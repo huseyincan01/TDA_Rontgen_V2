@@ -1,0 +1,84 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IDEs and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# Large data files (keep folder structure via .gitkeep / README.md)
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/README.md
+!data/raw/node21/
+!data/raw/node21/metadata.csv
+data/raw/node21/*
+!data/raw/node21/.gitkeep
+!data/raw/node21/metadata.csv
+!data/raw/node21/images/
+data/raw/node21/images/*
+!data/raw/node21/images/.gitkeep
+
+data/interim/*
+!data/interim/.gitkeep
+!data/interim/**/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+!data/processed/**/.gitkeep
+
+# Artifacts & model checkpoints
+artifacts/models/*
+!artifacts/models/.gitkeep
+artifacts/runs/*
+!artifacts/runs/.gitkeep
+artifacts/scalers/*
+!artifacts/scalers/.gitkeep
+artifacts/thresholds/*
+!artifacts/thresholds/.gitkeep
