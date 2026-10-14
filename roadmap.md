@@ -200,7 +200,21 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
 | Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 1/5 | E4.3 | 0 | 1 |
 
-**Referans noktası (v2.1, kilitli):** PI CNN test ROC-AUC **0.8631** · RBF-SVM **0.8289** · k-NN **0.7162** · Ham CNN **0.7043** · PL CNN **0.5450** · PL SVM **0.5217**
+**Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
+
+| Sıra | Model | Test ROC-AUC | Durum |
+| :-: | :--- | :---: | :--- |
+| 🥇 | **E3.1 Füzyon (ResNet18 + TDA ensemble)** | **0.9211** | KEEP 🏆 |
+| 🥈 | E3.4 TDA ensemble (CNN + SVM) | 0.8776 | KEEP |
+| 🥉 | TDA PI küçük CNN (v2.1) | 0.8631 | kilitli referans |
+| 4 | E0.3 ResNet18 (donmuş) + lojistik regresyon | 0.8349 | baseline |
+| 5 | RBF-SVM (PI) | 0.8289 | kilitli referans |
+| 6 | k-NN (PI) | 0.7162 | kilitli referans |
+| 7 | Ham görüntü küçük CNN | 0.7043 | kilitli referans |
+| 8 | PL küçük CNN | 0.5450 | kilitli referans |
+| 9 | PL RBF-SVM | 0.5217 | kilitli referans |
+
+> ⚠️ **TEST SETİ BÜTÇESİ: 4/6 kullanıldı** (E0.2, E3.4, E0.3, E3.1). Kalan **2 değerlendirme** Faz 5'e (final ablasyon matrisi + harici doğrulama E5.3) **saklanmalı**. Bundan sonraki deneyler yalnızca **validation** üzerinde karar vermeli.
 
 ---
 
