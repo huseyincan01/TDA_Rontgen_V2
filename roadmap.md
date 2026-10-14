@@ -257,3 +257,32 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 ### Yenilik iddia EDİLMEMESİ gerekenler
 
 "İlgisiz yapılar diyagramı domine eder → ROI kısıtlaması gerekir" (Vandaele 2020/2022) · "PI ve PL veri setine bağlı farklı davranır" (Barnes 2021, Sulowska 2026) · "topoloji tek başına CNN'e denk, füzyonla artar" (TDA-Net) · "topoloji gerçek histolojiyi, radyomik radyolog skorunu taklit eder" (Vandaele 2022).
+
+---
+
+## 12. Devam Noktası (Handoff — 2026-10-14)
+
+**Durum:** Faz 0 ✅ tamam · Faz 1 kısmi (2/5) · Faz 2 kısmi (1/2) · Faz 5 kısmi (1/5, 1 KILL).
+Çalışma ağacı **temiz**, tüm iş **commit'li**. Deney manifest'leri `artifacts/runs/` altında (gitignored, yerelde mevcut).
+
+**Ana sonuç (yayının çekirdeği):** E3.1 füzyonu → **0.9211** hasta düzeyi test ROC-AUC.
+
+**Devam edilecek ilk işler** — test bütçesi harcanmadan, yalnızca validation'da karar verilecek:
+
+| Öncelik | Deney | Not |
+| :-: | :--- | :--- |
+| 1 | **E2.7** — PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) | Özellik yeniden çıkarımı gerekir (~36 dk/varyant) |
+| 2 | **E4.1** — %10/%20/%30 overlap robustness | `02_create_labels_v2.py --threshold` destekliyor; **yeniden çıkarım GEREKMEZ** (etiket→split→eğitim) |
+| 3 | **E4.5** — E4.2 takibi (H1 düzgün bölgelerde mi oluşuyor?) | Temsilci döngü hücreleri gerekir |
+| 4 | **E2.8** — σ/ızgara duyarlılık taraması | Yeniden çıkarım gerekir |
+| 5 | **E2.1/E2.2** — çift yön filtrasyon + çok ölçek | Yeniden çıkarım gerekir |
+
+**Test bütçesi: 4/6 kullanıldı.** Kalan 2 → **E5.1** (final ablasyon matrisi) + **E5.3** (harici doğrulama).
+
+**Ortam notları:**
+* `torch 2.14.1+cpu` — **CUDA yok**; CPU yeterli çıktı (E0.0 ertelendi).
+* Pretrained ağırlıklar indirildi: `~/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth`.
+* `data/processed/features_resnet18/X_zone_features.npy` (24410, 512) — E3.1/E3.2 tarafından yeniden kullanılabilir.
+* Tüm deney betikleri: `pipelines/exp/`.
+
+**Devam komutu:** §9 (durum tablosu) + §10 (karar günlüğü) oku → yukarıdaki tablonun 1. maddesinden başla.
