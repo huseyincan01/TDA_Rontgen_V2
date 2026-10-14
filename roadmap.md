@@ -85,7 +85,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E0.1** | W0 | Deney kayıt protokolü + dizin sözleşmesi kurulabilir | — | 0.5g | Düşük | Altyapı | **KEEP** ✅ |
 | **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | **KEEP** ✅ birebir |
 | **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | Planlandı |
-| **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | Planlandı |
+| **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | **KEEP** ✅ test 0.8776 |
 | **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | Planlandı |
 | **E1.1** | W1 | Kemik bastırma H1 kemik gürültüsünü azaltır, val AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
 | **E1.2** | W1 | Frangi damar bastırma H1 damar döngülerini temizler, AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
@@ -193,7 +193,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 2/4 | E0.3 | 2 | 0 |
-| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 1/5 | E2.7 | 1 | 0 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 2/5 | E2.7 | 2 | 0 |
 | Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
@@ -210,6 +210,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E0.1** | **KEEP** | Manifest altyapısı (`src/node21_tda/experiment.py`) + `configs/experiments/` sözleşmesi kuruldu, smoke test geçti. |
 | 2026-10-14 | **E0.2** | **KEEP** | v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** (16/16 metrik; test ROC-AUC 0.8631, TP/FP/TN/FN 137/114/448/35). Pipeline deterministik. Yan bulgu: eğitim CPU'da ~27 s → özellik tabanlı deneyler GPU'suz yapılabilir. |
 | 2026-10-14 | **E4.4** | **KEEP** | **PL çöküşünün mekanizması nicel olarak kanıtlandı.** H1 zarf tepeleri λ1→λ5 boyunca 110→90 (birbirine yakın, enerji eşit dağılmış) → zarf, her zonda ≥5 çok uzun ömürlü arka plan H1 sınıfıyla **doymuş**. Poz/neg sinyal zarfın yalnızca **%1–2'si** (≈50–100× bastırılma); H0'da λ1'de %0.02. Bu, yayının **1 numaralı özgünlük iddiasının** deneysel kanıtı. |
+| 2026-10-14 | **E3.4** | **KEEP** | **Yeni lider: ensemble test ROC-AUC 0.8776** (w=0.55, hasta düzeyi soft voting). Val farkı +0.0214 (≥0.015 ✓), test farkı +0.0145, bootstrap %95 CI **[+0.0034, +0.0260]** sıfırı dışlıyor, p=0.010. NODE21 rank-1'i (0.868) geçiyor, NODE21 ensemble'ına (0.877) ulaşıyor. Zon düzeyi füzyon (varyant B) daha kötü (0.8629) → CNN ve SVM tamamlayıcı. |
 
 ---
 

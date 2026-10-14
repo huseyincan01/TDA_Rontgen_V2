@@ -223,3 +223,25 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KEEP** — PL çöküşünün mekanizması nicel olarak kanıtlandı. Bu, [literature.md](literature.md) §5.2'deki **1 numaralı özgünlük iddiasının** deneysel kanıtıdır.
 * **Yan kanıt:** `train_diagram_distribution_report.json` H1 kalıcılık dağılımının aşırı ağır kuyruklu olduğunu doğruluyor (p50 = 1, p90 = 2, p95 = 3, p99 = 8, **max = 255**) → zarfı doyuran az sayıda sınıf niceliksel olarak mevcuttur.
 * **Manifest:** `artifacts/runs/E4.4_pl_envelope_analysis/manifest.json`
+
+### E3.4 — 5-Zon TDA CNN + RBF-SVM Soft-Voting (Ensemble)
+
+* **Hipotez (ön-kayıtlı):** CNN ve SVM hasta düzeyi olasılıklarının ağırlıklı ortalaması, tek modellerin her birinden **≥ +0.015 val ROC-AUC** verir.
+* **Tek değişken:** Birleştirme ağırlığı `w` (`p = w·p_cnn + (1−w)·p_svm`), `w ∈ [0,1]` adım 0.05. Veri hattı, özellikler, split ve ölçekleyiciler sabit (v2.1 kilidi).
+* **Çalışma:** `python pipelines/exp/E3_4_ensemble_cnn_svm.py` · kayıtlı paketlerden çıkarım (`zone_cnn_bundle.pt`, `zone_svm_bundle.joblib`) · seed 42.
+* **Sonuç:** ✅ **Hipotez doğrulandı → KEEP**
+
+  | Model | w | Val ROC-AUC | **Test ROC-AUC** | Eşik |
+  | :--- | :---: | :---: | :---: | :---: |
+  | CNN (tek model) | — | 0.8607 | 0.8631 | 0.6949 |
+  | SVM (tek model) | — | 0.8278 | 0.8289 | 0.6397 |
+  | **🥇 Ensemble A** (hasta düzeyi soft voting) | **0.55** | **0.8821** | **0.8776** | 0.6785 |
+  | Ensemble B (zon düzeyi füzyon) | 0.55 | 0.8699 | 0.8629 | 0.6688 |
+
+* **İstatistiksel kanıt:** Val farkı **+0.0214** (≥ +0.015 ✓) · Test AUC farkı **+0.0145**, N=2.000 bootstrap %95 CI **[+0.0034, +0.0260]** (sıfırı **dışlıyor** ✓), iki yönlü **p = 0.010**.
+* **Yorum:**
+  1. **Hasta düzeyinde soft voting (A), zon düzeyinde füzyondan (B) belirgin iyi** → CNN ve SVM **tamamlayıcı** bilgi taşıyor; kazanç en iyi zonu korumaktan geliyor.
+  2. **Yeni lider: 0.8776 test ROC-AUC.** Bu, NODE21 rank-1 detektörünün görüntü düzeyi AUC'sini (0.868) **geçiyor** ve NODE21 **ensemble** seviyesine (0.877) **ulaşıyor** — üstelik hiçbir derin tespit mimarisi ve harici pretrain kullanmadan.
+  3. Referans tek modeller **birebir** yeniden üretildi (CNN 0.8631 / SVM 0.8289) → çıkarım hattı bağımsız olarak doğrulandı.
+* **Karar:** **KEEP** — bu, yayının ana performans sonucudur.
+* **Manifest:** `artifacts/runs/E3.4_ensemble_cnn_svm/manifest.json`

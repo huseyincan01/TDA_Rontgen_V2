@@ -210,7 +210,7 @@ NODE21'in **AUC metriği zaten görüntü düzeyindedir** ve görüntü skoru = 
 
 Bu, yayının ana çerçevesini kurar:
 
-> **Ağır bir detektör topluluğu (20–33 model, harici pretrain) NODE21'de görüntü düzeyi 0.868 AUC'ye ulaşıyor. Biz, hiçbir derin tespit mimarisi ve harici pretrain kullanmadan, yalnızca yorumlanabilir topolojik özelliklerle hasta düzeyi 0.8631 AUC elde ediyoruz — üstelik kendi iç split'imizde.**
+> **Ağır bir detektör topluluğu (20–33 model, harici pretrain) NODE21'de görüntü düzeyi 0.868 AUC'ye ulaşıyor. Biz, hiçbir derin tespit mimarisi ve harici pretrain kullanmadan, yalnızca yorumlanabilir topolojik özelliklerle hasta düzeyi 0.8776 AUC elde ediyoruz (E3.4 ensemble) — üstelik kendi iç split'imizde.**
 
 Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, ağır detektörlerin görüntü-düzeyi AUC seviyesine yaklaşıyor"** iddiasıdır ve **dürüst, savunulabilir**.
 
@@ -285,16 +285,16 @@ Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, a
 
 | Karşılaştırma | Değer | Yorum |
 | :--- | :---: | :--- |
-| NODE21 rank-1 (görüntü düzeyi AUC) | 0.868 | Bizimki (0.8631) pratikte **denk** |
-| NODE21 ensemble (zirve) | 0.877 | Tüm yarışmanın en iyisi |
-| NODE21 baseline (DB) | 0.816 | Bizimki bunun **üstünde** |
+| NODE21 rank-1 (görüntü düzeyi AUC) | 0.868 | Bizim **ensemble (0.8776)** bunu **geçiyor** |
+| NODE21 ensemble (zirve) | 0.877 | Bizim ensemble **denk** (fark 0.0006) |
+| NODE21 baseline (DB) | 0.816 | Bizimki **çok üstünde** |
 | ChestX-ray14 nodül AUC (Wang 2017) | 0.67 | Bizimki **çok üstünde** |
 | Wang 2024 topolojik radiomics (GGN) | 0.85 / 0.862 | **Aynı bant** |
 | Topo-CXR (TB/pnömoni) | ~0.99 | **Farklı ve yapısal olarak daha kolay görev** |
 
 **Kritik teknik uyum:** NODE21'in AUC metriği **görüntü düzeyindedir** ve görüntü skoru = **maksimum kutu olasılığı**. Bizim hasta skorumuz = **5 zon olasılığının maksimumu**. ⇒ **Agregasyon mantığı (max) ve metrik (AUC) örtüşüyor.** Farklar: (a) lokalizasyon üretmiyoruz, (b) split'imiz resmî değil.
 
-> 🔑 **Yeniden çerçeveleme:** *"Yorumlanabilir, hafif, tamamen topolojik bir temsil — hiçbir derin tespit mimarisi ve harici pretrain kullanmadan — ağır detektör topluluklarının görüntü düzeyi AUC seviyesine yaklaşıyor."* Bu iddia **dürüst ve savunulabilir**; "SOTA'yı geçtik" iddiası ise değil.
+> 🔑 **Yeniden çerçeveleme:** *"Yorumlanabilir, hafif, tamamen topolojik bir temsil — hiçbir derin tespit mimarisi ve harici pretrain kullanmadan — ağır detektör topluluklarının görüntü düzeyi AUC seviyesine ulaşıyor (**0.8776**)."* **E3.4 (KEEP)** bu iddiayı sayısal olarak destekledi. "Resmî test setinde SOTA'yı geçtik" iddiası ise **geçersizdir** (§3.4).
 
 ### 5.2 Yenilik hiyerarşisi (yayın için)
 
