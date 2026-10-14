@@ -1,0 +1,22 @@
+# NODE21 Veri ve Bölme (Splits) v2 Yapılandırması
+data:
+  labels_file: "data/processed/labels/zone_labels_v2.csv"
+  features_file: "data/processed/features_v2/X_zone_features.npy"
+  features_metadata_file: "data/processed/features_v2/features_metadata.csv"
+  patient_splits_file: "data/processed/splits_v2/patient_splits.csv"
+  zone_splits_file: "data/processed/splits_v2/zone_splits.csv"
+  summary_file: "data/processed/splits_v2/splits_summary.json"
+  tda_ranges_file: "data/processed/tda_config/tda_ranges_v2.json"
+
+splits:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  seed: 42
+  stratify_by:
+    - "patient_label"
+    - "zone_pattern"
+  train_balancing:
+    enabled: true
+    ratio: 1.0  # 1:1 pozitif/negatif dengesi
+    negative_pool: "clean_healthy_controls_only"  # Sadece label_state == 'negative'

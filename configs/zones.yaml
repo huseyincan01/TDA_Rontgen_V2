@@ -1,0 +1,53 @@
+# 5 Anatomik Bölge Yapılandırması (Sağ 3 Lob, Sol 2 Lob)
+model:
+  name: "torchxrayvision_pspnet"
+  architecture: "torchxrayvision.baseline_models.chestx_det.PSPNet"
+  device: "cuda"
+  input_size: 512
+  threshold: 0.5
+  right_lung_channel: 5
+  left_lung_channel: 4
+
+zones:
+  1:
+    name: "1. Sağ Üst Bölge (Apeks / Klavikula)"
+    short_tag: "Sağ Üst (R-Upper)"
+    lung: "right"
+    level: "upper"
+    file_prefix: "zone_1_sag_ust"
+    color: [0.95, 0.30, 0.15]
+  2:
+    name: "2. Sağ Orta Bölge (Orta Lob / Hiler Seviye)"
+    short_tag: "Sağ Orta (R-Mid)"
+    lung: "right"
+    level: "middle"
+    file_prefix: "zone_2_sag_orta"
+    color: [0.95, 0.75, 0.10]
+  3:
+    name: "3. Sağ Alt Bölge (Alt Lob / Diyafram)"
+    short_tag: "Sağ Alt (R-Lower)"
+    lung: "right"
+    level: "lower"
+    file_prefix: "zone_3_sag_alt"
+    color: [0.15, 0.85, 0.35]
+  4:
+    name: "4. Sol Üst Bölge (Apeks / Aort Kavsi / Sol Üst Lob)"
+    short_tag: "Sol Üst (L-Upper)"
+    lung: "left"
+    level: "upper"
+    file_prefix: "zone_4_sol_ust"
+    color: [0.65, 0.25, 0.90]
+  5:
+    name: "5. Sol Alt Bölge (Sol Alt Lob / Kardiyak Kenar / Diyafram)"
+    short_tag: "Sol Alt (L-Lower)"
+    lung: "left"
+    level: "lower"
+    file_prefix: "zone_5_sol_alt"
+    color: [0.10, 0.65, 0.98]
+
+cropping:
+  save_masked: true
+  save_raw_crop: true
+  save_png_preview: true
+  save_mha: true
+  padding_pixels: 5

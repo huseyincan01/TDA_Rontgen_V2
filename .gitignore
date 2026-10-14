@@ -54,6 +54,7 @@ Thumbs.db
 *.temp
 
 # Large data files (keep folder structure via .gitkeep / README.md)
+dataset_node21/
 data/raw/*
 !data/raw/.gitkeep
 !data/raw/README.md

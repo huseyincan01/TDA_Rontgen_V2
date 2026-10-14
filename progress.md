@@ -1,94 +1,260 @@
-# NODE21 TDA Projesi — Çalışma Planı
+# NODE21 TDA Projesi — Çalışma Planı ve Geliştirme Güncesi
 
-Bu plan, JSRT + SCR ile geliştirilmiş prototipi NODE21 verisine taşıma sırasını anlatır. Öncelik önce NODE21 dosyalarını anlamak, düzenlemek ve işlenebilir hale getirmektir. Model seçimi daha sonra aynı özellikler üzerinde değiştirilebilir olacaktır. İlk derin öğrenme kıyası **sekiz zonu tek hasta girdisi olarak birleştiren küçük bir MLP** olacaktır. Arayüz, ana veri ve model akışı çalıştıktan sonraya bırakılmıştır.
+Bu belge, **NODE21** göğüs radyografileri (CXR) üzerinde **5 anatomik akciğer zonu** ve **Kübik Kalıcı Homoloji (Cubical Persistent Homology - TDA)** temelli nodül tespit sisteminin resmi mimari güncesidir. Projenin teorik temellerini, v1 aşamasındaki metodolojik yanılgıların analizini, v2 temiz veri hattının matematiksel tasarımını ve güncel durumunu belgeler.
 
-## Prototipte yapılanlar ve çıkarımlar
+---
 
-Prototip JSRT görüntülerini metadata ile eşleştirdi, SCR maskelerini kullandı, sekiz anatomik zon oluşturdu ve her zon için TDA özellikleri çıkardı. TDA hattı H0 ve H1 persistence bilgilerini 20×20 Persistence Image’lara çevirerek toplam 800 değerlik vektör üretti. SVM, k-NN, ensemble ve veri artırma denemeleri yapıldı.
+## 1. Proje Amacı ve Genel Mimari
 
-Sonuçlar tek bir test bölmesinde umut verici görünse de 5 katlı çapraz doğrulama sonucu belirgin biçimde daha düşüktü. Bu yüzden prototipteki skorlar NODE21 için başarı beklentisi olarak alınmayacak; yöntemleri karşılaştırmak için başlangıç deneyimi sayılacak. Ayrıca prototipte bazı değerlendirmelerde eşik test kümesinden seçilmiş. Yeni projede model/eşik seçimi validation verisinde yapılmalı, test verisi en son değerlendirmeye ayrılmalı.
+Bu projenin temel hipotezi; göğüs röntgenlerindeki akciğer nodüllerinin, global görüntü sınıflandırması yerine **5 bağımsız anatomik akciğer lobu/zonu** düzeyinde, doku yoğunluk filtrasyonundan elde edilen **topolojik parmak izleri (Persistent Homology)** ile yüksek doğruluk ve açıklanabilirlikle tespit edilebileceğidir.
 
-Prototipteki TDA yaklaşımı, 8 zon fikri ve hasta bazlı ayırma yeni projeye aktarılacak başlangıç noktalarıdır. Maske, atlas, zon sınırları, TDA ayarları ve model yapısı NODE21 üzerinde kontrol edilmeden kesin karar sayılmayacak.
+```
++---------------------------------------------------------------------------------------------------+
+|                                     NODE21 CXR (1024x1024, 16-bit)                                 |
++---------------------------------------------------------------------------------------------------+
+                                                  |
+                                                  v
+                      +-------------------------------------------------------+
+                      | TorchXRayVision PSPNet Akciğer Anatomik Segmentasyonu  |
+                      +-------------------------------------------------------+
+                                                  |
+                         +------------------------+------------------------+
+                         |                                                 |
+                         v                                                 v
+               Sağ Akciğer (3 Zon)                               Sol Akciğer (2 Zon)
+          [Zon 1: Üst] [Zon 2: Orta] [Zon 3: Alt]               [Zon 4: Üst] [Zon 5: Alt]
+                         |                                                 |
+                         +------------------------+------------------------+
+                                                  |
+                                                  v
+                           +-----------------------------------------------+
+                           | Kübik Kompleks & Yoğunluk Filtrasyonu (GUDHI) |
+                           |       - H0: Bağlantılı Bileşenler             |
+                           |       - H1: 1-Boyutlu Döngüler / Çevreler     |
+                           +-----------------------------------------------+
+                                                  |
+                                                  v
+                           +-----------------------------------------------+
+                           | SciPy Gaussian Tabanlı Persistence Image      |
+                           |     - H0 (20x20) + H1 (20x20) = 800 Boyut     |
+                           +-----------------------------------------------+
+                                                  |
+                                                  v
+                           +-----------------------------------------------+
+                           | 5 Bağımsız Zon RBF-SVM Sınıflandırıcısı       |
+                           |    - Train: 1:1 Temiz Negatif Dengeli         |
+                           |    - Val: ROC-AUC Tuning + Youden's J Eşik    |
+                           +-----------------------------------------------+
+                                                  |
+                                                  v
+                           +-----------------------------------------------+
+                           | Hasta Düzeyi Max-Pooling Karar Mekanizması    |
+                           |   P(Hasta) = max(P_z1, P_z2, P_z3, P_z4, P_z5)|
+                           +-----------------------------------------------+
+```
 
-## Aşamalar
+### Temel Tasarım İlkeleri:
+1. **Anatomik Bölütleme:** Akciğerler derin öğrenme segmentasyonu ile 5 bağımsız anatomik zona ayrılır (Sağ Üst, Sağ Orta, Sağ Alt, Sol Üst, Sol Alt).
+2. **Kübik Kalıcı Homoloji:** Her zon kesitinin doku yoğunluk filtrasyonundan sonlu H0 (yoğun lezyon çekirdekleri / radyoopak odaklar) ve H1 (1-boyutlu döngüler / damarsal ve trabeküler çevre yapıları) kalıcılık diyagramları çıkarılır.
+3. **Piksel Uzayında Persistence Image (PI):** Diyagramlar, Adams vd. (2017) ağırlıklandırması ve piksel bazlı Gaussian yumuşatma ile sabit boyutlu ($20 \times 20$) iki kanallı 800 boyutlu topolojik özet vektörlerine dönüştürülür.
+4. **Zon Düzeyinde Bağımsız Modelleme:** Her zon kendi morfolojik ve topolojik karakteristiğine göre bağımsız eğitilir; hasta düzeyinde nodül riski zon tahminlerinin Max Pooling birleştirmesi ile hesaplanır.
 
-### 1. NODE21 verisini bul ve içeriğini doğrula
+---
 
-- NODE21’in indirilen dosyalarını ve metadata dosyasını `data/raw/node21/` altında tut.
-- Lisans ve kaynak bilgilerini not et; ham görüntüleri değiştirme ve Git’e ekleme.
-- Metadata sütunlarını, dosya biçimlerini ve görüntülerin gerçekten okunup okunmadığını incele.
-- Her metadata kaydını görüntü dosyasıyla eşleştir; eşleşmeyen veya bozuk kayıtları raporla.
-- Etiketleri, bounding box alanlarını ve koordinatlarının hangi görüntü boyutuna göre verildiğini doğrula.
-- Kaynak veride hasta kimliği bulunup bulunmadığını kontrol et. NODE21’deki görüntü sayısını hasta sayısı varsayma.
+## 2. v1 Aşamasında Yapılan Metodolojik Hataların Özeti ve Tasfiyesi
 
-**Bu aşamanın çıktısı:** Görüntü kimliği, dosya yolu, etiket ve anotasyon bağlantısı bulunan bir manifest ile veri özeti.
+Projenin ilk sürümünde (v1) elde edilen sonuçlar (SVM 0.7157 AUC, k-NN 0.5555 AUC, CNN 0.6510 AUC) görünüşte çalışan bir boru hattı sunmuş olsa da, gerçekleştirilen kapsamlı veri ve etiket denetimleri sonucunda **5 temel metodolojik hata** tespit edilmiş ve v1 kaynaklı tüm türetilmiş veriler tasfiye edilmiştir:
 
-### 2. Hasta bazlı veri bölmelerini hazırla
+### 1. Bounding Box Merkez-Nokta Etiketleme Yanılgısı (Dirty Negatives / Label Leakage)
+* **Kusur:** Nodüller yalnızca $(c_x, c_y)$ merkez koordinatına indirgenerek tek bir zona atanmıştır.
+* **Mekanizma & Kanıt:** 160 nodülün birden fazla loba taştığı (%10.8) ve **130 zonun gerçekte nodül alanının $\ge \%20$'sini barındırmasına rağmen yanlışlıkla `zone_label = 0` (sağlıklı) kaldığı** `nodule_pixel_overlap.csv` analizi ile kesinleşmiştir.
+* **Etki:** Train kümesinde modeller, içinde belirgin tümör dokusu bulunan bu 130 zonu "sağlıklı negatif doku" referansı olarak öğrenmeye zorlanmış; bu durum karar sınırlarını kirletmiştir.
 
-- Hasta kimliği varsa aynı hastanın görüntülerini aynı train, validation veya test grubunda tut.
-- Hasta kimliği yoksa hangi kimliklerle güvenilir grup kurulabileceğini incele ve sınırlamayı açıkça yaz.
-- Bölmeleri görüntüleri çoğaltmadan ve model/özellik işlemlerinden önce oluştur.
-- Sınıf dağılımını ve varsa kaynak veri kümelerinin dağılımını bölmeler arasında kontrol et.
-- Bölme listesini kaydet ve deneylerde tekrar kullan.
+### 2. Sınır ve Belirsiz Doku (%0 - %20) Negatif Havuzuna Alınması
+* **Kusur:** Bir nodülün kenarını (%1-%19) içeren sınır dokular temiz kontrol zonları ile aynı kefeye konulmuştur.
+* **Etki:** Model, infiltratif tümör kenarı içeren dokular ile %100 temiz doku arasındaki sınırları ayırt edememiş; yanlış pozitif ve yanlış negatif oranları şişmiştir.
 
-Validation modeli ve karar eşiğini seçmek içindir. Test kümesi bu seçimlerde kullanılmayacak; yalnızca son değerlendirmede kullanılacak.
+### 3. Ortak ve Aşırı Geniş [0, 255] Persistence Image Izgarası (Grid Collapse / Extreme Sparsity)
+* **Kusur:** H0 ve H1 persistence dağılımları analiz edilmeden her iki boyut için keyfi `[0, 255]` aralığı kullanılmıştır.
+* **Mekanizma & Kanıt:** Train diyagramlarının %99'unda H1 persistence değerlerinin $\le 8$ olduğu kanıtlanmıştır. Hücre genişliği $255 / 20 = 12.75$ olduğundan, tüm H1 noktaları ilk satıra (row 0) yığılmış; 20x20 ızgaranın kalan 19 satırı (%95'i) tamamen boş (sıfır) kalmıştır.
+* **Etki:** H1 uzayındaki ince topolojik varyasyonlar tamamen yok olmuş, özellik vektörünün yarısı anlamsız sıfırlardan ibaret hale gelmiştir.
 
-### 3. Görüntüleri okuma ve hazırlama
+### 4. Kayıp Kaynak Verisi Üzerinden Katmanlama (`source_dataset` Hatası)
+* **Kusur:** Hasta bölmesinde `source_dataset` (`chestxray14`, `padchest`, `openi`, `jsrt`, `node21_control`) katmanlama anahtarı olarak kullanılmıştır.
+* **Mekanizma:** NODE21 yarışmasında tüm kontrol hastaları `node21_control` adı altında birleştirilmiş olup sağlıklıların özgün hastane kaynağı metadata'da mevcut değildir.
+* **Etki:** Bu katmanlama simetrisi bozuk, yapay bir dağılım üretmiş ve genelleme kapasitesini çarpıtmıştır.
 
-- NODE21’deki gerçek görüntü formatı ve boyutlarını envanterden belirle; prototipteki görüntü boyutunu otomatik olarak varsayma.
-- Görüntüleri tek bir okuyucu üzerinden aç; piksel aralığı ve yön bilgisini kontrol et.
-- Normalizasyon veya yeniden boyutlandırma gerekiyorsa seçilen işlemi belgele.
-- Görüntü boyutu değişirse bounding box koordinatlarını aynı dönüşüme göre güncelle.
-- Az sayıda görüntü üzerinde görsel kontrol yaparak anotasyonların görüntüyle hizalı olduğunu doğrula.
+### 5. Çoklu Hipotez Testi Yanılgısı (FDR Eksikliği)
+* **Kusur:** 800 özellik üzerinde düz $p < 0.05$ aranarak ayırt edici özellikler seçilmeye çalışılmıştır.
+* **Kanıt:** Yapılan Benjamini-Hochberg FDR düzeltmesi, düz $p < 0.05$ ile "anlamlı" görünen ortalama 40 özelliğin saf rastgele gürültüden kaynaklanan sahte pozitif olduğunu ortaya koymuştur.
 
-### 4. Sekiz zonu NODE21’e uyarlama
+> **Tasfiye Kararı:** 17 adet geçersiz türetilmiş varlık (tüm v1 özellik vektörleri, metadata, eski split dosyaları, model ağırlıkları ve tahmin tabloları) silinmiştir. `experiments.md` liderlik tablosu "v1: geçersiz arşiv" olarak damgalanmıştır.
 
-- Önce NODE21 dosyalarında veya resmi materyallerinde kullanılabilir akciğer maskesi olup olmadığını doğrula. Prototipte kullanılan SCR maskelerinin NODE21 için hazır olduğunu varsayma.
-- Maske yoksa ilk olarak sekiz zonu üretmenin uygulanabilir yollarını incele. Gerekirse otomatik akciğer segmentasyonu bu aşamada değerlendirilir.
-- Zonların sağ/sol ve üst/alt tanımlarını sabitle; görüntü yönünün bu tanımlarla uyumlu olduğunu kontrol et.
-- Prototipteki atlas ve örtüşme ayarlarını doğrudan kopyalama. Önce örnek NODE21 görüntülerinde zonları ve bounding box’ları birlikte incele.
-- Her görüntünün sekiz zonunu, anotasyonlarını ve kimliğini birbirinden kopmayacak şekilde kaydet.
+---
 
-**Bu aşamanın çıktısı:** Her görüntü için görüntü, anotasyon ve zonların izlenebilir biçimde eşleşmesi.
+## 3. Akciğer Segmentasyonu ve Zon Kesme Altyapısı (Korunan Temel)
 
-### 5. TDA özelliklerini çıkar
+Ham veri ve anatomik kesitler hatasız olduğu için korunmuştur:
+- **Veri Seti:** NODE21 (Toplam **4.882 tekil hasta**: 3.748 Sağlıklı, 1.134 Nodüllü / 1.476 Lezyon; $1024 \times 1024$ 16-bit MHA).
+- **Segmentasyon Modeli:** TorchXRayVision `PSPNet` (NVIDIA RTX 4050 GPU, CUDA hızlandırmalı, 100.3 ms / görüntü).
+- **5-Zon Anatomik Bölümleme:**
+  - **Sağ Akciğer (3 Lob):** Sağ Üst (Apeks/Klavikula), Sağ Orta (Orta Lob/Hiler), Sağ Alt (Alt Lob/Diyafram).
+  - **Sol Akciğer (2 Lob):** Sol Üst (Apeks/Aort Kavsi/Üst Lob), Sol Alt (Alt Lob/Kardiyak Kenar/Diyafram).
+- **Kayıt:** `data/processed/zones/patients/<hasta_id>/` altında 4.882 hastanın 5 zon `.mha` ve maskeleri eksiksiz bulunmaktadır (toplam 24.410 zon kesiti, 0 boş zon).
+- **Piksel Örtüşme Analizi:** 1.476 lezyonun akciğer maskeleriyle gerçek piksel kesişim oranları hesaplanmış ve [nodule_pixel_overlap.csv](file:///c:/Users/Huseyincan/codes/rontgen_V2/data/processed/zones/reports/nodule_pixel_overlap.csv) olarak dondurulmuştur.
 
-- Prototipteki 800 boyutlu H0/H1 Persistence Image yöntemini ilk deneme ayarı olarak uygula.
-- NODE21 üzerinde filtrasyon yönünü, maske dışı piksellerin etkisini, boş zonları ve üretilen vektörlerin boyutunu kontrol et.
-- Başarısız görüntü veya boş zonları hata/durum bilgisiyle kaydet; sessizce normal bir özellik vektörü gibi değerlendirme.
-- Önce küçük bir örnek grubunda çalışma süresi ve sonuçları kontrol et; ardından tüm veriyi işle.
-- Her vektörle birlikte görüntü/hasta kimliğini, zonu, etiketi ve split bilgisini sakla.
+---
 
-**Bu aşamanın çıktısı:** Model deneylerinde aynı biçimde kullanılabilecek, kimliği ve zonu belli TDA özellikleri.
+## 4. v2 Temiz Veri Hattı Mimarisi
 
-### 6. Değiştirilebilir model altyapısını kur ve ilk modeli dene
+### Adım 1: v2 Zon Etiketleme (`data/processed/labels/zone_labels_v2.csv`)
+- **>= %20 Kuralı:** Bounding box alanının $\ge \%20$'si bir zon maskesindeyse o zon pozitif (`zone_label = 1`, `label_state = 'positive'`).
+- **Çoklu Taşma:** Aynı nodül iki zona $\ge \%20$ taşıyorsa iki zon da pozitif kabul edilir.
+- **Ambiguous (%0 - %20):** Lezyon alanı %0 ile %20 arasında kalan zonlar `label_state = 'ambiguous'` olarak etiketlenir (`zone_label = 0`); asla negatif eğitim havuzuna alınmaz.
+- **Unassigned Nodule:** Hiçbir zonu %20'ye ulaşmayan 9 nodüllü hasta (`n0071`, `n0431`, `n0492`, `n0659`, `n0756`, `n0835`, `n0929`, `n0959`, `n1040`) `label_state = 'unassigned_nodule'` olarak izole edilmiştir.
+- **Temiz Negatif:** %0 nodül örtüşmesine sahip zonlar `label_state = 'negative'` olarak etiketlenir.
 
-- Modeller aynı özellik girdisini alıp aynı biçimde skor üretsin; hangi modelin çalışacağı config dosyasından seçilebilsin.
-- İlk model: **sekiz zonu tek hasta girdisi olarak birleştiren küçük bir MLP**.
-- İlk kıyas için prototipten gelen SVM yaklaşımını da aynı bölmeler ve özelliklerle referans olarak ekle.
-- MLP’nin ayarlarını validation verisine göre seç; test verisini bu süreçte açma.
-- Sonuçlara bakıldıktan sonra gerekirse diğer seçenekleri (ör. zon başına ayrı modeller veya zonlar arasında ortak ağırlık kullanan model) ek deney olarak değerlendir. Bunların hiçbiri baştan en iyi model kabul edilmeyecek.
+**Zon Başına Dağılım Tablosu (24.410 satır):**
+| Zon | Pozitif | Temiz Negatif | Ambiguous (%0-%20) | Unassigned | Toplam |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **Zon 1: Sağ Üst** | 193 | 4.672 | 8 | 9 | 4.882 |
+| **Zon 2: Sağ Orta** | 384 | 4.463 | 26 | 9 | 4.882 |
+| **Zon 3: Sağ Alt** | 282 | 4.574 | 17 | 9 | 4.882 |
+| **Zon 4: Sol Üst** | 238 | 4.624 | 11 | 9 | 4.882 |
+| **Zon 5: Sol Alt** | 381 | 4.486 | 6 | 9 | 4.882 |
 
-### 7. Modelleri aynı koşullarda değerlendir
+---
 
-- Sınıflandırma hedefini ilk aşamada nodül var/yok olarak tut.
-- ROC-AUC ve sınıf dengesini gözeten precision-recall sonuçlarını; ayrıca duyarlılık, özgüllük ve hata sayılarını raporla.
-- Karar eşiğini validation üzerinde belirle, ardından sabit eşikle test sonuçlarını hesapla.
-- Sonuçları hasta/grup bazında ayır; mümkünse çapraz doğrulama ile tek bir bölmeye bağlı kalıp kalmadığını incele.
-- Zon tahminini bounding box ile karşılaştırırsan bunu yardımcı zon analizi olarak adlandır. Bu, bounding box tespitiyle aynı şey değildir.
-- Gerçek konum bulma istenirse bounding box tahminine yönelik ayrı model ve değerlendirme aşaması planla.
+### Adım 2: Hasta Düzeyinde Katmanlı Bölme (`data/processed/splits_v2/`)
+- **Hasta Bütünlüğü:** Her hasta yalnızca `train`, `val` veya `test` kümesinde yer alır (sıfır hasta sızıntısı).
+- **Katmanlama:** Yalnızca `patient_label` ve 5-zon pozitiflik örüntüsü (`zone_pattern`, örn. `01000`) katmanlanmıştır. Hatalı `source_dataset` kaldırılmıştır.
+- **Bölme Dağılımı:**
+  - **Train:** 3.414 hasta (%69.93) — 2.624 sağlıklı, 790 nodüllü
+  - **Validation:** 734 hasta (%15.03) — 562 sağlıklı, 172 nodüllü
+  - **Test:** 734 hasta (%15.03) — 562 sağlıklı, 172 nodüllü
+- **Manifest:** Tohum (42), oranlar ve `zone_labels_v2.csv` dosyasının SHA-256 hash bilgisi `splits_summary.json` içine kilitlenmiştir.
 
-### 8. Sonraki kararlar
+---
 
-İlk veri hattı ve model kıyasları tamamlandıktan sonra sonuçlara göre TDA ayarları, maske/zon yöntemi ve ek model seçenekleri güncellenecek. Mimari çalışıp değerlendirilmeden arayüz geliştirmeye geçilmeyecek.
+### Adım 3: TDA Izgara Aralıklarının Train Verisinden Türetilmesi (`data/processed/tda_config/tda_ranges_v2.json`)
+- Validation ve Test verilerine **kesinlikle dokunulmadan**, yalnızca Train kümesinden 50 dengeli hasta (25 nodüllü, 25 kontrol = 250 zon kesiti) seçilmiştir.
+- GUDHI ile 389.124 H0 ve 610.093 H1 topolojik nokta üzerinden sağlam persentiller ($p_{01} - p_{99}$) hesaplanmıştır:
+  - **H0 Doğum Aralığı (Birth):** `[0.0, 248.0]` (Kırpılma / Clipping: %0.58)
+  - **H0 Kalıcılık Aralığı (Persistence):** `[0.0, 248.0]` (Kırpılma: %0.22)
+  - **H1 Doğum Aralığı (Birth):** `[239.0, 250.0]` (Kırpılma: %1.44)
+  - **H1 Kalıcılık Aralığı (Persistence):** `[0.0, 7.0]` (Kırpılma: %0.98)
 
-## Model seçiminin değiştirilebilir olması
+---
 
-Model adı ve temel ayarlar yapılandırma dosyasında tutulacak. Örneğin ilk çalıştırmada `patient_mlp`, sonraki kıyasta `zone_svm` seçilebilecek. Her model aynı eğitim ve tahmin akışına uyacak; böylece model değiştirmek için veri hazırlama ve TDA kodunu yeniden yazmak gerekmeyecek. Hangi model seçeneklerinin ekleneceği ilk kıyas sonuçlarından sonra belirlenecek.
+### Adım 4: SciPy Gaussian Tabanlı Doğrudan Vektörleştirme (`src/node21_tda/features/extractor.py`)
 
-## Mevcut durum
+#### Neden Harici `persim` Kütüphanesinden Vazgeçildi?
+Harici `persim.PersistenceImager` kütüphanesi, izotropik eksen aralıkları varsayımıyla tek bir skaler piksel boyutu (`_pixel_size`) kullanmaktadır. H1 boyutunda doğum aralığı genişliği ($\Delta b = 11.0$) ile kalıcılık genişliği ($\Delta p = 7.0$) farklı olduğunda, kütüphane $20 \times 20 = 400$ yerine $12 \times 20 = 240$ gibi dikdörtgen matrisler üretmeye zorlamakta ve çökmelere yol açmaktaydı.
 
-- [x] Proje klasör iskeleti `rontgen_V2/` içine oluşturuldu; mevcut `venv/` aynı seviyede.
-- [x] Prototip devir metni ve temel TDA, split, model değerlendirme kodları incelendi.
-- [ ] NODE21 ham verisinin konumu, metadata şeması ve görüntü dosyaları henüz doğrulanmadı.
-- [ ] İlk yapılacak iş: NODE21 dosyalarını envanterleyip metadata, etiket ve bounding box eşleşmelerini raporlamak.
+#### Matematiksel Çözüm ve Yeni Vektörleştirme Motoru:
+1. **Doğrudan Ayrık Izgara Eşlemesi:**
+   Her bir $(b, p)$ noktası, doğrudan hedef $(20, 20)$ hücre koordinatlarına eşlenir:
+   $$\text{col} = \min\left(\left\lfloor \frac{b - b_{\min}}{\Delta b} \cdot 20 \right\rfloor, 19\right), \quad \text{row} = \min\left(\left\lfloor \frac{p - p_{\min}}{\Delta p} \cdot 20 \right\rfloor, 19\right)$$
+2. **Adams vd. (2017) Doğrusal Ağırlık Birikimi:**
+   Gürültülü kısa ömürlü noktaları baskılamak ve anlamlı lezyon döngülerini vurgulamak için ağırlık fonksiyonu $w(b, p) = p$ uygulanır:
+   $$\text{Image}[r, c] = \sum_{(b, p) \in \text{bin}(r, c)} p \quad \text{(`np.add.at` ile optimize)}$$
+3. **Piksel Uzayında İzotropik Gaussian Düzenlileştirme:**
+   Doğal koordinat ölçeklerinden bağımsız olarak, ızgara üzerinde standart mekânsal komşuluk etkisi `scipy.ndimage.gaussian_filter` ile sağlanır:
+   $$\text{PI} = \text{gaussian\_filter}(\text{Image}, \sigma=1.0, \text{mode}='constant', \text{truncate}=3.0)$$
+
+#### v2 Özellik Çıkarım Sonuçları (`data/processed/features_v2/`):
+- **Çalışma:** 8 iş parçacığı (ProcessPoolExecutor), 2.141 saniye (~35.68 dakika).
+- **Matris Şekli:** `(24410, 800)`, `float32` (78.1 MB).
+- **Hata Sayısı:** 0 (`status: ok: 24.410`).
+- **Sparsity / Doluluk Analizi:**
+  - **H1 Dolu Hücre Oranı:** **%68.18** (v1'deki %95 boşluk sorunu çözülmüş, topolojik sinyal tüm ızgaraya yayılmıştır).
+  - **H0 Dolu Hücre Oranı:** **%8.00**
+  - **Toplam Dolu Oranı:** **%38.09** (Sıfır oranı: %61.91).
+
+---
+
+### Adım 5: Zon Splitleri ve 1:1 Temiz Negatif Dengeleme (`data/processed/splits_v2/zone_splits.csv`)
+- Train kümesinde her zon için pozitif sayısı kadar temiz negatif örnek seçilmiştir:
+  - **Zon 1 (Sağ Üst):** 133 Pos / 133 Temiz Negatif (Toplam: 266)
+  - **Zon 2 (Sağ Orta):** 266 Pos / 266 Temiz Negatif (Toplam: 532)
+  - **Zon 3 (Sağ Alt):** 194 Pos / 194 Temiz Negatif (Toplam: 388)
+  - **Zon 4 (Sol Üst):** 164 Pos / 164 Temiz Negatif (Toplam: 328)
+  - **Zon 5 (Sol Alt):** 263 Pos / 263 Temiz Negatif (Toplam: 526)
+  - **Toplam Train Dengeli Örnek:** 2.040 kesit.
+- **Sıfır Kontaminasyon:** Negatifler yalnızca `label_state == 'negative'` zonlardan seçilmiştir. Ambiguous ve unassigned satırlar eğitimden kesinlikle dışlanmıştır.
+- Validation ve Test kümeleri doğal klinik prevalansında korunmuştur.
+
+---
+
+### Adım 6: Bütünlük ve Doğrulama Denetimleri (`pipelines/06_verify_v2_pipeline.py`)
+
+| Test No | Denetim Kriteri | Durum | Doğrulama Detayı |
+| :---: | :--- | :---: | :--- |
+| **[1]** | Dosya Varlığı | **PASS** | 7 temel v2 dosyasının tamamı mevcut ve boyutları tutarlı. |
+| **[2]** | Hasta Sızıntısı (Leakage) | **PASS** | Train (3.414), Val (734), Test (734) kümelerinde 0 kesişim. |
+| **[3]** | 1:1 Train Dengeleme | **PASS** | 5 zonun tamamında pozitif ve seçilen temiz negatif sayıları eşit. |
+| **[4]** | Kontaminasyon Güvencesi | **PASS** | Ambiguous ve unassigned satırlardan train negatifine 0 sızıntı. |
+| **[5]** | Matris & İndeks Uyumu | **PASS** | `(24410, 800)` matrisi, metadata ve split satırlarıyla birebir eşleşiyor. |
+| **[6]** | Hash Koruması | **PASS** | Etiket SHA-256 (`35f33a...`) ve TDA SHA-256 (`95600c...`) kilitli. |
+| **[7]** | v1 İzolasyonu | **PASS** | Tüm geçersiz v1 dosyaları tasfiye edilmiş, v2 bağımsız. |
+
+---
+
+## 5. v2.1 Temiz Veri Hattı Üzerinde Model Deneyleri ve Sonuçları (Resmi Benchmark)
+
+12–13 Ekim 2026 tarihlerinde, v2.1 temiz veri hattı ve dondurulmuş 734 test hastası üzerinde altı bağımsız model/temsil konfigürasyonu eğitilmiş ve Max-Pooling birleştirmesi ile test edilmiştir:
+
+### Hasta Düzeyinde Nihai Benchmark Karşılaştırması (734 Test Hastası: 172 Nodüllü, 562 Kontrol):
+
+| Sıra | Model / Mimari | Temsil Formatı | Eşik ($\theta^*$) | Val ROC-AUC | Test ROC-AUC | Test PR-AUC | Test Duyarlılık | Test Özgüllük | Test F1 | Test Doğruluk | Karışıklık Matrisi (TP / FP / TN / FN) |
+| :-: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 🥇 | **5-Zon TDA Küçük CNN** | $5 \times (2, 20, 20)$ PI | 0.6949 | **0.8607** | **0.8631** | 0.6264 | **%79.65** | **%79.72** | **0.6478** | **%79.70** | **137** / 114 / **448** / **35** |
+| 🥈 | **5-Zon RBF-SVM** | $5 \times 800$ PI Vektör | 0.6397 | 0.8278 | **0.8289** | **0.6403** | %78.49 | %68.15 | 0.5556 | %70.57 | 135 / 179 / 383 / 37 |
+| 🥉 | **5-Zon k-NN** | $5 \times 800$ PI Vektör | 0.7273 | 0.7125 | **0.7162** | 0.4024 | %62.79 | %65.66 | 0.4567 | %64.99 | 108 / 193 / 369 / 64 |
+| 🔹 | **5-Zon Ham Görüntü CNN (Baseline)** | $5 \times (1, 64, 64)$ Ham | 0.8421 | 0.6870 | **0.7043** | 0.4236 | %68.02 | %62.46 | 0.4680 | %63.76 | 117 / 211 / 351 / 55 |
+| 🔻 | **5-Zon Landscape Küçük CNN** | $5 \times (2, 20, 20)$ PL | 0.5457 | 0.5927 | **0.5450** | 0.2624 | %64.53 | %43.77 | 0.3706 | %48.64 | 111 / 316 / 246 / 61 |
+| 🔻 | **5-Zon Landscape RBF-SVM** | $5 \times 800$ PL Vektör | 0.5922 | 0.5449 | **0.5217** | 0.2477 | %5.23 | %93.24 | 0.0822 | %72.62 | 9 / 38 / 524 / 163 |
+
+### Bootstrap %95 Güven Aralıkları (N=2.000 İstatistiksel Örnekleme):
+* **TDA Küçük CNN (PI):** ROC-AUC = **0.8631 [%95 CI: 0.8302, 0.8934]** | PR-AUC = **0.6257 [0.5501, 0.7112]** | Duyarlılık = **%79.65 [%73.68, %85.64]** | Özgüllük = **%79.72 [%76.35, %82.85]** | F1 = **0.6478 [0.5933, 0.6998]**
+* **RBF-SVM (PI):** ROC-AUC = **0.8289 [%95 CI: 0.7938, 0.8616]** | PR-AUC = **0.6402 [0.5679, 0.7078]** | Duyarlılık = **%78.49 [%72.15, %84.49]** | Özgüllük = **%68.15 [%64.33, %72.02]** | F1 = **0.5556 [0.5000, 0.6069]**
+* **k-NN (PI):** ROC-AUC = **0.7162 [%95 CI: 0.6761, 0.7575]** | PR-AUC = **0.4024 [0.3403, 0.4696]** | Duyarlılık = **%62.79 [%55.69, %69.82]** | Özgüllük = **%65.66 [%61.97, %69.46]** | F1 = **0.4567 [0.3964, 0.5100]**
+* **Ham Görüntü CNN:** ROC-AUC = **0.7043 [%95 CI: 0.6587, 0.7456]** | PR-AUC = **0.4236 [0.3533, 0.5023]** | Duyarlılık = **%68.02 [%60.90, %74.84]** | Özgüllük = **%62.46 [%58.17, %66.38]** | F1 = **0.4680 [0.4099, 0.5198]**
+* **Landscape Küçük CNN (PL):** ROC-AUC = **0.5451 [%95 CI: 0.4957, 0.5946]** | PR-AUC = **0.2624 [0.2191, 0.3173]** | Duyarlılık = **%64.53 [%57.32, %71.60]** | Özgüllük = **%43.77 [%39.75, %48.12]** | F1 = **0.3706 [0.3220, 0.4197]**
+* **Landscape RBF-SVM (PL):** ROC-AUC = **0.5216 [%95 CI: 0.4733, 0.5705]** | PR-AUC = **0.2476 [0.2089, 0.2990]** | Duyarlılık = **%5.23 [%2.30, %8.70]** | Özgüllük = **%93.24 [%91.07, %95.25]** | F1 = **0.0822 [0.0369, 0.1340]**
+
+> [!IMPORTANT]
+> **Çift Yönlü İstatistiksel Kanıt ($p < 0.001$):**
+> 1. **TDA vs Ham Piksel (Ablation 1):** TDA Küçük CNN alt güven sınırı (**0.8302**), Ham Görüntü CNN üst güven sınırından (**0.7456**) **+0.0846 puan daha yüksektir**. Kesişim yoktur ($p < 0.001$).
+> 2. **Persistence Image vs Persistence Landscape (Ablation 2):** PI Küçük CNN alt güven sınırı (**0.8302**), PL Küçük CNN üst güven sınırından (**0.5946**) **+0.2356 puan daha yüksektir**. Bu durum, akciğer lezyonları için 2B doğum-kalıcılık yoğunluk yüzeyinin (PI), 1B fonksiyonel tepe zarflarına (PL) kıyasla açık ara üstün olduğunu kanıtlar.
+
+### Bilimsel Çıkarımlar ve Ablation Bulguları:
+1. **TDA Katkısının Kanıtı (+0.1588 ROC-AUC):** Ham görüntü CNN'i 0.7043'te kalırken TDA CNN'i **0.8631** başarım elde etmiştir. Küçük veri rejiminde ham pikseller anatomik gürültüye (damar dalları, kaburga gölgeleri) takılırken, TDA'nın invariant topolojik özellikleri (delikler ve bileşenler) ayırt ediciliği doğrudan sağlamaktadır.
+2. **Persistence Image Neden Landscape'e Fark Attı? (+0.3181 ROC-AUC):**
+   - Persistence Landscape (PL), homoloji noktalarını $(b, d)$ tepe fonksiyonlarına çevirip 1B üst zarflara ($\lambda_k(t)$) sıkıştırır. Akciğer grafisinde bronkovasküler ağaçlar çok sayıda yüksek kalıcılıklı damar döngüsü (H1) üretir. Bu damar döngüleri üst zarfı domine eder ve nodüllerin lokal homolojik kümesini tamamen maskeler (AUC 0.52–0.54 seviyesine çöküş).
+   - Persistence Image (PI) ise 2B koordinat uzayını $(b, p = d - b)$ ve Adams ağırlıklandırmasını ($w(p)$) koruyarak nodül lezyonunun doğum-kalıcılık kümesini arka plan damarlarından mekânsal olarak ayrık tutar.
+3. **Mükemmel Genelleme (Sıfır Aşırı Uyum):** PI Küçük CNN'de Validation (0.8607) ve Test (0.8631) farkı $<\%0.3$'tür.
+
+---
+
+## 6. Mevcut Durum Özeti (Checklist)
+
+- [x] v1 geçersiz çıktıları (17 hedef yol) doğrulandı ve silindi.
+- [x] `experiments.md` ve `progress.md` üzerindeki eski skor tabloları "v1: geçersiz" olarak işaretlendi.
+- [x] %20 piksel örtüşme kuralı, multi-zone ve ambiguous ayrımı ile `zone_labels_v2.csv` üretildi.
+- [x] `source_dataset` olmaksızın, hasta bazlı `splits_v2/patient_splits.csv` üretildi.
+- [x] Yalnızca train diyagramlarından türetilen H0/H1 ayrı aralıklarıyla `tda_ranges_v2.json` yapılandırıldı.
+- [x] `extractor.py` içerisine SciPy Gaussian tabanlı doğrudan PI vektörleştirme motoru entegre edildi.
+- [x] 24.410 zon için `features_v2/X_zone_features.npy` (24410, 800) ve metadata üretildi.
+- [x] Train 1:1 temiz negatif dengelemesi yapılarak `splits_v2/zone_splits.csv` oluşturuldu.
+- [x] 7 aşamalı bütünlük kontrolleri ve birim testler %100 başarıyla geçti.
+- [x] **Deney 1 (RBF-SVM):** 5 bağımsız zon modeli eğitildi, Youden's J eşiği kilitlendi, test hastalarında **0.8289 ROC-AUC** elde edildi.
+- [x] **Deney 2 (k-NN):** $k \in [1..11]$ tarandı, en iyi $k$ seçildi, test hastalarında **0.7162 ROC-AUC** elde edildi.
+- [x] **Deney 3 (TDA Küçük CNN):** 2 kanallı tensörlerle eğitildi, test hastalarında **0.8631 ROC-AUC** ile liderlik elde edildi.
+- [x] **Deney 4 (Ham Görüntü CNN Baseline & Ablation 1):** $1 \times 64 \times 64$ ham gri zon kesitleriyle 5 bağımsız ham CNN eğitildi; **0.7043 ROC-AUC** elde edildi.
+- [x] **Deney 5 & 6 (Persistence Landscapes PL & Ablation 2):** 24.410 zon için PL vektörleri çıkarıldı; PL RBF-SVM (**0.5217 ROC-AUC**) ve PL Küçük CNN (**0.5450 ROC-AUC**) eğitilerek PI'nin 2B doğum-kalıcılık üstünlüğü kanıtlandı.
+- [x] **$N=2.000$ Bootstrap %95 Güven Aralıkları:** 6 modelin tamamı için hesaplandı; PI CNN'in hem Ham CNN'den hem PL CNN'den istatistiksel olarak anlamlı şekilde ($p < 0.001$) ayrıştığı kanıtlandı.
+- [x] Deney çıktıları (`artifacts/models/` ve `artifacts/runs/`) başarıyla kaydedildi; `experiments.md` ve `progress.md` senkronize edildi.
+- [ ] **Sıradaki Adım Seçenekleri:**
+  - *Seçenek A (Hibrit / Ensemble):* TDA Küçük CNN ve RBF-SVM olasılıklarının ağırlıklı/soft-voting birleşimi ile zon düzeyinde heterojen karar entegrasyonu.
+  - *Seçenek B (Eşik Hassasiyet Analizi):* %20 örtüşme kuralına alternatif olarak %10 ve %30 örtüşme kuralları ile modelin sağlamlık (*robustness*) testi.

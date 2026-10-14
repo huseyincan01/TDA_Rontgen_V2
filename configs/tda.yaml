@@ -1,0 +1,11 @@
+tda:
+  grid_size: 20
+  intensity_max: 65535
+  ranges_config: data/processed/tda_config/tda_ranges_v2.json
+
+extraction:
+  workers: 10
+  chunksize: 16
+  zones_dir: data/processed/zones/patients
+  labels_file: data/processed/labels/zone_labels_v2.csv
+  output_dir: data/processed/features_v2
