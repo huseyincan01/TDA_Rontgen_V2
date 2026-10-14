@@ -50,6 +50,8 @@
 * **multipers çift filtrasyon:** `X_(t,s) = {x : d(x,X) ≤ t, density(x) ≥ s}` — bizde `s` = **nodül olasılık haritası** olabilir. Ağırlıklandırmayı, eşik seçiminin keyfiliğinden kurtaran **prensipli** yola çevirir.
 * **Weighted Rips/alpha kompleks:** nokta-bazlı ağırlık ile 1-parametrede aynı bilgi (daha düşük eforlu ara adım).
 * **Yorumlanabilirlik API'si (hazır):** GUDHI `CubicalComplex.cofaces_of_persistence_pairs()` ve `vertices_of_persistence_pairs()` ([GUDHI 3.13](https://gudhi.inria.fr/python/latest/_modules/gudhi/cubical_complex.html)) persistence doğum/ölüm hücrelerini **girdi görüntüsündeki indekslere** döndürüyor → bir PI noktasını görüntüdeki bir bölgeye **geri izlemek mümkün**. `[Kolay]` → E4.2'yi doğrudan besliyor.
+  * ✅ **Yerel doğrulama (gudhi 3.13.0, gerçek zon kesiti `c0001/zone_1_sag_ust`, 234×334):** API mevcut ve çalışıyor. `cofaces_of_persistence_pairs()` H0 için **(1966×2)**, H1 için **(3127×2)** hücre-indeksi çifti döndürdü; örnek bir H1 çifti görüntüde **(satır 180, sütun 6–7)** konumuna başarıyla geri izlendi. ⇒ **E4.2 teknik olarak hazır**, ek kütüphane gerekmiyor.
+  * 📌 **Niceliksel teşhis desteği:** Tek bir zonda H1 çifti sayısı (**3.127**) H0'dan (**1.967**) fazla — bu, "H1 damar döngüleriyle domine ediliyor" teşhisini sayısal olarak destekliyor. (Not: H0'ın toplam kalıcılığı `inf` çıkar; yorumlanabilirlik analizinde sonsuz aralıklar dışlanmalıdır.)
 
 ### 1.6 Tıbbi görüntülemede yorumlanabilirlik ve performans emsalleri
 
