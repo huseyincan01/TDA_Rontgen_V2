@@ -4,6 +4,7 @@ NODE21 verilerini hasta bazında hazırlama, 5 anatomik bölgeden TDA (Topologic
 
 - Mimari ve çalışma günlüğü: [progress.md](progress.md)
 - v3 araştırma programı ve deney yönetimi: [roadmap.md](roadmap.md)
+- Literatür taraması ve konumlandırma: [literature.md](literature.md)
 - Model deneyleri, doğruluk oranları ve liderlik tablosu: [experiments.md](experiments.md)
 
 
