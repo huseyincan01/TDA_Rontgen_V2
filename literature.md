@@ -145,9 +145,84 @@ Bu nedenle raporda **zorunlu** görünen iki şey:
 
 ---
 
-## 3. NODE21 ve CXR Nodül Tespitinde SOTA (tarama sürüyor)
+## 3. NODE21 ve CXR Nodül Tespitinde SOTA
 
-> ⏳ Bu bölüm tamamlandığında doldurulacak: NODE21 görev tanımı ve metrikleri, leaderboard/yayın sonuçları, hakim mimariler, "0.8631 nerede duruyor" analizi.
+**Birincil kaynak:** Sogancioglu, van Ginneken, … Murphy, *"Nodule detection and generation on chest X-rays: NODE21 Challenge"*, **IEEE TMI 2024** — [arXiv:2401.02192](https://arxiv.org/abs/2401.02192) · [challenge](https://node21.grand-challenge.org/) · [leaderboard](https://node21.grand-challenge.org/evaluation/challenge/leaderboard/)
+
+### 3.1 Görev ve metrikler
+
+* İki track: **detection** (frontal CXR → skorlu bounding box listesi) ve **generation** (verilen lokasyona nodül sentezleme). Yarışma değil **işbirliği**; kod açık kaynak zorunlu.
+* **Veri setleri:**
+  * **Training (halka açık):** **4882 görüntü = 1134 nodüllü (1476 nodül) + 3748 normal**
+  * **Experimental test (ÖZEL):** 281 görüntü (166 nodüllü + 115 normal)
+  * **Final test (ÖZEL):** 298 görüntü (111 pozitif + 187 negatif), CT tabanlı referans
+* **Metrikler:** **AUC** → görüntü skoru = o görüntüdeki **maksimum bounding-box olasılığı** (tahmin yoksa 0), sonra eşiklenip ROC. **FROC** → eşleşme **IoU > 0.2**, duyarlılık **0.125 / 0.25 / 0.50 FP/görüntü** noktalarında. **CPM NODE21'de kullanılmıyor** (o LUNA16 gibi CT challenge'larında).
+
+### 3.2 En iyi sonuçlar (final test, 298 görüntü)
+
+| Yöntem | Mimari | AUC | S(0.5 FP) | S(0.25 FP) | S(0.125 FP) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **D1** (rank 1) | Faster R-CNN + RetinaNet + YOLOv5 + EfficientDet-D2, 20 model, WBF; VinDr-CXR pretrain | **0.868** | 0.800 | 0.750 | 0.603 |
+| **D2** (rank 2) | 33× YOLOv5 ensemble, scratch | 0.862 | 0.771 | 0.723 | 0.600 |
+| **D3** (rank 3) | Mask R-CNN + RetinaNet (ResNet-50), 6 model | 0.833 | 0.761 | 0.704 | 0.590 |
+| **DB** (baseline) | Faster R-CNN, COCO pretrain | 0.816 | 0.714 | 0.635 | 0.504 |
+| **Ensemble** (D1+D2+D3+DB) | weighted box fusion | **0.877** | 0.819 | 0.754 | 0.619 |
+
+Kazananların **tamamı** iki-aşamalı, bol ensemble'lı anchor-based detektörler + NMS/WBF + harici pretrain. **Hiçbir topolojik / açıklanabilir / hafif yöntem kazanmıyor.** Ensemble 12 radyologdan 3'ünü geçiyor, 8'iyle benzer (AUC 0.877, %95 CI 0.830–0.915).
+
+### 3.3 "0.8631 nerede duruyor?"
+
+| Kaynak | Veri / görev | AUC |
+| :--- | :--- | :---: |
+| NODE21 (DB / D1 / ensemble) | NODE21 final (298), **nodül tespiti** | 0.816 / **0.868** / 0.877 |
+| Wang et al., CVPR 2017 ([arXiv:1705.02315](https://arxiv.org/abs/1705.02315)) | ChestX-ray14, **nodül** etiketi (zayıf) | **0.6687** (mass 0.6933) |
+| Yoo et al., JAMA Netw Open 2020 ([PMC7516603](https://pmc.ncbi.nlm.nih.gov/articles/PMC7516603/)) | NLST, nonkalsifiye nodül (Lunit) | 0.93 (tümü) / 0.99 (dijital) / 0.86 (kompütte) |
+| Hanaoka et al., IJCARS 2024 ([PMC11442563](https://pmc.ncbi.nlm.nih.gov/articles/PMC11442563/)) | JSRT, nodül tespiti | **Sn @0.2 FP = 0.688** |
+
+**Değerlendirme: orta-güçlü.** ChestX-ray14'te "nodül/mass" **en zor etiketler** (AUC ~0.67–0.72); bizim 0.8631 bunun çok üstünde ve NODE21 rank-1 AUC'sine (0.868) denk. **Kritik nüans:** AUC ≠ düşük FP'deki duyarlılık — rank-1'in AUC'si 0.868 iken 0.125 FP'de duyarlılığı yalnızca 0.603.
+
+### 3.4 ⚠️ KRİTİK UYARI — bizim split'imiz resmî NODE21 split'i DEĞİL
+
+✅ **Yerel doğrulama:** veri kümemiz **birebir** NODE21'in *halka açık training setidir*:
+
+| | Bizim verimiz | NODE21 halka açık training |
+| :--- | :---: | :---: |
+| Toplam | 4882 | 4882 |
+| Nodüllü | 1134 | 1134 |
+| Normal | 3748 | 3748 |
+
+Yani **734 hastalık test setimiz, halka açık training setinden yapılmış kendi iç bölünmemizdir** (train 3414 / val 734 / test 734). NODE21'in iki test seti (281 ve 298) **özeldir, yalnızca organizatörlerde bulunur**.
+
+**Sonuçlar:**
+* ✅ **Sızıntı yok** — split hasta düzeyinde ve 0 kesişimli olduğu doğrulandı (E0.2 ve `test_v2_pipeline.py`).
+* ❌ **Leaderboard ile karşılaştırma geçersizdir**: farklı split + farklı görev (biz lokalizasyon yapmıyoruz → FROC üretemiyoruz).
+* ⚠️ Makalede bu **açıkça beyan edilmelidir**; aksi halde "resmî test setinde 0.8631" gibi yanlış bir izlenim doğar.
+
+### 3.5 NODE21 üzerinde topolojik çalışma var mı?
+
+**Bulunamadı** — "NODE21 persistent homology / topological / explainable" aramaları sonuçsuz. En yakın metodolojik referans **Topo-CXR** (ICCVW 2023) ama o **TB/pnömoni** üzerine, nodül değil. Bulunan tek NODE21+açıklanabilirlik makalesi ([arXiv:2510.07681](https://arxiv.org/abs/2510.07681)) **geri çekilmiş (withdrawn)** → kaynak olarak **kullanılamaz**.
+
+⇒ "Bildiğimiz kadarıyla NODE21 üzerinde kalıcı homoloji tabanlı ilk çalışma" iddiası **savunulabilir** (Topo-CXR referansı verilerek).
+
+### 3.6 🔑 Yeniden çerçeveleme: bizim görevimiz NODE21'in AUC metriğiyle uyumlu
+
+NODE21'in **AUC metriği zaten görüntü düzeyindedir** ve görüntü skoru = **maksimum kutu olasılığı** ile hesaplanır. Bizim hasta skorumuz = **5 zon olasılığının maksimumu**. Yani **agregasyon mantığı (max) ve metrik (AUC) örtüşüyor**; fark, bizim lokalizasyon üretmememizdir.
+
+Bu, yayının ana çerçevesini kurar:
+
+> **Ağır bir detektör topluluğu (20–33 model, harici pretrain) NODE21'de görüntü düzeyi 0.868 AUC'ye ulaşıyor. Biz, hiçbir derin tespit mimarisi ve harici pretrain kullanmadan, yalnızca yorumlanabilir topolojik özelliklerle hasta düzeyi 0.8631 AUC elde ediyoruz — üstelik kendi iç split'imizde.**
+
+Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, ağır detektörlerin görüntü-düzeyi AUC seviyesine yaklaşıyor"** iddiasıdır ve **dürüst, savunulabilir**.
+
+### 3.7 Yayın için zorunlu karşılaştırmalar
+
+| # | Gereksinim | Neden |
+| :-: | :--- | :--- |
+| 1 | **Aynı split'te güçlü baseline** (basit CNN + mümkünse bir detektör) — *bizim 734 test setimizde* | En zorunlu adım; "TDA neden global CNN'i geçmiyor?" itirazını kapatır |
+| 2 | **FROC / duyarlılık@FP** (0.125/0.25/0.5) **veya** lokalizasyon yapmadığımızın açık beyanı + alternatif metrik (kısmi AUC, sabit özgüllükte duyarlılık) | AUC tek başına yetmez |
+| 3 | **NODE21 organizer submission** (public GitHub + Docker) | Tek gerçek elma-elmaya karşılaştırma |
+| 4 | **Harici doğrulama** (JSRT veya ChestX-ray14 nodül alt kümesi, eğitimde kullanmadan) | Genelleme iddiası |
+| 5 | Özgünlük ifadesi: *"bildiğimiz kadarıyla ilk"* + Topo-CXR referansı | Aşırı iddiadan kaçınma |
 
 ---
 
