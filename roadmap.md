@@ -32,10 +32,15 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 
 ## 1. Hesaplama Bütçesi ve Darboğazlar
 
-| Kaynak | Durum |
+| Kaynak | Doğrulanmış durum |
 | :--- | :--- |
-| GPU | Tek **NVIDIA RTX 4050** → eğitim işleri serileştirilmeli |
-| Özellik çıkarımı | 24.410 zon ≈ **36 dk** (10 worker) → her yeni ön-işleme tam yeniden çıkarım gerektirir |
+| GPU | **NVIDIA RTX 4050 Laptop, 6 GB VRAM** (fiziksel olarak var, boşta: 0% kullanım, 5.921 MiB boş) |
+| ⚠️ **PyTorch** | **`torch 2.14.1+cpu` — CUDA YOK** (`torch.version.cuda = None`, `cuda.device_count() = 0`). GPU var ama venv CPU-only build içeriyor → **ağır eğitimden önce düzeltilmeli (E0.0)** |
+| VRAM sınırı | 6 GB → pretrainli omurga için küçük batch, ~224px girdi |
+| Disk | C: üzerinde **~54 GB boş** |
+| Pretrained ağırlık | `~/.cache/torch` **yok** → ilk çalıştırmada indirme gerekir (internet şart) |
+| Özellik çıkarımı | 24.410 zon ≈ **36 dk** (10 worker, CPU/GUDHI) → her yeni ön-işleme tam yeniden çıkarım |
+| Kütüphaneler | gudhi 3.13.0 ✓ · scikit-image 0.26.0 ✓ (**`frangi/sato/meijering` hazır** → E1.2 ucuz) · SimpleITK 2.5.6 ✓ · torchxrayvision 1.5.5 ✓ |
 | Veri | 4.882 hasta, 24.410 zon, 800 boyut PI (78 MB) |
 | Kilitli test | 734 hasta (172 nodül / 562 kontrol) |
 
@@ -60,7 +65,7 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 
 | Faz | İçerik | Süre (tahmini) | Çıkış kriteri |
 | :--- | :--- | :--- | :--- |
-| **Faz 0 — Altyapı** | E0.1, E0.2, E0.3 | ~1 hafta | Registry çalışıyor · 0.8631 referansı yeniden üretildi · pretrainli omurga smoke test geçti |
+| **Faz 0 — Altyapı** | E0.0, E0.1, E0.2, E0.3 | ~1 hafta | CUDA torch geri kuruldu · registry çalışıyor · 0.8631 referansı yeniden üretildi · pretrainli omurga GPU'da smoke test geçti |
 | **Faz 1 — Hızlı kazanç** | E3.4, E4.1, E1.1, E1.2 | ~1–2 hafta | En az 1 KEEP (ensemble **veya** kemik bastırma val'de ≥ +0.015) |
 | **Faz 2 — Füzyon (ana iddia)** | E3.1, E3.2 | ~1–2 hafta | TDA'nın güçlü CNN'e **tamamlayıcı** katkısı val'de CI ile kanıtlı |
 | **Faz 3 — Topoloji derinleşmesi** | E2.1, E2.2, E2.3, E2.4 | ~2–3 hafta | En az 1 topolojik novelty KEEP |
@@ -75,6 +80,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 
 | ID | İş Kolu | Hipotez (ön-kayıtlı) | Bağımlılık | Efor | Risk | Beklenen Etki | Durum |
 | :--- | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
+| **E0.0** | W0 | ⚠️ **BLOCKER:** CUDA PyTorch kurulunca GPU eğitimi tekrar çalışır | — | 0.5g | Düşük | **Kritik** | Planlandı |
 | **E0.1** | W0 | Deney kayıt protokolü + dizin sözleşmesi kurulabilir | — | 0.5g | Düşük | Altyapı | Planlandı |
 | **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | Planlandı |
 | **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | Planlandı |
@@ -181,7 +187,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
-| Faz 0 | E0.1, E0.2, E0.3 | 0/3 | — | 0 | 0 |
+| Faz 0 | E0.0, E0.1, E0.2, E0.3 | 0/4 | — | 0 | 0 |
 | Faz 1 | E3.4, E4.1, E1.1, E1.2 | 0/4 | — | 0 | 0 |
 | Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
 | Faz 3 | E2.1, E2.2, E2.3, E2.4 | 0/4 | — | 0 | 0 |
