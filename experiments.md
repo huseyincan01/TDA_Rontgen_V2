@@ -245,3 +245,24 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   3. Referans tek modeller **birebir** yeniden üretildi (CNN 0.8631 / SVM 0.8289) → çıkarım hattı bağımsız olarak doğrulandı.
 * **Karar:** **KEEP** — bu, yayının ana performans sonucudur.
 * **Manifest:** `artifacts/runs/E3.4_ensemble_cnn_svm/manifest.json`
+
+### E4.2 — Persistence Özelliklerinin Görüntüye Geri İzlenmesi (Yorumlanabilirlik)
+
+* **Hipotez (ön-kayıtlı):** En yüksek kalıcılıklı H1 (ve H0) sınıflarının doğum/ölüm hücreleri **yüksek gradyanlı (kenar)** bölgelere düşer → kaburga/damar kenarları.
+* **Tek değişken:** Yok (mekanizma analizi).
+* **Çalışma:** `python pipelines/exp/E4_2_persistence_localization.py` · 30 pozitif + 30 negatif zon · top-K = 10 · GUDHI `cofaces_of_persistence_pairs()` ile hücre → piksel eşlemesi · **drift koruması:** kendi crop'umuz `prepare_filtration` çıktısıyla birebir eşleşiyor (eşleşmezse zon atlanır).
+* **Sonuç:** ⚠️ **H1 hipotezi ÇÜRÜTÜLDÜ → KILL**, ancak iki değerli bulgu çıktı:
+
+  | Boyut | Top-K gradyan oranı (ort / medyan) | Rastgele kontrol | Oran > 1.5 olan zon |
+  | :---: | :---: | :---: | :---: |
+  | **H0** | **6.176 / 6.608** | 0.974 | **%90** |
+  | **H1** | 1.474 / **1.021** | 0.981 | %30 |
+
+* **Yorum:**
+  1. **H0 için hipotez GÜÇLÜ desteklendi:** en kalıcılıklı H0 sınıfları, doku ortalamasının **6,2 katı** gradyanlı kenarlara düşüyor (zonların **%90'ında**). ⇒ H0 Persistence Image büyük ölçüde **arka plan/sınır yapısını** kodluyor, nodül çekirdeğini değil.
+  2. **H1 için hipotez ÇÜRÜTÜLDÜ:** medyan oran **1.021** — tipik bir zonda en kalıcılıklı H1 sınıfları kenarlarda **değil**, düzgün (düşük gradyanlı) bölgelerde. Ortalamanın 1.474'e çıkması birkaç aşırı zonun etkisiyle (dağılım çarpık).
+  3. **Yine de tez destekleniyor:** her iki boyutta da en kalıcılıklı sınıflar **nodüle özgü yapılara karşılık gelmiyor** → E4.4'teki zarf-doygunluğu bulgusunu **bağımsız olarak** destekliyor.
+  4. **Metodolojik katkı:** literatür *"H1 döngülerinin hangi anatomik yapıya karşılık geldiği kanıtlanmıyor"* diyordu ([literature.md](literature.md) §2.5). Bu deney o **yeteneği** kuruyor: persistence noktası → piksel koordinatı geri izleme çalışıyor.
+* **Karar:** **KILL** (ön-kayıtlı H1 hipotezi) — ama H0 bulgusu ve yorumlanabilirlik yeteneği korunur, yayında kullanılır.
+* **Takip hipotezi (E4.5 olarak kaydedildi):** "En kalıcılıklı H1 sınıfları düzgün/düşük-gradyanlı (hava/arka plan) bölgelerde oluşur." Doğum/ölüm hücreleri yerine **temsilci döngünün tüm hücreleri** kullanılarak test edilmeli.
+* **Manifest:** `artifacts/runs/E4.2_persistence_localization/manifest.json`

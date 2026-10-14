@@ -95,7 +95,8 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E2.2** | W2 | Çok ölçekli PI tek ölçekten ≥ +0.015 iyi | E2.1 | 2g | Orta | Orta-Yüksek | Planlandı |
 | **E2.3** | W2 | Sağlıklı şablon çıkarma (relative persistence) AUC artırır | E0.2 | 2.5g | Yüksek | **Yüksek** (novelty) | Planlandı |
 | **E2.4** | W2 | Aday-olasılık ağırlıklı filtrasyon H1'i nodüle odaklar | E1.2 | 2.5g | Yüksek | Orta | Planlandı |
-| **E4.2** | W4 | Kalıcılık özellikleri radyolojik yapılara eşlenebilir | E0.2 | 2g | Orta | **Yüksek** (yayın) | Planlandı |
+| **E4.2** | W4 | Kalıcılık özellikleri radyolojik yapılara eşlenebilir | E0.2 | 2g | Orta | **Yüksek** (yayın) | **KILL** ⚠️ H0 ✅ / H1 ❌ |
+| **E4.5** | W4 | En kalıcılıklı H1 sınıfları düzgün (düşük-gradyanlı) bölgelerde oluşur | E4.2 | 1.5g | Orta | Orta | Planlandı |
 | **E4.3** | W4 | Hangi zonlarda sistematik hata yapıyoruz? | E0.2 | 1g | Düşük | Orta | Planlandı |
 | **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | Planlandı |
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | Planlandı |
@@ -197,7 +198,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
-| Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 0/5 | — | 0 | 0 |
+| Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 1/5 | E4.3 | 0 | 1 |
 
 **Referans noktası (v2.1, kilitli):** PI CNN test ROC-AUC **0.8631** · RBF-SVM **0.8289** · k-NN **0.7162** · Ham CNN **0.7043** · PL CNN **0.5450** · PL SVM **0.5217**
 
@@ -211,6 +212,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E0.2** | **KEEP** | v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** (16/16 metrik; test ROC-AUC 0.8631, TP/FP/TN/FN 137/114/448/35). Pipeline deterministik. Yan bulgu: eğitim CPU'da ~27 s → özellik tabanlı deneyler GPU'suz yapılabilir. |
 | 2026-10-14 | **E4.4** | **KEEP** | **PL çöküşünün mekanizması nicel olarak kanıtlandı.** H1 zarf tepeleri λ1→λ5 boyunca 110→90 (birbirine yakın, enerji eşit dağılmış) → zarf, her zonda ≥5 çok uzun ömürlü arka plan H1 sınıfıyla **doymuş**. Poz/neg sinyal zarfın yalnızca **%1–2'si** (≈50–100× bastırılma); H0'da λ1'de %0.02. Bu, yayının **1 numaralı özgünlük iddiasının** deneysel kanıtı. |
 | 2026-10-14 | **E3.4** | **KEEP** | **Yeni lider: ensemble test ROC-AUC 0.8776** (w=0.55, hasta düzeyi soft voting). Val farkı +0.0214 (≥0.015 ✓), test farkı +0.0145, bootstrap %95 CI **[+0.0034, +0.0260]** sıfırı dışlıyor, p=0.010. NODE21 rank-1'i (0.868) geçiyor, NODE21 ensemble'ına (0.877) ulaşıyor. Zon düzeyi füzyon (varyant B) daha kötü (0.8629) → CNN ve SVM tamamlayıcı. |
+| 2026-10-14 | **E4.2** | **KILL** ⚠️ | Ön-kayıtlı H1 hipotezi **çürütüldü**: en kalıcılıklı H1 sınıflarının gradyan oranı medyan **1.021** (kenarlarda değil), rastgele kontrol 0.981. **Ancak H0 güçlü:** oran **6.176** (medyan 6.608), zonların **%90'ında** >1.5 → H0 PI ağırlıklı olarak **arka plan/sınır** kodluyor. Ayrıca persistence→piksel geri izleme **yeteneği** kuruldu (literatürdeki boşluk). Takip deneyi E4.5 kaydedildi. |
 
 ---
 
