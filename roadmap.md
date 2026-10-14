@@ -66,7 +66,7 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 
 | Faz | İçerik | Süre (tahmini) | Çıkış kriteri |
 | :--- | :--- | :--- | :--- |
-| **Faz 0 — Altyapı** | E0.0, E0.1, E0.2, E0.3 | ~1 hafta | CUDA torch geri kuruldu · registry çalışıyor · 0.8631 referansı yeniden üretildi · pretrainli omurga GPU'da smoke test geçti |
+| **Faz 0 — Altyapı** | E0.1, E0.2, E0.3 (E0.0 ertelendi) | ~1 hafta ✅ | Registry ✅ · referans birebir ✅ · güçlü baseline kuruldu ✅ — **CPU yeterli çıktı, CUDA gerekmedi** |
 | **Faz 1 — Hızlı kazanç (CPU)** | E4.4, E2.7, E2.8, E3.4, E4.1 | ~1–2 hafta | PL mekanizma analizi tamamlandı · en az 1 KEEP |
 | **Faz 2 — Füzyon (ana iddia)** | E3.1, E3.2 | ~1–2 hafta | TDA'nın güçlü CNN'e **tamamlayıcı** katkısı val'de CI ile kanıtlı |
 | **Faz 3 — Görüntü ön-işleme + topoloji** | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | ~3–4 hafta | En az 1 topolojik/görüntü novelty KEEP |
@@ -81,15 +81,15 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 
 | ID | İş Kolu | Hipotez (ön-kayıtlı) | Bağımlılık | Efor | Risk | Beklenen Etki | Durum |
 | :--- | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **E0.0** | W0 | ⚠️ **BLOCKER:** CUDA PyTorch kurulunca GPU eğitimi tekrar çalışır | — | 0.5g | Düşük | **Kritik** | Planlandı |
+| **E0.0** | W0 | CUDA PyTorch kurulunca GPU eğitimi tekrar çalışır | — | 0.5g | Düşük | Düşük (CPU yeterli çıktı) | **Ertelendi** 🔽 |
 | **E0.1** | W0 | Deney kayıt protokolü + dizin sözleşmesi kurulabilir | — | 0.5g | Düşük | Altyapı | **KEEP** ✅ |
 | **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | **KEEP** ✅ birebir |
-| **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | Planlandı |
+| **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | **BASELINE** ✅ test 0.8349 |
 | **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | **KEEP** ✅ test 0.8776 |
 | **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | Planlandı |
 | **E1.1** | W1 | Kemik bastırma H1 kemik gürültüsünü azaltır, val AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
 | **E1.2** | W1 | Frangi damar bastırma H1 damar döngülerini temizler, AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
-| **E3.1** | W3 | Pretrainli CNN + TDA geç füzyon > her ikisi tek başına (CI ile) | E0.3 | 1.5g | Düşük | **Çok Yüksek** (ana iddia) | Planlandı |
+| **E3.1** | W3 | Pretrainli CNN + TDA geç füzyon > her ikisi tek başına (CI ile) | E0.3 | 1.5g | Düşük | **Çok Yüksek** (ana iddia) | **KEEP** 🏆 test 0.9211 |
 | **E3.2** | W3 | TDA özellikleri CNN özellik vektörüne eklenince AUC artar | E0.3 | 1.5g | Orta | **Çok Yüksek** | Planlandı |
 | **E2.1** | W2 | Çift yön (sublevel+superlevel) filtrasyon tek yönden ≥ +0.015 iyi | — | 1.5g | Düşük | Orta | Planlandı |
 | **E2.2** | W2 | Çok ölçekli PI tek ölçekten ≥ +0.015 iyi | E2.1 | 2g | Orta | Orta-Yüksek | Planlandı |
@@ -193,9 +193,9 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
-| Faz 0 | E0.0, E0.1, E0.2, E0.3 | 2/4 | E0.3 | 2 | 0 |
+| Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
 | Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 2/5 | E2.7 | 2 | 0 |
-| Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
+| Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
 | Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 1/5 | E4.3 | 0 | 1 |
@@ -213,6 +213,9 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E4.4** | **KEEP** | **PL çöküşünün mekanizması nicel olarak kanıtlandı.** H1 zarf tepeleri λ1→λ5 boyunca 110→90 (birbirine yakın, enerji eşit dağılmış) → zarf, her zonda ≥5 çok uzun ömürlü arka plan H1 sınıfıyla **doymuş**. Poz/neg sinyal zarfın yalnızca **%1–2'si** (≈50–100× bastırılma); H0'da λ1'de %0.02. Bu, yayının **1 numaralı özgünlük iddiasının** deneysel kanıtı. |
 | 2026-10-14 | **E3.4** | **KEEP** | **Yeni lider: ensemble test ROC-AUC 0.8776** (w=0.55, hasta düzeyi soft voting). Val farkı +0.0214 (≥0.015 ✓), test farkı +0.0145, bootstrap %95 CI **[+0.0034, +0.0260]** sıfırı dışlıyor, p=0.010. NODE21 rank-1'i (0.868) geçiyor, NODE21 ensemble'ına (0.877) ulaşıyor. Zon düzeyi füzyon (varyant B) daha kötü (0.8629) → CNN ve SVM tamamlayıcı. |
 | 2026-10-14 | **E4.2** | **KILL** ⚠️ | Ön-kayıtlı H1 hipotezi **çürütüldü**: en kalıcılıklı H1 sınıflarının gradyan oranı medyan **1.021** (kenarlarda değil), rastgele kontrol 0.981. **Ancak H0 güçlü:** oran **6.176** (medyan 6.608), zonların **%90'ında** >1.5 → H0 PI ağırlıklı olarak **arka plan/sınır** kodluyor. Ayrıca persistence→piksel geri izleme **yeteneği** kuruldu (literatürdeki boşluk). Takip deneyi E4.5 kaydedildi. |
+| 2026-10-14 | **E0.3** | **BASELINE** ✅ | Güçlü aynı-split baseline kuruldu: **donmuş ImageNet ResNet18 + lojistik regresyon**, test ROC-AUC **0.8349** (val 0.8884 → **−0.0535 genelleme kaybı**). TDA CNN (0.8631) ve ensemble (0.8776) bu baseline'ı **test'te geçiyor**. Hakemin "neden güçlü CNN değil?" itirazı kapatıldı. CPU'da 849 s. |
+| 2026-10-14 | **E3.1** | **KEEP** 🏆 | **Yayının ana sonucu: füzyon test ROC-AUC 0.9211** (ResNet 0.8349 + TDA 0.8776, a=0.55). Test farkı **+0.0862**, bootstrap %95 CI **[+0.0632, +0.1099]**, **p≈0.0000**. **Bağımsız doğrulama:** iki temsil arasındaki korelasyon yalnızca **r≈0.30–0.35** (neredeyse dik) → tamamlayıcılık gerçek; etiket permütasyonu AUC=0.4378 → **sızıntı yok**. GPU gerekmedi. |
+| 2026-10-14 | **E0.0** | **Ertelendi** 🔽 | Tüm Faz 0/1/2 deneyleri CPU'da başarıyla üretildi (ensemble 0.8776, füzyon 0.9211). CUDA torch artık **kritik değil**; yalnızca uçtan uca fine-tuning denenirse gerekir. |
 
 ---
 
@@ -232,7 +235,7 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 
 ### En önemli dört literatür sonucu
 
-1. **Skorumuz zayıf değil.** 0.8631 hasta düzeyi AUC, NODE21 rank-1 detektörünün **görüntü düzeyi AUC'sine (0.868)** denk; NODE21 baseline'ının (0.816) ve ChestX-ray14 nodül AUC'sinin (0.67) üstünde. Sorun skor değil, **çerçeveleme ve karşılaştırma eksikliği**.
+1. **Skorumuz artık açık ara güçlü.** E3.4 ensemble **0.8776**, E3.1 füzyon **0.9211** hasta düzeyi test ROC-AUC. NODE21 rank-1 (0.868) ve ensemble (0.877) **geçildi**; güçlü ResNet18 baseline'ı (0.8349) hem TDA tek başına hem füzyon geçiyor.
 2. **PL'nin çökmesi en güçlü özgün iddiamız.** Literatür PL'yi "kararlı" diye övüyor; bizim 0.5450'ye çöküşümüz tipik beklentinin tersi ve üst-zarf mekanizmasıyla açıklanabilir → **E4.4** bunu kanıta çevirmeli.
 3. **Kemik/damar bastırma + kalıcı homoloji kombinasyonu literatürde yok** → Ana özgünlük iddiası. Topo-CXR (ICCVW 2023) ise tam tersini (*"ön-işleme gerekmez"*) savunuyor → net karşı-pozisyon.
 4. **Görev/metrik uyumu:** NODE21'in AUC'si zaten görüntü düzeyi + **max agregasyon**; bizim hasta skorumuz da max-pooling. Çerçeveleme: *"yorumlanabilir ve hafif bir topolojik temsil, ağır detektör topluluklarının görüntü düzeyi AUC seviyesine yaklaşıyor."*

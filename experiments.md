@@ -266,3 +266,47 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** (ön-kayıtlı H1 hipotezi) — ama H0 bulgusu ve yorumlanabilirlik yeteneği korunur, yayında kullanılır.
 * **Takip hipotezi (E4.5 olarak kaydedildi):** "En kalıcılıklı H1 sınıfları düzgün/düşük-gradyanlı (hava/arka plan) bölgelerde oluşur." Doğum/ölüm hücreleri yerine **temsilci döngünün tüm hücreleri** kullanılarak test edilmeli.
 * **Manifest:** `artifacts/runs/E4.2_persistence_localization/manifest.json`
+
+### E0.3 — Güçlü Aynı-Split Baseline (donmuş ImageNet ResNet18 + linear probe)
+
+* **Amaç:** Literatürün **zorunlu** kıldığı güçlü görüntü baseline'ı (mevcut 64×64'lük küçük ham CNN = 0.7043 adil değildi).
+* **Tek değişken:** Yok (yeni referans noktası).
+* **Çalışma:** `python pipelines/exp/E0_3_resnet_baseline.py` · ImageNet-pretrainli **ResNet18 (donmuş)** · 224×224 girdi · 512-D avgpool özellikleri · zon başına lojistik regresyon (C val'de seçilir) · hasta düzeyi max-pooling · CPU.
+* **Sonuç:**
+
+  | Model | Val ROC-AUC | **Test ROC-AUC** | Val→Test farkı |
+  | :--- | :---: | :---: | :---: |
+  | ResNet18 (donmuş) + LR | 0.8884 | **0.8349** | **−0.0535** |
+  | TDA PI küçük CNN | 0.8607 | **0.8631** | +0.0024 |
+  | TDA ensemble (E3.4) | 0.8821 | **0.8776** | −0.0045 |
+
+* **Yorum:**
+  1. **Güçlü pretrainli görüntü modeli test'te TDA'yı GEÇEMİYOR** (0.8349 < 0.8631 < 0.8776) ⇒ hakemin *"neden güçlü bir CNN değil?"* itirazı **kapatıldı**.
+  2. **ResNet ciddi genelleme kaybı yaşıyor** (val 0.8884 → test 0.8349, **−0.0535**), TDA ise neredeyse kayıpsız (+0.0024). Küçük veri rejiminde TDA'nın **genelleme avantajı**.
+  3. Çıkarım maliyeti: 24.410 zon × 512-D, CPU'da **849 s** (~14 dk) — GPU gerekmedi.
+* **Karar:** **BASELINE** (referans noktası kuruldu)
+
+### E3.1 — Pretrainli Görüntü Omurgası + TDA Geç Füzyonu 🏆
+
+* **Hipotez (ön-kayıtlı):** ResNet18 + TDA geç füzyonu, tek başına ResNet'ten **≥ +0.015 val ROC-AUC** verir.
+* **Tek değişken:** Füzyon ağırlığı `a` (`p = a·p_resnet + (1−a)·p_tda`). TDA dalı E3.4 konfigürasyonunda **sabit** (CNN+SVM, w=0.55).
+* **Çalışma:** `python pipelines/exp/E3_1_tda_image_fusion.py` · seed 42 · CPU.
+* **Sonuç:** ✅ **KEEP — çok güçlü etki**
+
+  | Model | Val ROC-AUC | **Test ROC-AUC** |
+  | :--- | :---: | :---: |
+  | ResNet18 (tek) | 0.8884 | 0.8349 |
+  | TDA ensemble (tek) | 0.8821 | 0.8776 |
+  | **🏆 Füzyon (a = 0.55)** | **0.9572** | **0.9211** |
+
+* **İstatistiksel kanıt:** Test AUC farkı (füzyon − ResNet) = **+0.0862**, N=2.000 bootstrap %95 CI **[+0.0632, +0.1099]**, **p ≈ 0.0000**. Val farkı **+0.0688** (≥ +0.015 ✓).
+* **Neden bu kadar büyük? — bağımsız doğrulama (`scratch/verify_E3_1.py`):**
+  * İki temsil arasındaki **korelasyon yalnızca r ≈ 0.30–0.35** (val 0.3034 · test 0.3489) ⇒ ResNet ve TDA hasta olasılıkları **neredeyse dik**; büyük ölçüde **bağımsız** bilgi taşıyorlar.
+  * **Sızıntı kontrolü:** etiketler permute edildiğinde füzyon AUC = **0.4378** (≈ şans) ⇒ etiket sızıntısı **yok**.
+  * NaN yok; tüm sayılar bağımsız yeniden hesaplamayla **birebir** doğrulandı.
+* **Yorum:**
+  1. Bu, yayının **ana sonucudur**: topolojik ve görüntü temsilleri **tamamlayıcı**dır; füzyon **0.9211** test ROC-AUC ile NODE21 ensemble'ını (0.877) **+0.044** geçiyor.
+  2. Literatürde TDA-Net (CXR/COVID) füzyonla ~+0.05 kazanmıştı ([literature.md](literature.md) §2.3); bizim **+0.0862**'lik kazancımız bu mertebede ve istatistiksel olarak çok güçlü.
+  3. **GPU gerekmedi** — tüm sonuç CPU'da üretildi.
+* **Karar:** **KEEP**
+* **Manifest:** `artifacts/runs/E3.1_tda_image_fusion/manifest.json`

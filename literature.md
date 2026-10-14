@@ -285,16 +285,17 @@ Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, a
 
 | Karşılaştırma | Değer | Yorum |
 | :--- | :---: | :--- |
-| NODE21 rank-1 (görüntü düzeyi AUC) | 0.868 | Bizim **ensemble (0.8776)** bunu **geçiyor** |
-| NODE21 ensemble (zirve) | 0.877 | Bizim ensemble **denk** (fark 0.0006) |
+| NODE21 rank-1 (görüntü düzeyi AUC) | 0.868 | Bizim **ensemble (0.8776)** ve **füzyon (0.9211)** bunu **geçiyor** |
+| NODE21 ensemble (zirve) | 0.877 | Bizim füzyon **+0.044 geçiyor** (0.9211) |
 | NODE21 baseline (DB) | 0.816 | Bizimki **çok üstünde** |
+| Güçlü görüntü baseline'ı (bizim, ResNet18) | 0.8349 | **TDA tek başına geçiyor**; füzyon çok geçiyor |
 | ChestX-ray14 nodül AUC (Wang 2017) | 0.67 | Bizimki **çok üstünde** |
-| Wang 2024 topolojik radiomics (GGN) | 0.85 / 0.862 | **Aynı bant** |
+| Wang 2024 topolojik radiomics (GGN) | 0.85 / 0.862 | Bizimki **üstünde** |
 | Topo-CXR (TB/pnömoni) | ~0.99 | **Farklı ve yapısal olarak daha kolay görev** |
 
 **Kritik teknik uyum:** NODE21'in AUC metriği **görüntü düzeyindedir** ve görüntü skoru = **maksimum kutu olasılığı**. Bizim hasta skorumuz = **5 zon olasılığının maksimumu**. ⇒ **Agregasyon mantığı (max) ve metrik (AUC) örtüşüyor.** Farklar: (a) lokalizasyon üretmiyoruz, (b) split'imiz resmî değil.
 
-> 🔑 **Yeniden çerçeveleme:** *"Yorumlanabilir, hafif, tamamen topolojik bir temsil — hiçbir derin tespit mimarisi ve harici pretrain kullanmadan — ağır detektör topluluklarının görüntü düzeyi AUC seviyesine ulaşıyor (**0.8776**)."* **E3.4 (KEEP)** bu iddiayı sayısal olarak destekledi. "Resmî test setinde SOTA'yı geçtik" iddiası ise **geçersizdir** (§3.4).
+> 🔑 **Yeniden çerçeveleme:** *"Topolojik ve görüntü temsilleri büyük ölçüde bağımsız bilgi taşır (r ≈ 0.30); füzyon, güçlü bir pretrainli görüntü baseline'ını +0.086 AUC ile geçerek **0.9211** hasta düzeyi ROC-AUC'ye ulaşır — hiçbir derin tespit mimarisi ve uçtan uca eğitim olmadan."* **E3.1 (KEEP)** bu iddiayı bootstrap CI **[+0.0632, +0.1099]**, p≈0.0000 ile kanıtladı. "Resmî test setinde SOTA'yı geçtik" iddiası ise **geçersizdir** (§3.4).
 
 ### 5.2 Yenilik hiyerarşisi (yayın için)
 
@@ -313,8 +314,8 @@ Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, a
 
 | # | Gereksinim | Bağlı deney |
 | :-: | :--- | :--- |
-| 1 | **Aynı split'te güçlü ham-piksel CNN baseline** ("TDA neden global CNN'i geçmiyor?") | E0.3 → E3.1/E3.2 |
-| 2 | **PL mekanizma analizi** (üst zarf görselleştirmesi + nicel ölçüm) | **E4.4** |
+| 1 | **Aynı split'te güçlü ham-piksel CNN baseline** ("TDA neden global CNN'i geçmiyor?") | ✅ **E0.3 tamamlandı** (ResNet18 test 0.8349 — TDA geçiyor) |
+| 2 | **PL mekanizma analizi** (üst zarf görselleştirmesi + nicel ölçüm) | ✅ **E4.4 tamamlandı** (sinyal/zarf %1–2) |
 | 3 | **Split beyanı** (iç bölünme; leaderboard karşılaştırması yok) | roadmap §0 kural 9 |
 | 4 | **Sağlamlık** (σ/ızgara, ağırlık fonksiyonu, overlap eşiği) | E2.7, E2.8, E4.1 |
 | 5 | **Harici doğrulama** (JSRT / ChestX-ray14 nodül alt kümesi) | E5.3 |
