@@ -168,3 +168,35 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   * **Persistence Landscape (PL):** Homoloji noktalarını $(b, d)$ tepe fonksiyonlarına dönüştürerek sıralı üst zarflara ($\lambda_k(t)$) izdüşürür. Ancak akciğer dokusunda bronkovasküler ağaçlar ve kemik kenarları çok sayıda yüksek kalıcılıklı damar döngüsü üretir. Üst zarf fonksiyonu ($\lambda_1, \lambda_2$), bu dominant arka plan anatomik döngüleri tarafından ele geçirilir; nodüllerin daha küçük ama kümelenmiş topolojik imzası fonksiyonel zarfın altında tamamen boğulur (AUC 0.52–0.54 seviyesine çöküş).
   * **Persistence Image (PI):** Doğum ve kalıcılığı 2 boyutlu bir ızgara üzerinde $(b, p = d - b)$ bağımsız eksenler olarak muhafaza eder. Adams ağırlıklandırma fonksiyonu ($w(p)$) ve Gauss çekirdeği sayesinde, nodülün spesifik koordinatlardaki yoğunluk kümesi arka plan damar yapılarından mekânsal olarak ayrık kalır.
 * **Akademik Değer:** Bu karşılaştırma, hakemlerin *"Neden Landscape değil de Persistence Image seçtiniz?"* sorusuna verilecek en güçlü matematiksel ve ampirik cevaptır.
+
+---
+
+## 6. v3 Araştırma Programı — Deney Kayıtları
+
+> Yönetim protokolü, fazlar ve backlog: [roadmap.md](roadmap.md). Her deney burada ID'siyle kaydedilir.
+
+### E0.1 — Deney Kayıt Altyapısı
+
+* **Amaç:** Deneylerin tekrar üretilebilir ve karşılaştırılabilir şekilde kaydedilmesi.
+* **Sonuç:** [experiment.py](src/node21_tda/experiment.py) yazıldı (manifest: git commit + dal + kirli ağaç, config SHA-256, girdi dosya hash'leri, seed, metrikler, karar). [configs/experiments/](configs/experiments/) sözleşmesi (şablon + README) kuruldu. Smoke test ile doğrulandı.
+* **Karar:** **KEEP**
+
+### E0.2 — Referans Yeniden Üretimi (v2.1 PI Küçük CNN)
+
+* **Amaç:** Kilitli v2.1 referansının (test ROC-AUC **0.8631**) tekrar üretilebilirliğini doğrulamak.
+* **Tek değişken:** Yok (saf yeniden üretim).
+* **Çalışma:** `python pipelines/05_train_cnn.py --output-dir artifacts/repro_E0_2` · seed 42 · cihaz **CPU** · orijinal artefaktlar korundu.
+* **Sonuç:** Orijinal raporla **bit-bit aynı (16/16 metrik)**:
+
+  | Metrik | Val | Test | Orijinal ile |
+  | :--- | :---: | :---: | :---: |
+  | ROC-AUC | 0.8607 | **0.8631** | ✅ aynı |
+  | Duyarlılık | 0.7674 | 0.7965 | ✅ aynı |
+  | Özgüllük | 0.8078 | 0.7972 | ✅ aynı |
+  | F1 | 0.6408 | 0.6478 | ✅ aynı |
+  | TP/FP/TN/FN | 132/108/454/40 | 137/114/448/35 | ✅ aynı |
+
+  5 zonun tamamı da (eşikler dahil) birebir eşleşti.
+* **Karar:** **KEEP** — referans doğrulandı, pipeline deterministik.
+* **Yan bulgu (hesaplama bütçesi):** Küçük CNN 5 zonu toplam **~27 saniyede** (zon başına 4.7–6.1 s) **CPU'da** eğitiyor. ⇒ Özellik/TDA tabanlı deneylerin tamamı GPU'suz yürütülebilir; CUDA yalnızca görüntü tabanlı pretrainli omurga (E0.3/E3.1/E3.2) için gerekli.
+* **Manifest:** `artifacts/runs/E0.2_baseline_repro/manifest.json`

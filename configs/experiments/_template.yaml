@@ -1,0 +1,39 @@
+# Deney Konfigürasyonu Şablonu
+#
+# Dosya adı sözleşmesi:  configs/experiments/<ID>_<slug>.yaml
+# Örnek:                 configs/experiments/E1_1_bone_suppression.yaml
+#
+# KURAL: Bu dosya deneyin TEK DEĞİŞKENİNİ ve ÖN-KAYITLI başarı eşiğini içerir.
+# Ön-kayıt bölümü deney BAŞLAMADAN doldurulur ve deney sırasında DEĞİŞTİRİLMEZ.
+
+experiment:
+  id: "E0.0"                # roadmap.md backlog ID'si
+  slug: "ornek_deney"
+  phase: 0                  # 0..5
+  workstream: "W0"          # W0..W5
+  date: ""                  # YYYY-AA-GG (başlangıç)
+
+# --- Ön-kayıt (deney başlamadan doldurulur) ---
+preregistration:
+  hypothesis: "Bu deneyde test edilen tek cümlelik iddia."
+  single_variable: "Değişen TEK faktör (ör. 'kemik bastırma açık/kapalı')."
+  success_threshold:
+    metric: "val_roc_auc"
+    min_delta: 0.015        # referansa göre minimum artış
+    ci_required: true       # N=2000 bootstrap %95 CI kesişmemeli
+  kill_criterion: "Bu koşul sağlanırsa deney KILL edilir."
+
+# --- Değişmeyen referans (v2.1 kilidi) ---
+baseline:
+  features_file: "data/processed/features_v2/X_zone_features.npy"
+  splits_file: "data/processed/splits_v2/zone_splits.csv"
+  labels_file: "data/processed/labels/zone_labels_v2.csv"
+  seed: 42
+  reference_metrics:
+    val_roc_auc: 0.8607
+    test_roc_auc: 0.8631
+
+# --- Deneye özgü değişken (tek değişken burada) ---
+variant:
+  name: "Varyantın kısa adı"
+  params: {}

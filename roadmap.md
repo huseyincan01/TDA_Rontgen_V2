@@ -35,7 +35,7 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 | Kaynak | Doğrulanmış durum |
 | :--- | :--- |
 | GPU | **NVIDIA RTX 4050 Laptop, 6 GB VRAM** (fiziksel olarak var, boşta: 0% kullanım, 5.921 MiB boş) |
-| ⚠️ **PyTorch** | **`torch 2.14.1+cpu` — CUDA YOK** (`torch.version.cuda = None`, `cuda.device_count() = 0`). GPU var ama venv CPU-only build içeriyor → **ağır eğitimden önce düzeltilmeli (E0.0)** |
+| ⚠️ **PyTorch** | **`torch 2.14.1+cpu`** (`cuda.device_count() = 0`). **E0.2'de ölçüldü:** küçük CNN 5 zonu **~27 s**'de CPU'da eğitiyor ⇒ TDA/özellik tabanlı deneyler GPU'suz yapılabilir. CUDA yalnızca görüntü tabanlı pretrainli omurga (E0.3/E3.1/E3.2) için gerekli → **E0.0** |
 | VRAM sınırı | 6 GB → pretrainli omurga için küçük batch, ~224px girdi |
 | Disk | C: üzerinde **~54 GB boş** |
 | Pretrained ağırlık | `~/.cache/torch` **yok** → ilk çalıştırmada indirme gerekir (internet şart) |
@@ -81,8 +81,8 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | ID | İş Kolu | Hipotez (ön-kayıtlı) | Bağımlılık | Efor | Risk | Beklenen Etki | Durum |
 | :--- | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
 | **E0.0** | W0 | ⚠️ **BLOCKER:** CUDA PyTorch kurulunca GPU eğitimi tekrar çalışır | — | 0.5g | Düşük | **Kritik** | Planlandı |
-| **E0.1** | W0 | Deney kayıt protokolü + dizin sözleşmesi kurulabilir | — | 0.5g | Düşük | Altyapı | Planlandı |
-| **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | Planlandı |
+| **E0.1** | W0 | Deney kayıt protokolü + dizin sözleşmesi kurulabilir | — | 0.5g | Düşük | Altyapı | **KEEP** ✅ |
+| **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | **KEEP** ✅ birebir |
 | **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | Planlandı |
 | **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | Planlandı |
 | **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | Planlandı |
@@ -187,7 +187,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
-| Faz 0 | E0.0, E0.1, E0.2, E0.3 | 0/4 | — | 0 | 0 |
+| Faz 0 | E0.0, E0.1, E0.2, E0.3 | 2/4 | E0.3 | 2 | 0 |
 | Faz 1 | E3.4, E4.1, E1.1, E1.2 | 0/4 | — | 0 | 0 |
 | Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
 | Faz 3 | E2.1, E2.2, E2.3, E2.4 | 0/4 | — | 0 | 0 |
@@ -202,4 +202,5 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 
 | Tarih | ID | Karar | Gerekçe |
 | :--- | :--- | :--- | :--- |
-| — | — | — | Henüz karar yok |
+| 2026-10-14 | **E0.1** | **KEEP** | Manifest altyapısı (`src/node21_tda/experiment.py`) + `configs/experiments/` sözleşmesi kuruldu, smoke test geçti. |
+| 2026-10-14 | **E0.2** | **KEEP** | v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** (16/16 metrik; test ROC-AUC 0.8631, TP/FP/TN/FN 137/114/448/35). Pipeline deterministik. Yan bulgu: eğitim CPU'da ~27 s → özellik tabanlı deneyler GPU'suz yapılabilir. |
