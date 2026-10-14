@@ -300,7 +300,7 @@ Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, a
 
 | # | İddia | Literatür durumu | Güç |
 | :-: | :--- | :--- | :---: |
-| 1 | **PL'nin üst-zarf (envelope) mekanizmasıyla çökmesi** — birkaç uzun ömürlü ama ilgisiz H1 sınıfının tüm temsili ezmesi; PI ile doğrudan nedensel karşılaştırma | **Bulunamadı.** Vandaele 2020 "ilgisiz nesne" problemini tanıyor ama **PL zarfı için test etmiyor** | **En güçlü** |
+| 1 | **PL'nin üst-zarf (envelope) mekanizmasıyla çökmesi** — birkaç uzun ömürlü ama ilgisiz H1 sınıfının tüm temsili ezmesi; PI ile doğrudan nedensel karşılaştırma | **Bulunamadı.** Vandaele 2020 "ilgisiz nesne" problemini tanıyor ama **PL zarfı için test etmiyor** | **En güçlü** — ✅ **E4.4 ile nicel kanıtlandı** (sinyal/zarf = %1–2) |
 | 2 | **Kemik/damar bastırma + kalıcı homoloji kombinasyonu** | **Bulunamadı** | **Çok güçlü** |
 | 3 | Topo-CXR'ın *"ön-işleme gerekmez"* tezine **karşı çıkış** | Literatür ters tezi savunuyor → net karşı-pozisyon | Güçlü |
 | 4 | CXR'de H1'in bronkovasküler döngü + kaburga kenarı ile domine edilmesi | Spesifik anatomik formülasyon **yok** | Güçlü |

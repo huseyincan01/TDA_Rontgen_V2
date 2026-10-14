@@ -101,7 +101,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | Planlandı |
 | **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
 | **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | Planlandı 🔓 |
-| **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | Planlandı |
+| **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | **KEEP** ✅ |
 | **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | Planlandı |
 | **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | Planlandı |
 | **E5.3** | W5 | Harici doğrulama (JSRT / ChestX-ray14 nodül alt kümesi) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | Planlandı |
@@ -193,7 +193,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 2/4 | E0.3 | 2 | 0 |
-| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 0/5 | — | 0 | 0 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 1/5 | E2.7 | 1 | 0 |
 | Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
@@ -209,6 +209,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | :--- | :--- | :--- | :--- |
 | 2026-10-14 | **E0.1** | **KEEP** | Manifest altyapısı (`src/node21_tda/experiment.py`) + `configs/experiments/` sözleşmesi kuruldu, smoke test geçti. |
 | 2026-10-14 | **E0.2** | **KEEP** | v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** (16/16 metrik; test ROC-AUC 0.8631, TP/FP/TN/FN 137/114/448/35). Pipeline deterministik. Yan bulgu: eğitim CPU'da ~27 s → özellik tabanlı deneyler GPU'suz yapılabilir. |
+| 2026-10-14 | **E4.4** | **KEEP** | **PL çöküşünün mekanizması nicel olarak kanıtlandı.** H1 zarf tepeleri λ1→λ5 boyunca 110→90 (birbirine yakın, enerji eşit dağılmış) → zarf, her zonda ≥5 çok uzun ömürlü arka plan H1 sınıfıyla **doymuş**. Poz/neg sinyal zarfın yalnızca **%1–2'si** (≈50–100× bastırılma); H0'da λ1'de %0.02. Bu, yayının **1 numaralı özgünlük iddiasının** deneysel kanıtı. |
 
 ---
 

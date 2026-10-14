@@ -200,3 +200,26 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KEEP** — referans doğrulandı, pipeline deterministik.
 * **Yan bulgu (hesaplama bütçesi):** Küçük CNN 5 zonu toplam **~27 saniyede** (zon başına 4.7–6.1 s) **CPU'da** eğitiyor. ⇒ Özellik/TDA tabanlı deneylerin tamamı GPU'suz yürütülebilir; CUDA yalnızca görüntü tabanlı pretrainli omurga (E0.3/E3.1/E3.2) için gerekli.
 * **Manifest:** `artifacts/runs/E0.2_baseline_repro/manifest.json`
+
+### E4.4 — Persistence Landscape Üst-Zarf (Envelope) Mekanizma Analizi
+
+* **Hipotez (ön-kayıtlı):** PL'nin AUC çöküşü (0.5450), üst-zarf fonksiyonlarının az sayıda çok uzun ömürlü ama **sınıf-ayırt-edici olmayan** H1 sınıfı tarafından doyurulmasından kaynaklanır; nodüle ait sinyal zarfın yanında ihmal edilebilir kalır.
+* **Tek değişken:** Yok (mekanizma analizi).
+* **Çalışma:** `python pipelines/exp/E4_4_pl_envelope_analysis.py` · dengeli train alt kümesi (n = 2.040 zon) · PL vektörü `(N, 2, 5, 80)` olarak açıldı.
+* **Sonuç:** ✅ **Hipotez doğrulandı.**
+
+  | Ölçüt | λ1 | λ2 | λ3 | λ4 | λ5 |
+  | :--- | ---: | ---: | ---: | ---: | ---: |
+  | **H1** ortalama tepe | 109.89 | 102.61 | 97.56 | 93.60 | 89.61 |
+  | **H1** enerji payı | %22.3 | %20.8 | %19.8 | %19.0 | %18.1 |
+  | **H1** sinyal/zarf | %1.62 | **%1.90** | %1.54 | %0.37 | %1.72 |
+  | **H0** ortalama tepe | 173.87 | 173.42 | 172.67 | 171.79 | 170.49 |
+  | **H0** sinyal/zarf | %0.02 | %0.21 | %0.39 | %0.78 | **%0.89** |
+
+* **Yorum — PL neden çöktü:**
+  1. **Zarf doymuş:** H1 tepe değerleri λ1→λ5 boyunca 110 → 90 aralığında ve **birbirine yakın**; enerji neredeyse eşit dağılmış. Bu, *her zonda en az 5 adet çok uzun ömürlü (~180–220 kalıcılık) H1 sınıfı* bulunduğunu gösterir — bunlar damar döngüleri/kaburga kenarları gibi **arka plan** yapılarıdır.
+  2. **Sinyal gömülü:** Pozitif/negatif zon ayrımını taşıyan bilgi, zarfın yalnızca **%1–2'si** kadardır (≈ **50–100× bastırılma**). H0'da ayırt edicilik λ1'de neredeyse sıfır (**%0.02**) ve ancak alt landsaflarda (**%0.89**) belirir — yani sınıf bilgisi zarfın *altına* gömülür.
+  3. **PI neden kazandı:** PI, üst-zarf projeksiyonu yapmak yerine `(birth, persistence)` 2B yoğunluk yüzeyini korur; bu sayede zarf tarafından ezilen lokal imza ayakta kalır ve hasta düzeyi **0.8631** ROC-AUC'ye ulaşılır.
+* **Karar:** **KEEP** — PL çöküşünün mekanizması nicel olarak kanıtlandı. Bu, [literature.md](literature.md) §5.2'deki **1 numaralı özgünlük iddiasının** deneysel kanıtıdır.
+* **Yan kanıt:** `train_diagram_distribution_report.json` H1 kalıcılık dağılımının aşırı ağır kuyruklu olduğunu doğruluyor (p50 = 1, p90 = 2, p95 = 3, p99 = 8, **max = 255**) → zarfı doyuran az sayıda sınıf niceliksel olarak mevcuttur.
+* **Manifest:** `artifacts/runs/E4.4_pl_envelope_analysis/manifest.json`
