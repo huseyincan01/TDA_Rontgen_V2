@@ -66,9 +66,82 @@
 
 ---
 
-## 2. Tıbbi Görüntülemede TDA (tarama sürüyor)
+## 2. Tıbbi Görüntülemede TDA
 
-> ⏳ Bu bölüm, ilgili araştırma kolu tamamlandığında doldurulacak: TDA'nın akciğer/CXR'deki uygulamaları, diyagram temsillerinin karşılaştırılması, bildirilen başarı seviyeleri, "arka plan topolojisi baskın çıkıyor" probleminin literatürde ele alınışı.
+### 2.1 Uygulamalar
+
+| Çalışma | Veri / görev | Yaklaşım |
+| :--- | :--- | :--- |
+| **Topo-CXR** — Ahmed ve ark., ICCVW 2023 ([paper](https://openaccess.thecvf.com/content/ICCV2023W/CVAMD/html/Ahmed_Topo-CXR_Chest_X-ray_TB_and_Pneumonia_Screening_with_Topological_Machine_ICCVW_2023_paper.html)) | **CXR**, TB/pnömoni | **Kübik persistence** → Betti vektörleri → standart ML. Ön işleme/augmentasyon yok. **En yakın emsal** |
+| **Vandaele ve ark.**, *Patterns* 2023 ([PMC9868648](https://pmc.ncbi.nlm.nih.gov/articles/PMC9868648/)) | Akciğer tümörü **histoloji** (CT), 164 hasta | 290 topolojik özellik (15 diyagram × özet istatistik) vs 105 radyomik |
+| **Wang ve ark.**, 2024 ([PMC11452904](https://pmc.ncbi.nlm.nih.gov/articles/PMC11452904/)) | Buzlu cam nodül (GGN) malignite, 3.223 hasta | Giotto-TDA, 270 topolojik özellik + PyRadiomics |
+| **Lin ve ark.**, *PLOS Digit Health* 2026 ([makale](https://journals.plos.org/digitalhealth/article?id=10.1371/journal.pdig.0001646)) | İnvaziv adenokarsinom derece, 4 merkez | Topolojik intratümöral heterojenlik |
+| **TDA-Net** — Hajij, Zamzmi, Batayneh, [arXiv:2101.08398](https://ar5iv.labs.arxiv.org/html/2101.08398) | **CXR** / COVID | Betti eğrisi + derin özellik **füzyonu** |
+
+### 2.2 Temsil karşılaştırmaları — kritik bulgu
+
+* **Barnes, Polanco, Perea**, *Front Artif Intell* 2021 ([PMC8355525](https://pmc.ncbi.nlm.nih.gov/articles/PMC8355525/)): Altı şema karşılaştırılıyor (multi-scale kernel, PL, PI, Adcock–Carlsson, template systems, adaptive template). Sonuç: **PL, Adcock–Carlsson ve template systems hem hızlı hem doğru**; **PI daha yavaş ama rekabetçi**; **multi-scale kernel en pahalı ve hiçbir zaman daha iyi çıkmadı.**
+* **Sulowska**, *Adv Sci Technol Res J* 2026 ([makale](https://www.astrj.com/Comparative-evaluation-of-persistence-diagram-vectorisation-methods-in-classification,218660,0,1.html)): **PI ve PL tutarlı biçimde en iyi**; sentetikte >0.98; **ModelNet10'da PI açık ara üstün (~0.75)**; MNIST'te tüm yöntemler zayıf. Sentez: **PI sağlam/çok yönlü, PL kararlı ve yorumlanabilir.**
+
+> **Sonuç:** Literatürde **"PI vs PL evrensel kazananı yok"**. Bizim PI lehine +0.3181'lik farkımız bu çerçevede *olağandışı* — ve tam da bu yüzden ilginç (§2.6).
+
+### 2.3 Bildirilen başarı seviyeleri
+
+| Çalışma | Sonuç |
+| :--- | :--- |
+| Topo-CXR | TB-CXR için iddia edilen **~%99.3 doğruluk / 99.8 AUC** — ancak sonraki bir ViT çalışması (RepViT-CXR, [arXiv:2509.08234](https://arxiv.org/abs/2509.08234)) onu geçti (99.9/99.9); Shenzhen TB'de yalnızca %91.1 ⇒ **üstünlük kalıcı değil, marj küçük** |
+| Vandaele 2022 | Benign/malign: radyomik 84.6 → topolojik **86.8** → vote 87.9. ADC vs skuamöz: 67.2 → **91.2** (büyük katkı). Bazı görevlerde ise **radyomik daha iyi** |
+| Wang 2024 (GGN) | Topolojik **0.85 / 0.862**; klinik+radyomik+topolojik birleşik **0.879** |
+| TDA-Net | Temel CNN 0.87 → **sadece topoloji (Betti) 0.89** → füzyon **0.92/0.93** (~+0.05) |
+| Lin 2026 | Stacking **0.875** vs sadece radyomik 0.834 |
+
+### 2.4 "İlgisiz/arka plan yapıları baskın çıkıyor" problemi
+
+**Kavramsal olarak literatürde VAR, ama bizim CXR/H1 formülasyonumuzda yok.**
+
+* **Vandaele, Nervo, Gevaert**, *Sci Rep* 2020 ([PMC7713118](https://pmc.ncbi.nlm.nih.gov/articles/PMC7713118/)) — en net ifade: *"many real-world images contain outliers, as well as **irrelevant objects, which complicate the use of persistent homology**"*. Çözüm: **Topological Image Modification (TIM)** — ilgisiz ama yüksek kalıcılıklı bilgiyi filtreler; "border modification" ile en kalıcı bileşenin **arka plan** olması garanti edilir (elder rule).
+* **ROI izolasyonu standart pratik:** Vandaele diyagramları **5 farklı nesneden** hesaplıyor (lezyon pikselleri ham/negatif, lezyon+bbox, yüzey nokta bulutu). Wang 2024 GGN'de lezyon maskesiyle kırpma yapıyor.
+* **Bulunamayan:** "CXR'de H1'de bronkovasküler döngüler ve kaburga kenarları üst zarfı domine eder" biçiminde **spesifik** ifade → muhtemelen bizim özgün formülasyonumuz. `[belirsiz: daha derin atıf-ağı taraması gerekir]`
+
+### 2.5 Bilinen sınırlamalar
+
+* **Hesaplama maliyeti** (multi-scale kernel en pahalı, hiç kazanmadı).
+* **Vektörizasyonda bilgi kaybı** — Vandaele 2022 açıkça yazıyor: *"Unavoidably, one loses information when transforming topological information into feature representations."*
+* **Yüksek boyut + küçük örneklem / overfitting** — Vandaele 290 özellikten mRMR ile **yalnızca 10** özellik seçiyor; GGN çalışması PCA (0.99) uyguluyor.
+* **Genelleme sınırı** — yüksek geometrik karmaşıklık + gürültüde tüm temsiller zayıf (Sulowska).
+* **Kararlılık bir güçlü yön:** bottleneck/Wasserstein kararlılığı $d_b(\mathrm{Dgm}(I),\mathrm{Dgm}(J)) \le \|f-g\|_\infty$ ⇒ "kararsızlık" eleştirisi PH'ın kendisi için değil, **vektörizasyon + özellik seçimi + küçük örneklem** hattı için geçerli.
+* **Yorumlanabilirlik iddiası kanıtsız:** TDA-Net daha iyi açıklanabilirlik iddia ediyor ama H1 döngülerinin **hangi anatomik yapıya** karşılık geldiği gösterilmiyor. `[belirsiz]`
+
+### 2.6 Bizim PI-vs-PL bulgumuz literatürle uyuşuyor mu?
+
+**Kısmen uyuşuyor, kısmen ayrışıyor — ayrıştığı yer tam da ilginç olan yer.**
+
+* ✅ **Uyuşan:** PI'ın (birth, persistence) 2B uzayını koruyup ayrık imzaları saklaması ve yüksek geometrik karmaşıklıkta PL'den üstün olması, Sulowska'nın **ModelNet10'da PI açık ara üstün** bulgusu ve "PI sağlam/çok yönlü" senteziyle **örtüşüyor**.
+* ❌ **Ayrışan:** Literatürde PL genelde **öne çıkan** taraf (Barnes 2021: PL hızlı+doğru). Bizim PL'nin **0.5450'ye çökmesi** (PI 0.8631) tipik beklentinin **tersi**. Literatür PL'yi "kararlı/yorumlanabilir" diye övüyor ama **ilgisiz yüksek-kalıcılıklı yapıların üst zarfı ele geçirmesi** durumunu PL için özel olarak test etmiyor.
+* **Mekanizma:** "İlgisiz ama yüksek kalıcılıklı yapılar diyagramı domine eder" problemi **tanınıyor** (Vandaele 2020 TIM tam bunun için). Yani gözlemimiz **bilinen bir olgunun CXR/H1'deki yeni tezahürü** — kavramsal olarak yeni değil, bu anatomik örnekte gösterilmesi yeni.
+
+### 2.7 Gerçekten yeni olan (yayın iddiaları)
+
+| # | İddia | Güç |
+| :-: | :--- | :--- |
+| 1 | **PL'nin üst-zarf (envelope) mekanizmasıyla çökmesinin nicel gösterimi** — birkaç uzun ömürlü ama ilgisiz H1 sınıfının tüm temsili ezmesi; PI'ın 2B kütle dağılımı olarak yerel imzayı korumasıyla doğrudan nedensel karşılaştırma | **En güçlü** (literatürde bulunamadı) |
+| 2 | **CXR'de H1'in bronkovasküler döngüler + kaburga kenarlarıyla domine edilmesi** | Güçlü (spesifik formülasyon yok) |
+| 3 | **5 anatomik zon + zon başına ayrı kübik PH + hasta düzeyi max-pooling** (Topo-CXR global, Vandaele/Wang ROI-kısıtlı) | Güçlü |
+| 4 | **NODE21 + kalıcı homoloji** | Orta `[belirsiz: olumsuz sonuç]` |
+
+**Yenilik İDDİA EDİLMEMESİ gerekenler:** "ilgisiz yapılar diyagramı domine eder → ROI kısıtlaması gerekir" (Vandaele 2020/2022) · "PI ve PL farklı davranır, veri setine bağlıdır" (Barnes 2021, Sulowska 2026) · "topoloji tek başına CNN'e denk, füzyonla artar" (TDA-Net) · "topoloji gerçek histolojiyi, radyomik radyolog skorunu taklit eder" (Vandaele 2022).
+
+### 2.8 Hakem riski ve zorunlu karşılaştırma
+
+> ⚠️ ROC-AUC 0.8631, Topo-CXR'ın (0.993) ve TDA-Net füzyonunun (~0.92–0.93) altında. Hakemin en olası itirazı: **"TDA neden global bir CNN baseline'ını geçmiyor?"**
+
+Bu nedenle raporda **zorunlu** görünen iki şey:
+1. **Aynı split üzerinde eğitilmiş güçlü bir ham-piksel CNN baseline'ı** → E0.3 + E3.1/E3.2 (füzyon) kritik yolunu doğrudan meşrulaştırıyor.
+2. **PI vs PL mekanizma analizi** (üst zarf görselleştirmesi) → §2.7'deki 1 numaralı iddiayı kanıta çeviriyor.
+
+---
+
+> ℹ️ **Araç sınırlaması:** `web_fetch` PDF içeriğini okuyamıyor (`application/pdf`). Topo-CXR'ın tam metin sonuç tablosu **ikincil atıftan** (RepViT-CXR) alındı; sayılar birincil kaynaktan teyit edilemedi. ScienceDirect/MDPI/PubMed HTML getirmeleri 403 döndü; PMC ve arXiv HTML yolları çalıştı.
 
 ---
 

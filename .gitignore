@@ -74,7 +74,12 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/**/.gitkeep
 
-# Artifacts & model checkpoints
+# Artifacts & model checkpoints (yalnızca .gitkeep dosyaları takip edilir)
+artifacts/*
+!artifacts/models/
+!artifacts/runs/
+!artifacts/scalers/
+!artifacts/thresholds/
 artifacts/models/*
 !artifacts/models/.gitkeep
 artifacts/runs/*
