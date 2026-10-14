@@ -19,6 +19,7 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 6. **Anlamlılık eşiği.** Bir iyileşme "gerçek" sayılır ancak **val ROC-AUC farkı ≥ +0.015** ve **N=2000 bootstrap %95 CI kesişmiyorsa**. Bunun altındaki farklar gürültü kabul edilir (mevcut bootstrap altyapısı: [07_compute_bootstrap_ci.py](pipelines/07_compute_bootstrap_ci.py)).
 7. **Öldürme kriteri.** Yüksek riskli her deney için önceden "hangi durumda bırakırım" tanımlanır (bkz. §6). Kriter tetiklenirse deney **KILL** işaretlenir ve zaman harcanmaz.
 8. **Karar günlüğü.** Her hafta sonunda roadmap.md durum tablosu + experiments.md güncellenir; verilen KEEP/KILL kararlarının **gerekçesi** yazılır. Bu, yazım aşamasında "neden bunu seçtiniz?" sorularının cevabıdır.
+9. **SPLIT BEYANI (ZORUNLU).** Verimiz NODE21'in **halka açık training setidir** (4882 = 1134 + 3748; yerel olarak doğrulandı). Test setimiz bu setin **kendi iç bölünmesidir**; NODE21'in resmî test setleri (281 experimental + 298 final) **özeldir ve kullanılmamıştır**. Bu nedenle **leaderboard ile karşılaştırma yapılmaz**; her sonuç "kendi iç split'imizde" olarak sunulur. Sızıntı yoktur (hasta düzeyi, 0 kesişim). Ayrıntı: [literature.md §3.4](literature.md).
 
 ### Anlamlı "kanıt" ne demek?
 
@@ -66,11 +67,11 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 | Faz | İçerik | Süre (tahmini) | Çıkış kriteri |
 | :--- | :--- | :--- | :--- |
 | **Faz 0 — Altyapı** | E0.0, E0.1, E0.2, E0.3 | ~1 hafta | CUDA torch geri kuruldu · registry çalışıyor · 0.8631 referansı yeniden üretildi · pretrainli omurga GPU'da smoke test geçti |
-| **Faz 1 — Hızlı kazanç** | E3.4, E4.1, E1.1, E1.2 | ~1–2 hafta | En az 1 KEEP (ensemble **veya** kemik bastırma val'de ≥ +0.015) |
+| **Faz 1 — Hızlı kazanç (CPU)** | E4.4, E2.7, E2.8, E3.4, E4.1 | ~1–2 hafta | PL mekanizma analizi tamamlandı · en az 1 KEEP |
 | **Faz 2 — Füzyon (ana iddia)** | E3.1, E3.2 | ~1–2 hafta | TDA'nın güçlü CNN'e **tamamlayıcı** katkısı val'de CI ile kanıtlı |
-| **Faz 3 — Topoloji derinleşmesi** | E2.1, E2.2, E2.3, E2.4 | ~2–3 hafta | En az 1 topolojik novelty KEEP |
+| **Faz 3 — Görüntü ön-işleme + topoloji** | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | ~3–4 hafta | En az 1 topolojik/görüntü novelty KEEP |
 | **Faz 4 — Yüksek risk** | E3.3, E2.5, E1.4, E2.6 | ~3–4 hafta | En az 1 deney başarılı **veya** gerekçeli KILL (öğrenilmiş) |
-| **Faz 5 — Yayın** | E4.2, E4.3, E5.1, E5.2 | ~2 hafta | Ablasyon matrisi tam · taslak metin + figürler |
+| **Faz 5 — Yayın + harici doğrulama** | E4.2, E4.3, E5.1, E5.2, E5.3 | ~3 hafta | Ablasyon matrisi tam · taslak metin + figürler |
 
 ---
 
@@ -99,7 +100,11 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | Planlandı |
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | Planlandı |
 | **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
-| **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır | E2.2 | 5g+ | Çok Yüksek | Belirsiz | **Parkta** |
+| **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | Planlandı 🔓 |
+| **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | Planlandı |
+| **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | Planlandı |
+| **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | Planlandı |
+| **E5.3** | W5 | Harici doğrulama (JSRT / ChestX-ray14 nodül alt kümesi) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | Planlandı |
 | **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | Planlandı |
 | **E5.2** | W5 | Metin + figürler hakem beklentilerini karşılar | E5.1 | 4g | Orta | Yayın | Planlandı |
 
@@ -188,11 +193,11 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 2/4 | E0.3 | 2 | 0 |
-| Faz 1 | E3.4, E4.1, E1.1, E1.2 | 0/4 | — | 0 | 0 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 0/5 | — | 0 | 0 |
 | Faz 2 | E3.1, E3.2 | 0/2 | — | 0 | 0 |
-| Faz 3 | E2.1, E2.2, E2.3, E2.4 | 0/4 | — | 0 | 0 |
+| Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
-| Faz 5 | E4.2, E4.3, E5.1, E5.2 | 0/4 | — | 0 | 0 |
+| Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 0/5 | — | 0 | 0 |
 
 **Referans noktası (v2.1, kilitli):** PI CNN test ROC-AUC **0.8631** · RBF-SVM **0.8289** · k-NN **0.7162** · Ham CNN **0.7043** · PL CNN **0.5450** · PL SVM **0.5217**
 
@@ -204,3 +209,30 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | :--- | :--- | :--- | :--- |
 | 2026-10-14 | **E0.1** | **KEEP** | Manifest altyapısı (`src/node21_tda/experiment.py`) + `configs/experiments/` sözleşmesi kuruldu, smoke test geçti. |
 | 2026-10-14 | **E0.2** | **KEEP** | v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** (16/16 metrik; test ROC-AUC 0.8631, TP/FP/TN/FN 137/114/448/35). Pipeline deterministik. Yan bulgu: eğitim CPU'da ~27 s → özellik tabanlı deneyler GPU'suz yapılabilir. |
+
+---
+
+## 11. Literatür Revizyonu (v3.1 — 2026-10-14)
+
+Dört kolda yapılan literatür taraması ([literature.md](literature.md)) planı şu noktalarda değiştirdi:
+
+| Değişiklik | Gerekçe |
+| :--- | :--- |
+| **§0'a kural 9 (SPLIT BEYANI) eklendi** | Verimizin NODE21 halka açık training seti olduğu **yerel olarak doğrulandı** (4882 = 1134 + 3748) → leaderboard karşılaştırması geçersiz |
+| **E4.4 (PL üst-zarf mekanizması) eklendi → Faz 1** | Literatürde **en güçlü novelty**; ucuz (mevcut PL verisi + görselleştirme) |
+| **E2.7, E2.8 eklendi → Faz 1** | Moon et al. ağırlık fonksiyonu + 625-kombinasyon σ taraması → ucuz sağlamlık kanıtı |
+| **E1.1/E1.2 Faz 1 → Faz 3'e taşındı** | Yeniden özellik çıkarımı gerektiriyor (pahalı); ucuz topolojik analizler öne alındı |
+| **E2.6 (MPH) "Parkta"dan çıkarıldı** | `multipers`/MMA olgunluğu doğrulandı → risk düşük-orta |
+| **E5.3 (harici doğrulama) eklendi** | Hakem genelleme kanıtı isteyecek |
+| **E0.3 → E3.1/E3.2 kritik yolda pekişti** | Literatür "aynı split'te güçlü baseline"yı **zorunlu** kılıyor |
+
+### En önemli dört literatür sonucu
+
+1. **Skorumuz zayıf değil.** 0.8631 hasta düzeyi AUC, NODE21 rank-1 detektörünün **görüntü düzeyi AUC'sine (0.868)** denk; NODE21 baseline'ının (0.816) ve ChestX-ray14 nodül AUC'sinin (0.67) üstünde. Sorun skor değil, **çerçeveleme ve karşılaştırma eksikliği**.
+2. **PL'nin çökmesi en güçlü özgün iddiamız.** Literatür PL'yi "kararlı" diye övüyor; bizim 0.5450'ye çöküşümüz tipik beklentinin tersi ve üst-zarf mekanizmasıyla açıklanabilir → **E4.4** bunu kanıta çevirmeli.
+3. **Kemik/damar bastırma + kalıcı homoloji kombinasyonu literatürde yok** → Ana özgünlük iddiası. Topo-CXR (ICCVW 2023) ise tam tersini (*"ön-işleme gerekmez"*) savunuyor → net karşı-pozisyon.
+4. **Görev/metrik uyumu:** NODE21'in AUC'si zaten görüntü düzeyi + **max agregasyon**; bizim hasta skorumuz da max-pooling. Çerçeveleme: *"yorumlanabilir ve hafif bir topolojik temsil, ağır detektör topluluklarının görüntü düzeyi AUC seviyesine yaklaşıyor."*
+
+### Yenilik iddia EDİLMEMESİ gerekenler
+
+"İlgisiz yapılar diyagramı domine eder → ROI kısıtlaması gerekir" (Vandaele 2020/2022) · "PI ve PL veri setine bağlı farklı davranır" (Barnes 2021, Sulowska 2026) · "topoloji tek başına CNN'e denk, füzyonla artar" (TDA-Net) · "topoloji gerçek histolojiyi, radyomik radyolog skorunu taklit eder" (Vandaele 2022).

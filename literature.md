@@ -3,7 +3,7 @@
 > Amaç: [roadmap.md](roadmap.md) v3 programındaki fikirlerin literatürde nerede durduğunu, hangisinin **gerçekten yeni** olduğunu ve bu ışıkta hangi deneylerin öncelik kazanması gerektiğini belirlemek.
 > Yöntem: Dört bağımsız kolda web araması + birincil kaynak getirme. Yalnızca doğrulanan kaynaklar yazılır; emin olunmayan ifadeler `[belirsiz]` ile işaretlenir.
 
-**Durum:** §1 tamamlandı · §2–§4 tarama sürüyor · §5 sentez tamamlanacak.
+**Durum:** ✅ Dört kol da tamamlandı (§1–§5) · Tarama tarihi: **2026-10-14**
 
 ---
 
@@ -226,28 +226,116 @@ Bu, "SOTA'yı geçtik" iddiası değil; **"yorumlanabilir ve hafif bir temsil, a
 
 ---
 
-## 4. Görüntü Ön-İşleme ve İki Aşamalı Tespit (tarama sürüyor)
+## 4. Görüntü Ön-İşleme ve İki Aşamalı Tespit
 
-> ⏳ Bu bölüm tamamlandığında doldurulacak: kemik/damar bastırma yöntemleri ve açık kaynak durumu, Frangi vesselness, iki aşamalı (aday üretimi + yanlış pozitif azaltma) nodül tespiti ve tipik kazançlar.
+### 4.1 Kemik bastırma — açık kaynak envanteri
+
+| Yöntem | Kaynak | Lisans | Notlar |
+| :--- | :--- | :--- | :--- |
+| **Qure.ai** (Anatomy-Decomposed CT Projections) | [arXiv:2609.24937](https://arxiv.org/html/2609.24937v2) (2026, *Med Image Anal* incelemede) | **CC-BY-NC-SA-4.0** | TorchScript ağırlıklar: [huggingface.co/qureaiorg/bone-suppression](https://huggingface.co/qureaiorg/bone-suppression) (~400 MB). **NODE21 ve TBX11K'da değerlendirilmiş**; kemik parlak, 1024×1024 resize, min-max [0,1]; `--device cpu` ~1 dk/görüntü. ⚠️ Gelecek tarihli arXiv ID + hakem süreci `[belirsiz]` |
+| **SADXNet** | Xu ve ark., *Diagnostics* 13(9):1652 (2023) · [repo](https://github.com/FluteXu/CXR-Rib-Suppression) | MIT | Nodül tespitinde **+%3.23 AUC**, FP 1273→1070; lokalizasyonda +%6.62 AUC. ⚠️ Ağırlıklar "TBA" |
+| **GL-LCM** | MICCAI 2025 · [repo](https://github.com/diaoquesang/GL-LCM) · [arXiv:2508.03357](https://arxiv.org/abs/2508.03357) | ağırlıklar açık | 8.54 s/görüntü, BSR %95.6. ⚠️ **Dual-energy eşleştirilmiş veri** gerektirir → NODE21 transferi garanti değil |
+| **xU-NetFullSharp** | [repo](https://github.com/ArjunBasandrai/xU-NetFullSharp-Bone-Shadow-Suppression) | GPL-3.0 | Eğitilmiş `model.pth`, tek komut |
+| **DeBoNet** | *PLOS ONE* 2022 · [repo](https://github.com/sivaramakrishnan-rajaraman/Bone-Suppresion-Ensemble) | belirtilmemiş | COVID'de MCC 0.796→**0.965** |
+| **Ernestosant** | [repo](https://github.com/Ernestosant/Bone-supression-models) | Apache-2.0 | Çoklu model + demo |
+
+### 4.2 Damar bastırma — dürüst boşluk
+
+* **CXR'de hazır/açık bir damar bastırma modeli bulunamadı** (literatür çoğunlukla CT tarafında). Bu, **literatürde az işlenmiş** bir alan.
+* **Frangi vesselness hazır:** [`skimage.filters.frangi`](https://scikit-image.org/docs/stable/auto_examples/edges/plot_ridge_filter.html) (`frangi`, `sato`, `meijering`, `hessian`; `sigmas=[1,2,3,4]`). Olgunluk kanıtı: VESSEL12'de Method K ve I, **σ = 1,2,3 mm çok ölçekli Frangi** kullanmış (CT).
+* ✅ **Yerel doğrulama:** `scikit-image 0.26.0` kurulu ve `frangi/sato/meijering` mevcut → **ek kütüphane gerekmiyor**.
+* ❌ **CXR'de damar bastırmanın nodül tespitine ölçülmüş katkısı** için doğrulanmış sayı bulunamadı `[belirsiz]`.
+
+### 4.3 Bildirilen kazançlar
+
+| Çalışma | Görev | Kazanç |
+| :--- | :--- | :--- |
+| SADXNet | Nodül tespiti | **+%3.23 AUC**, 1273→1070 FP |
+| SADXNet | Akciğer hastalığı lokalizasyonu | +%6.62 AUC, 3029→2644 FP |
+| DeBoNet | COVID tespiti | MCC 0.796 → **0.965** |
+| Qure.ai | NODE21 / TBX11K | Kazanç var, **ama kemik-örtüşmeli lezyonlarda yoğunlaşıyor** |
+| Schalekamp ve ark., *Eur J Radiol* 2013 ([PubMed](https://pubmed.ncbi.nlm.nih.gov/24113431/)) | Radyolog nodül tespiti | Kemik-bastırılmış görüntüler radyolog performansını artırıyor |
+
+> ⚠️ **Kritik uyarı:** Bu kazançların **tamamı dedektör/radyolog** performansı içindir. **H1 topolojik çıkarımı üzerindeki etkiyi sayısallaştıran bir çalışma bulunamadı** → burası bizim özgün katkı alanımız.
+
+### 4.4 İki aşamalı tespit
+
+* **NODE21 baseline'ı tek aşamalıdır** (Faster R-CNN şablonu) — aday üretimi + FP azaltma ayrımı **yapmıyor**. Bu, bizim candidate-based mimarimiz (E3.3) için bir **boşluk/avantaj**.
+* Repolar: [DIAGNijmegen/node21-noduledetection](https://github.com/DIAGNijmegen/node21-noduledetection), [osmaoui/node21_detection_baseline](https://github.com/osmaoui/node21_detection_baseline). Veri seti: [Zenodo 4783745](https://zenodo.org/records/4783745).
+* Klasik iki-aşamalı şablon (Hessian/şablon eşleme ile aday → CNN patch sınıflandırıcı ile FP azaltma) standarttır, ama bu turda doğrulanmış tek bir sayısal referans bulunamadı `[belirsiz]`.
+
+### 4.5 Topoloji + ön-işleme kombinasyonu — bizim boşluğumuz
+
+* **Topo-CXR'ın tezi bizimkinin TAM TERSİ.** Yazarlar açıkça *"does not need any data augmentation or pre-processing steps"* ifadesini **avantaj** olarak sunuyor. Biz ise H1'in arka plan (kaburga + bronkovasküler döngüler) tarafından maskelendiğini gösterip **ön-işleme/filtreleme eklemeyi** öneriyoruz → literatürde **net, savunulabilir bir karşı-pozisyon ve özgün katkı**.
+* ❌ **Kemik/damar bastırmayı kalıcı homoloji ile birleştiren bir çalışma bulunamadı** → **ana özgünlük iddiası** burada.
+
+### 4.6 Kritik uygulama notları (deney tasarımına doğrudan girer)
+
+1. **Kemik bastırmayı GÖRÜNTÜ düzeyinde değil MASKE/diyagram düzeyinde uygula.** Difüzyon/GAN tabanlı bastırıcılar ince nodül dokusunu zayıflatabilir. `bone.png`'yi **kaynak maske** olarak kullanıp H1 doğumlarını süzmek daha güvenli.
+2. **Frangi'yi H1 filtre ağırlığı olarak kullan**, görüntüyü agresif değiştirmeden — geri alınabilir ve hiperparametrik ayarlanabilir.
+3. **Filtrasyon yeniden kalibre edilmeli.** Bastırılmış görüntüde piksel yoğunluk dağılımı değişir → H0/H1 diyagramları bastırma öncesiyle **karşılaştırılamaz** hale gelir. Pratik çözüm: bastırma sonrası görüntüyü orijinalin min-max aralığına geri ölçekle.
+4. **"Kemik bastırma her zaman iyi değil."** Kazanç kemik-örtüşmeli lezyonlarda yoğunlaşıyor → **zon-bazlı kazanç analizi** raporlanmalı (üst zonlarda klavikula/kaburga etkisi daha güçlü). SADXNet'in +%3.23 AUC'si referans büyüklük mertebesi.
+5. **Lisans:** Qure.ai CC-BY-NC-SA-4.0 (ticari kullanım yasak), xU-NetFullSharp GPL-3.0. Ticari hedef varsa kendi modelini eğitmek daha güvenli.
 
 ---
 
-## 5. Sentez ve Deney Önceliklendirmesi
+## 5. Sentez ve Deney Önceliklendirmesi (FİNAL)
 
-> ⏳ Dört kol tamamlandığında finalize edilecek.
+### 5.1 Skorumuzun gerçek konumu — "başarısız" değil
 
-**Şimdiden netleşen üç sonuç:**
+| Karşılaştırma | Değer | Yorum |
+| :--- | :---: | :--- |
+| NODE21 rank-1 (görüntü düzeyi AUC) | 0.868 | Bizimki (0.8631) pratikte **denk** |
+| NODE21 ensemble (zirve) | 0.877 | Tüm yarışmanın en iyisi |
+| NODE21 baseline (DB) | 0.816 | Bizimki bunun **üstünde** |
+| ChestX-ray14 nodül AUC (Wang 2017) | 0.67 | Bizimki **çok üstünde** |
+| Wang 2024 topolojik radiomics (GGN) | 0.85 / 0.862 | **Aynı bant** |
+| Topo-CXR (TB/pnömoni) | ~0.99 | **Farklı ve yapısal olarak daha kolay görev** |
 
-1. **En yakın emsal Topo-CXR (ICCVW 2023):** CXR + kübik PH ile, küçük veri rejiminde, augmentasyonsuz SOTA DL'yi geçiyor. Bizim PI-vs-PL ve TDA-vs-ham-piksel ablasyonlarımız bu çizgiyi **nodül görevine** taşıyor → **özgün katkı, görev + PI temsili + 5-zon anatomik ayrıştırmada**, yöntemin kendisinde değil.
-2. **Referans skorumuz literatürle uyumlu:** 0.8631, topolojik radiomics emsalleriyle (0.85–0.862) aynı bantta. Sorun skorun düşüklüğü değil, **güçlü baseline eksikliği** ve **yorumlanabilirlik kanıtının olmaması**.
-3. **E2.6 (MPH) "Parkta"dan çıkarılmalı**; ancak cubical adaptasyon riski nedeniyle ikinci dalga. İlk dalga için **SEDT-3 / şablon tabanlı filtrasyon** ve **çok ölçekli σ-ızgara duyarlılık taraması** daha yüksek etki/efor oranı sunuyor.
+**Kritik teknik uyum:** NODE21'in AUC metriği **görüntü düzeyindedir** ve görüntü skoru = **maksimum kutu olasılığı**. Bizim hasta skorumuz = **5 zon olasılığının maksimumu**. ⇒ **Agregasyon mantığı (max) ve metrik (AUC) örtüşüyor.** Farklar: (a) lokalizasyon üretmiyoruz, (b) split'imiz resmî değil.
 
-**Yeni, literatürden doğan deney adayları (backlog'a eklenecek):**
+> 🔑 **Yeniden çerçeveleme:** *"Yorumlanabilir, hafif, tamamen topolojik bir temsil — hiçbir derin tespit mimarisi ve harici pretrain kullanmadan — ağır detektör topluluklarının görüntü düzeyi AUC seviyesine yaklaşıyor."* Bu iddia **dürüst ve savunulabilir**; "SOTA'yı geçtik" iddiası ise değil.
 
-| Öneri | Dayanak | Efor | Etki |
-| :--- | :--- | :---: | :---: |
-| PI **ağırlık fonksiyonu** karşılaştırması (Adams `w=p` vs max-distance, linear, arctangent) | Moon et al. 3 ağırlık fonksiyonu | Kolay | Orta |
-| **σ / ızgara çözünürlük duyarlılık taraması** | Moon et al. 625 kombinasyon LOOCV | Kolay | Orta (sağlamlık kanıtı) |
-| **GUDHI `cofaces_of_persistence_pairs()`** ile PI noktası → görüntü bölgesi geri izleme | GUDHI 3.13 API | Kolay | **Yüksek** (E4.2 yorumlanabilirlik) |
-| **SEDT-3 / sağlıklı şablon** filtrasyonu | Moon et al. | Orta | Yüksek |
-| **PersLay** ile öğrenilebilir vektörleştirme | repo hazır | Orta | Orta |
+### 5.2 Yenilik hiyerarşisi (yayın için)
+
+| # | İddia | Literatür durumu | Güç |
+| :-: | :--- | :--- | :---: |
+| 1 | **PL'nin üst-zarf (envelope) mekanizmasıyla çökmesi** — birkaç uzun ömürlü ama ilgisiz H1 sınıfının tüm temsili ezmesi; PI ile doğrudan nedensel karşılaştırma | **Bulunamadı.** Vandaele 2020 "ilgisiz nesne" problemini tanıyor ama **PL zarfı için test etmiyor** | **En güçlü** |
+| 2 | **Kemik/damar bastırma + kalıcı homoloji kombinasyonu** | **Bulunamadı** | **Çok güçlü** |
+| 3 | Topo-CXR'ın *"ön-işleme gerekmez"* tezine **karşı çıkış** | Literatür ters tezi savunuyor → net karşı-pozisyon | Güçlü |
+| 4 | CXR'de H1'in bronkovasküler döngü + kaburga kenarı ile domine edilmesi | Spesifik anatomik formülasyon **yok** | Güçlü |
+| 5 | 5 anatomik zon + zon başına PH + hasta düzeyi max-pooling | **Bulunamadı** (Topo-CXR global, Vandaele/Wang ROI-kısıtlı) | Güçlü |
+| 6 | NODE21 + kalıcı homoloji | **Bulunamadı** | Orta (*"bildiğimiz kadarıyla ilk"*) |
+
+**Yenilik İDDİA EDİLMEMESİ gerekenler:** "ilgisiz yapılar diyagramı domine eder → ROI kısıtlaması gerekir" (Vandaele 2020/2022) · "PI ve PL farklı davranır, veri setine bağlıdır" (Barnes 2021, Sulowska 2026) · "topoloji tek başına CNN'e denk, füzyonla artar" (TDA-Net) · "topoloji gerçek histolojiyi, radyomik radyolog skorunu taklit eder" (Vandaele 2022).
+
+### 5.3 Zorunlu karşılaştırmalar (hakem itirazlarını kapatmak için)
+
+| # | Gereksinim | Bağlı deney |
+| :-: | :--- | :--- |
+| 1 | **Aynı split'te güçlü ham-piksel CNN baseline** ("TDA neden global CNN'i geçmiyor?") | E0.3 → E3.1/E3.2 |
+| 2 | **PL mekanizma analizi** (üst zarf görselleştirmesi + nicel ölçüm) | **E4.4** |
+| 3 | **Split beyanı** (iç bölünme; leaderboard karşılaştırması yok) | roadmap §0 kural 9 |
+| 4 | **Sağlamlık** (σ/ızgara, ağırlık fonksiyonu, overlap eşiği) | E2.7, E2.8, E4.1 |
+| 5 | **Harici doğrulama** (JSRT / ChestX-ray14 nodül alt kümesi) | E5.3 |
+| 6 | **NODE21 organizer submission** (public GitHub + Docker) | opsiyonel, en güçlü kanıt |
+
+### 5.4 Literatürden doğan deneyler (roadmap'e işlendi)
+
+| ID | Deney | Dayanak | Efor | Etki |
+| :--- | :--- | :--- | :---: | :---: |
+| **E4.4** | PL üst-zarf mekanizması analizi | Moon 2020 + Barnes 2021 + Sulowska 2026 | Kolay | **Çok Yüksek** |
+| **E2.7** | PI ağırlık fonksiyonu karşılaştırması (Adams `w=p` vs max-dist/linear/arctan) | Moon et al. 3 ağırlık fonksiyonu | Kolay | Orta |
+| **E2.8** | σ / ızgara çözünürlük duyarlılık taraması | Moon et al. 625 kombinasyon LOOCV | Kolay | Orta (kanıt) |
+| **E2.3** (güçlendirildi) | SEDT-3 / sağlıklı şablon + **kemik maskesiyle H1 süzme** | Moon et al. + Qure.ai | Orta | Yüksek |
+| **E4.2** (enabler doğrulandı) | GUDHI `cofaces_of_persistence_pairs()` ile PI noktası → görüntü bölgesi | GUDHI 3.13 (yerel test ✅) | Kolay | Yüksek |
+| **E5.3** | Harici doğrulama | JSRT / ChestX-ray14 | Zor | Yüksek |
+| **E2.6** (parktan çıktı) | Çok parametreli persistence (multipers/MMA) | multipers olgun | Zor | Orta |
+
+### 5.5 Dürüstlük notları ve doğrulanamayanlar
+
+* **Topo-CXR'ın sayısal sonuçları** ikincil atıftan (RepViT-CXR) alındı — PDF araç zincirince okunamadı.
+* **NODE21 leaderboard sayıları** bazı kollarda tam metinden çıkarılamadı; TMI 2024 makalesi ikincil kaynaklarla teyit edildi, ama **sayı uydurulmadı**.
+* **Qure.ai** arXiv ID'si gelecek tarihli (2026-09) ve hakem süreci belirsiz → ağırlıklar kullanılsa bile makalede bu belirsizlik belirtilmeli.
+* **CXR'de damar bastırmanın nodül tespitine ölçülmüş katkısı** için doğrulanmış kaynak yok.
+* **Tarama kapsamı:** ~40 arama + birincil kaynak getirme. `web_fetch` PDF okuyamıyor; ScienceDirect/MDPI/PubMed HTML getirmeleri 403 döndü (PMC ve arXiv HTML çalıştı).
