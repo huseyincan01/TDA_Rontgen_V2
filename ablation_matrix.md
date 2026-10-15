@@ -21,14 +21,16 @@ Veri kümemiz **NODE21'in halka açık TRAINING setiyle birebir aynıdır** (488
 
 | Sıra | Model | Temsil | Val ROC-AUC | **Test ROC-AUC** | Kaynak |
 | :-: | :--- | :--- | :---: | :---: | :--- |
-| 🥇 | **Füzyon: ResNet18 + TDA ensemble** | görüntü + topoloji | 0.9572 | **0.9190 ± 0.0056** (3 seed) | **E3.1 + E3.7** · [betik](pipelines/exp/E3_1_tda_image_fusion.py) |
-| 🥈 | TDA ensemble (CNN + SVM soft-voting) | PI vektörü | 0.8821 | **0.8776** | **E3.4** · [betik](pipelines/exp/E3_4_ensemble_cnn_svm.py) |
-| 🥉 | **TDA PI küçük CNN** | PI (2,20,20) | 0.8607 | **0.8631** | v2.1 · E0.2 ile birebir üretildi |
-| 4 | ResNet18 (donmuş) + lojistik regresyon | 512-D ImageNet | 0.8884 | **0.8349** | **E0.3** · [betik](pipelines/exp/E0_3_resnet_baseline.py) |
-| 5 | RBF-SVM | PI vektörü | 0.8278 | 0.8289 | v2.1 |
-| 6 | k-NN | PI vektörü | 0.7125 | 0.7162 | v2.1 |
-| 7 | Ham görüntü küçük CNN (64×64) | gri piksel | 0.6870 | 0.7043 | v2.1 |
-| 8 | PL küçük CNN | Landscape | 0.5927 | 0.5450 | v2.1 |
+| 🥇 | **Füzyon: ince ayarlı ResNet18 + TDA ensemble** | görüntü + topoloji | 0.9572 | **0.9516** (doğruluk %89.4) | **E0.6** · [betik](pipelines/exp/E0_6_decisive_test.py) |
+| 🥈 | İnce ayarlı ResNet18 (son-blok) | 512-D ImageNet | — | **0.9284** | **E0.4/E0.5/E0.6** · [betik](pipelines/exp/E0_5_resnet_finetune_reg.py) |
+| 🥉 | Füzyon: **donmuş** ResNet18 + TDA ensemble | görüntü + topoloji | 0.9572 | **0.9190 ± 0.0056** (3 seed) | **E3.1 + E3.7** · [betik](pipelines/exp/E3_1_tda_image_fusion.py) |
+| 4 | TDA ensemble (CNN + SVM soft-voting) | PI vektörü | 0.8821 | **0.8776** | **E3.4** · [betik](pipelines/exp/E3_4_ensemble_cnn_svm.py) |
+| 5 | **TDA PI küçük CNN** | PI (2,20,20) | 0.8607 | **0.8631** | v2.1 · E0.2 ile birebir üretildi |
+| 6 | ResNet18 (donmuş) + lojistik regresyon | 512-D ImageNet | 0.8884 | **0.8349** | **E0.3** · [betik](pipelines/exp/E0_3_resnet_baseline.py) |
+| 7 | RBF-SVM | PI vektörü | 0.8278 | 0.8289 | v2.1 |
+| 8 | k-NN | PI vektörü | 0.7125 | 0.7162 | v2.1 |
+| 9 | Ham görüntü küçük CNN (64×64) | gri piksel | 0.6870 | 0.7043 | v2.1 |
+| 10 | PL küçük CNN | Landscape | 0.5927 | 0.5450 | v2.1 |
 | 9 | PL RBF-SVM | Landscape | 0.5449 | 0.5217 | v2.1 |
 
 **Bağlam (bizim split'imizle karşılaştırılamaz):** NODE21 final test leaderboard → D1 0.868 · D2 0.862 · D3 0.833 · baseline 0.816 · **ensemble 0.877**.

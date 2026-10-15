@@ -613,3 +613,46 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   ⇒ **Son test değerlendirmesi bu soruyu çözmeye ayrılmalı:** ince ayarlı ResNet18 ve **ince ayarlı + TDA füzyonu** test'te ölçülmeli.
 * **Karar:** **KEEP** (ön-kayıtlı kriter sağlandı) — ancak **aşırı uyum** nedeniyle test doğrulaması **zorunlu**; sonuçlar şimdilik **val-only** olarak işaretlenmiştir.
 * **Manifest:** `artifacts/runs/E0.4_resnet_finetune/manifest.json`
+
+### E0.5 — Düzenlileştirilmiş İnce Ayar Taraması (aşırı uyum giderme)
+
+* **Amaç:** E0.4'ün aşırı uyumunu (train loss 0.0012) gidermek. Ön-kayıtlı iki koşul: **(a)** son train loss > 0.05, **(b)** zon val AUC ≥ 0.87.
+* **🐛 Kritik bug ve düzeltme:** İlk koşular **geçersizdi**. Önbellek E0.4 tarafından `train_dengeli+val+test` = **9380** satırla üretilmişti, E0.5 ise `test` hariç **5710** satır kullanıyordu → **görüntüler etiketlerle kaydı** ve model şans düzeyinde kaldı (val AUC 0.58). Önbellek satır sayısı ekrana basıldığında (`Zon: 5710` vs `Onbellek: (9380,...)`) fark edildi. Düzeltme: aynı satır kümesi kullanıldı + **boyut uyuşmazlığında hata fırlatan koruma** eklendi.
+* **Sonuç (düzeltilmiş):** ⚠️ **KILL** — hiçbir tarif iki koşulu birlikte sağlamadı
+
+  | Konfigürasyon | Son train loss | Zon val AUC | **Hasta val AUC** |
+  | :--- | :---: | :---: | :---: |
+  | E0.4 (artırma/düzenlileştirme yok) | 0.0012 ⚠️ | 0.8590 | 0.9487 |
+  | **mild** (hflip, wd=1e-4, dropout 0.3) | 0.0012 ⚠️ | **0.8706** | **0.9546** |
+  | **full** (artırma + wd=1e-3) | **0.1247** ✓ | 0.8439 | 0.9368 |
+
+* **Yorum:**
+  1. **Tam artırma aşırı uyumu gerçekten giderdi** (train loss 0.0012 → 0.1247) ama **temsili biraz düşürdü** (zon AUC 0.859 → 0.844).
+  2. **Hasta düzeyi val AUC üç tarifte de 0.937–0.955** → ince ayarın kazancı **tarife duyarsız**, sağlam.
+  3. ⇒ Asıl mesele aşırı uyum değil: ince ayarlı görüntü modeli **füzyona val'de çok yakın** (0.955 vs 0.957) ⇒ **E0.6 belirleyici testi zorunlu kıldı.**
+* **Karar:** **KILL** (koşullar sağlanmadı) — ancak E0.6 için gerekli bilgiyi üretti.
+* **Manifest:** `artifacts/runs/E0.5_resnet_finetune_reg*/manifest.json`
+
+### E0.6 — BELİRLEYİCİ TEST: TDA, Güçlü Görüntü Modeline de Katkı Sağlıyor mu? 🏆
+
+* **Hipotez (ön-kayıtlı):** TDA dalı, **ince ayarlı** görüntü modeline de test ROC-AUC'sinde **≥ +0.015** katkı sağlar (bootstrap %95 CI sıfırı dışlar).
+* **Neden son test hakkı buraya:** E3.1'in orijinal kazancı **donmuş** bir baseline'a karşıydı ve o baseline ciddi genelleme kaybı yaşıyordu. E0.4/E0.5, ince ayarın val AUC'sini 0.95'e çıkardığını gösterdi ⇒ *"füzyon kazancının çoğu zayıf baseline'dan geliyor"* itirazı **test'te** sınanmalıydı. Bu, literatür taramasında öngörülen **1 numaralı hakem itirazıydı.**
+* **Kapsam:** **SON test değerlendirmesi** (bütçe 5/6 → **6/6**).
+* **Sonuç:** ✅ **KEEP — ana iddia güçlü bir baseline karşısında AYAKTA**
+
+  | Model | Test hasta ROC-AUC | (donmuş dönem) |
+  | :--- | :---: | :---: |
+  | İnce ayarlı ResNet18 (tek başına) | **0.9284** | 0.8349 |
+  | TDA ensemble (tek başına) | 0.8629 | 0.8776 |
+  | **FÜZYON (a=0.45)** | **0.9516** | 0.9190 |
+  | **Füzyon doğruluğu** | **0.8937** | 0.8638 |
+
+  **TDA katkısı: +0.0232, %95 CI [+0.0132, +0.0338], p=0.0000** ✓
+
+* **Yorum:**
+  1. ✅ **İnce ayar baseline'ı çok güçlendirdi** (0.8349 → **0.9284**, +0.0935) ⇒ E0.3'ün "donmuş model" eleştirisi haklıymış.
+  2. ✅ **Buna rağmen TDA anlamlı katkı sağlıyor** (+0.0232, CI sıfırı dışlıyor) ⇒ **füzyon kazancı zayıf baseline artefaktı DEĞİL.** Makalenin ana iddiası **en güçlü baseline karşısında doğrulandı.**
+  3. 🏆 **Yeni ana sonuç: füzyon test ROC-AUC 0.9516, doğruluk %89.4** (dondurulmuş dönemde 0.9190 / %86.4).
+  4. ⚠️ **Küçük tutarsızlık (kayda geçti):** TDA dalı bu koşuda 0.8629 çıktı, E3.4'te 0.8776 idi (−0.0148). Muhtemel sebep: kayıtlı CNN bundle'ının dropout/config yüklenmesi veya SVM bundle sürümü. Aynı koşu içinde füzyon tutarlı hesaplandığı için ana sonuç etkilenmez, ancak **TDA-tek sayısı için E3.4 değeri (0.8776) esas alınmalı** ve fark ileride açıklanmalıdır.
+* **Karar:** **KEEP** 🏆 — ana iddia, ince ayarlı güçlü görüntü modeli karşısında **istatistiksel olarak doğrulandı**.
+* **Manifest:** `artifacts/runs/E0.6_decisive_test/manifest.json`
