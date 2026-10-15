@@ -59,7 +59,7 @@ SEED = 42
 INPUT_SIZE = 224
 EPOCHS = 15
 LR = 1e-4
-BATCH = 32
+BATCH = 64
 FROZEN_VAL_AUC = 0.8884
 MIN_DELTA = 0.015
 CACHE = PROJECT_ROOT / "data/processed/features_resnet18/trainval_gray224.npy"
@@ -114,11 +114,23 @@ def build_or_load_cache(sub: pd.DataFrame, zones_dir: Path, reuse: bool) -> np.n
     return arr
 
 
-def to_batch(gray_u8: np.ndarray) -> torch.Tensor:
+def to_batch(gray_u8: np.ndarray, device: torch.device) -> torch.Tensor:
     x = torch.from_numpy(gray_u8).float().div_(255.0).unsqueeze(1).repeat(1, 3, 1, 1)
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
-    return (x - mean) / std
+    mean = torch.tensor([0.485, 0.456, 0.406], device=device).view(1, 3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225], device=device).view(1, 3, 1, 1)
+    return (x.to(device) - mean) / std
+
+
+@torch.no_grad()
+def predict(model: nn.Module, gray: np.ndarray, idx: np.ndarray, device: torch.device,
+            bs: int = 256) -> np.ndarray:
+    """Toplu cikarim — tum val setini tek forward'da gecirmek 6 GB VRAM'i asar (OOM)."""
+    model.eval()
+    outs = []
+    for i in range(0, len(idx), bs):
+        b = idx[i:i + bs]
+        outs.append(torch.sigmoid(model(to_batch(gray[b], device)).squeeze(-1)).cpu().numpy())
+    return np.concatenate(outs) if outs else np.empty(0)
 
 
 def main() -> None:
@@ -142,12 +154,18 @@ def main() -> None:
     va = (sub["split"] == "val").values
     vt = va & sub["is_zone_metric_sample"].values.astype(bool)
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if device.type == "cuda":
+        torch.cuda.manual_seed_all(SEED)
+    print(f"  Cihaz: {device}" + (f" — {torch.cuda.get_device_name(0)}" if device.type == "cuda" else ""))
+
     model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
     for p in model.parameters():
         p.requires_grad = False
     for p in model.layer4.parameters():
         p.requires_grad = True
     model.fc = nn.Linear(model.fc.in_features, 1)
+    model.to(device)
     model.train()
 
     params = [p for p in model.parameters() if p.requires_grad]
@@ -168,14 +186,13 @@ def main() -> None:
         losses = []
         for i in range(0, len(idx_tr), BATCH):
             b = idx_tr[i:i + BATCH]
-            xb = to_batch(gray[b]); yb = torch.tensor(y[b])
+            xb = to_batch(gray[b], device); yb = torch.tensor(y[b], device=device)
             opt.zero_grad()
             loss = crit(model(xb).squeeze(-1), yb)
             loss.backward(); opt.step()
-            losses.append(float(loss))
+            losses.append(float(loss.detach()))
         model.eval()
-        with torch.no_grad():
-            pv = torch.sigmoid(model(to_batch(gray[idx_vt])).squeeze(-1)).numpy()
+        pv = predict(model, gray, idx_vt, device)
         a = roc_auc_score(y[idx_vt], pv)
         if a > best_auc:
             best_auc, best_state = a, {k: v.clone() for k, v in model.state_dict().items()}
@@ -186,8 +203,7 @@ def main() -> None:
     model.eval()
 
     # hasta duzeyi val AUC
-    with torch.no_grad():
-        pv_all = torch.sigmoid(model(to_batch(gray[va])).squeeze(-1)).numpy()
+    pv_all = predict(model, gray, np.where(va)[0], device)
     tmp = sub.loc[va, ["patient_id"]].copy(); tmp["p"] = pv_all
     pdf = tmp.groupby("patient_id")["p"].max()
     meta = sub[sub["split"] == "val"].drop_duplicates("patient_id").set_index("patient_id")

@@ -584,3 +584,32 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   5. Bu bir **genelleme çalışmasıdır**; dondurulmuş test seti kullanılmadı, model seçimi yapılmadı (her kat kendi train/val/test'ini kurar).
 * **Karar:** **KEEP** — kaynak-dışı genelleme kanıtlandı; domain-shift bedeli ölçüldü.
 * **Manifest:** `artifacts/runs/E5.3_cross_source/manifest.json`
+
+### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
+
+* **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
+* **Gerekçe:** E0.3'ün görüntü dalı **donmuş** ImageNet ağırlıklarıydı; *"görüntü tarafında model eğitmediniz"* eleştirisine açıktı. GPU (E0.0) gelince bu deney ucuzladı.
+* **Tek değişken:** `layer4+fc` eğitilebilir mi. Mimari, ön-işleme, split ve değerlendirme protokolü E0.3 ile **aynı**. Havuzlanmış tek model (E3.5'te zon-özel ile eşdeğer bulundu).
+* **Kapsam:** Yalnızca **validation**; test setine dokunulmadı.
+* **Sonuç:** ✅ **KEEP (kriter sağlandı)** — ama **ciddi aşırı uyum uyarısıyla**
+
+  | Ölçüt | Değer |
+  | :--- | :--- |
+  | **HASTA düzeyi val ROC-AUC** | **0.9487** |
+  | Dondurulmuş versiyon (E0.3) | 0.8884 |
+  | **Fark** | **+0.0603** (eşik +0.015 ✓) |
+  | Zon düzeyi val AUC (en iyi epoch) | 0.8590 |
+  | GPU eğitim süresi | **5 s/epoch** (CPU'da 205 s → **41× hızlanma**), 15 epoch ≈ 75 s |
+
+* **🚨 Kritik uyarı — aşırı uyum:**
+  * Eğitim kaybı **0.5894 → 0.0012**'ye düşüyor (neredeyse ezberleme).
+  * Buna karşılık **zon düzeyi** val AUC epoch 7'den sonra **0.859'da plato** yapıyor; iyileşme duruyor.
+  * Yani model **2.040 dengeli train zonunu ezberliyor**, genel temsili iyileştirmiyor.
+  * **Hasta düzeyi 0.9487 neden bu kadar yüksek?** Muhtemelen **max-pooling + aşırı özgüven** etkisi: aşırı uyumlu model bazı zonlarda çok kesin (0/1'e yakın) tahmin üretiyor ve max-pooling bunu amplifiye ediyor. Kırılgan bir kazanç olabilir.
+  * **Ayrıca metodolojik asimetri:** ince ayarlı model val üzerinde **15 epoch × checkpoint** ile seçildi, dondurulmuş model ise val üzerinde 5 C değeriyle. İkisi de val kullanıyor ama ince ayarlının **val'e uyum fırsatı daha fazla** → val karşılaştırması iyimser olabilir.
+
+* **📌 Stratejik sonuç (yayın açısından önemli):**
+  İnce ayarlı görüntü modelinin val hasta AUC'si **0.9487**, füzyonun val AUC'si **0.9572**'ye çok yakın. Eğer bu **test'te de** tutarsa, ana iddiamız (*"TDA güçlü görüntü modeline tamamlayıcı bilgi katıyor"*) **zayıflar** — çünkü füzyon kazancının büyük kısmı **zayıf (dondurulmuş) baseline**'dan kaynaklanıyor olabilir. Bu, literatür taramasında öngördüğümüz **1 numaralı hakem itirazının** ta kendisidir.
+  ⇒ **Son test değerlendirmesi bu soruyu çözmeye ayrılmalı:** ince ayarlı ResNet18 ve **ince ayarlı + TDA füzyonu** test'te ölçülmeli.
+* **Karar:** **KEEP** (ön-kayıtlı kriter sağlandı) — ancak **aşırı uyum** nedeniyle test doğrulaması **zorunlu**; sonuçlar şimdilik **val-only** olarak işaretlenmiştir.
+* **Manifest:** `artifacts/runs/E0.4_resnet_finetune/manifest.json`
