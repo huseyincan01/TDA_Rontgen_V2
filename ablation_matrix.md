@@ -136,7 +136,25 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 
 ---
 
-## 7. Sağlamlık Özeti
+## 6.1 Zon Bazlı Hata Analizi
+
+**E4.3** · [betik](pipelines/exp/E4_3_zone_error_analysis.py) · validation, 734 hasta (test kullanılmadı, yeni model eğitilmedi)
+
+**Zon başına hasta düzeyi val ROC-AUC** (zon TEK BAŞINA kullanılırsa):
+
+| Zon | CNN | SVM | ResNet |
+| :--- | :---: | :---: | :---: |
+| 1 Sağ Üst | 0.7859 | 0.7252 | 0.8055 |
+| 2 Sağ Orta | **0.8199** | **0.8156** | **0.8244** |
+| 3 Sağ Alt | 0.8017 | 0.7321 | 0.7743 |
+| 4 Sol Üst | 0.7380 | 0.7046 | **0.8409** |
+| 5 Sol Alt | 0.7763 | 0.7379 | 0.8021 |
+
+**Sorumlu zon dağılımı** (fusion kararı hangi zondan geliyor): Zon 5 %26.7 · Zon 1 %25.3 · Zon 3 %21.5 · Zon 4 %18.9 · Zon 2 %7.5 ⇒ **tek-zon hakimiyeti yok**.
+**Yanlış negatifler (n=12):** ortalama olasılık 0.5812, maksimum 0.6317 — eşiğin (0.6357) hemen altında **"kıl payı"** hatalar (TP ortalaması 0.7271).
+
+> ⚠️ **SINIRLAMA — hasta-global sinyal riski.** Her zonun **tek başına** hastayı 0.74–0.84 AUC ile ayırt edebilmesi, zon-bazlı sınıflandırıcıların sinyalinin önemli bir kısmının **zon-dışı / hasta-global** olabileceğini düşündürüyor. Sinyal tamamen lokal olsaydı, **nodül içermeyen zonlar şans düzeyinde kalırdı**. Bu, makalede açıkça belirtilmeli ve **E4.7** (lokalite testi: modelin maksimumu gerçek nodül zonuna şanstan sık mı düşüyor?) ile test edilmelidir. Sonuçları geçersiz kılmaz — global bağlam da klinik olarak bilgilendirici olabilir — ama **iddianın kapsamını** daraltır.
+
 
 | Boyut | Test edilen | Sonuç | Deney |
 | :--- | :--- | :--- | :--- |

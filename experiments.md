@@ -405,3 +405,31 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   4. 📌 **Bonus:** E4.6'da ölçülen seed varyansının (±0.02–0.03) **yöntem kararlarından büyük** olduğu burada da doğrulandı → **kural 10** (çok-seed raporlama) haklı.
 * **Karar:** **KEEP** — mevcut σ=1.0 / 20×20 ayarları korunur; **Faz 1 tamamlandı (6/6)**.
 * **Manifest:** `artifacts/runs/E2.8_sigma_grid_sensitivity/manifest.json`
+
+### E4.3 — Zon Bazlı Hata Analizi
+
+* **Hipotez (ön-kayıtlı):** Hasta düzeyi max-pooling kararı tek zona bağımlı değildir; **zayıf zonlar** (val ROC-AUC < 0.70) vardır ve yanlış negatiflerin çoğundan onlar sorumludur.
+* **Kapsam:** Yalnızca **validation**; test setine dokunulmadı. **Yeni model eğitilmedi** — kayıtlı paketlerden çıkarım (açıklayıcı analiz, model seçimi değil).
+* **Sonuç:** ❌ **Hipotez reddedildi → KILL** (zayıf zon **yok**) — ama üç değerli bulgu:
+
+  **1) Zon başına hasta düzeyi val ROC-AUC (zon TEK BAŞINA kullanılırsa):**
+
+  | Zon | CNN | SVM | ResNet |
+  | :--- | :---: | :---: | :---: |
+  | 1 Sağ Üst | 0.7859 | 0.7252 | 0.8055 |
+  | 2 Sağ Orta | **0.8199** | **0.8156** | **0.8244** |
+  | 3 Sağ Alt | 0.8017 | 0.7321 | 0.7743 |
+  | 4 Sol Üst | 0.7380 | 0.7046 | **0.8409** |
+  | 5 Sol Alt | 0.7763 | 0.7379 | 0.8021 |
+
+  **Hiçbir zon 0.70'in altında değil** ⇒ ön-kayıtlı "zayıf zon" kriteri sağlanmadı.
+
+  **2) Sorumlu zon dağılımı (fusion, eşik 0.6357):** karar 5 zonun **tamamına** yayılıyor (Zon 1 %25.3 · Zon 5 %26.7 · Zon 3 %21.5 · Zon 4 %18.9 · Zon 2 %7.5). Tek-zon hakimiyeti **yok** ⇒ max-pooling dejenere değil.
+
+  **3) Yanlış negatifler (FN=12):** ortalama fusion olasılığı **0.5812**, maksimum **0.6317** — yani eşiğin (0.6357) hemen altında **"kıl payı"** hatalar; TP ortalaması 0.7271.
+
+* **📌 En önemli çıkarım (yeni hipotez doğuruyor):**
+  Her zonun **tek başına** hastayı ~0.74–0.84 AUC ile ayırt edebilmesi, zon-bazlı sınıflandırıcıların sinyalinin önemli bir kısmının **hasta-global** (zon-dışı) olabileceğini düşündürüyor — saf lokal nodül kanıtı olsaydı, nodül içermeyen zonlar şans düzeyinde kalırdı. Bu, makalede **sınırlama + gelecek iş** olarak açıkça belirtilmeli ve **E4.7** ile test edilmeli.
+* **Karar:** **KILL** (hipotez) — bulgular korunur.
+* **Yeni deney (E4.7):** "Modelin maksimum olasılığı, gerçek nodül zonuna şanstan daha sık mı düşüyor?" (lokalite testi).
+* **Manifest:** `artifacts/runs/E4.3_zone_error_analysis/manifest.json`
