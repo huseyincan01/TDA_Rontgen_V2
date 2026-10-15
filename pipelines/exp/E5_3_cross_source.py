@@ -73,7 +73,33 @@ def parse_args() -> argparse.Namespace:
                    default=PROJECT_ROOT / "data/processed/features_resnet18/X_zone_features.npy")
     p.add_argument("--patients-dir", type=Path,
                    default=PROJECT_ROOT / "data/processed/zones/patients")
+    p.add_argument("--train-zone-cap", type=int, default=0,
+                   help="Dengeli train zon sayisini bu degere indir (0 = sinirsiz). "
+                        "Esit-boyut kontrolu: tum katlar ayni miktarda veriyle egitilsin.")
+    p.add_argument("--tag", type=str, default="", help="rapor etiketi")
     return p.parse_args()
+
+
+def cap_balanced_train(zs: pd.DataFrame, cap: int, seed: int) -> pd.DataFrame:
+    """Dengeli train setini 1:1 oranini koruyarak `cap` zona indirir.
+
+    Amac (esit-boyut kontrolu): katlar arasindaki basarim farkinin ne kadari
+    GERCEK domain shift, ne kadari yalnizca egitim verisi miktari farki?
+    """
+    zs = zs.copy()
+    m = zs["is_train_balanced_sample"].values.astype(bool)
+    if m.sum() <= cap:
+        return zs
+    idx = np.where(m)[0]
+    pos = idx[zs["zone_label"].values[idx] == 1]
+    neg = idx[zs["zone_label"].values[idx] == 0]
+    rng = np.random.RandomState(seed)
+    n_each = min(len(pos), len(neg), cap // 2)
+    keep = np.concatenate([rng.choice(pos, n_each, replace=False),
+                           rng.choice(neg, n_each, replace=False)])
+    drop = np.setdiff1d(idx, keep)
+    zs.loc[zs.index[drop], "is_train_balanced_sample"] = False
+    return zs
 
 
 def patient_sources(patients_dir: Path) -> Dict[str, str]:
@@ -215,6 +241,8 @@ def main() -> None:
     for s in HELD_OUT:
         ps = make_patient_splits(meta, src, s, seed=42)
         zs, _ = build_zone_splits_v2(features_meta_df=meta, patient_splits_df=ps, seed=42)
+        if args.train_zone_cap > 0:
+            zs = cap_balanced_train(zs, args.train_zone_cap, seed=42)
         print(f"\n--- Kaynak disi: {s} ---")
         print(f"  train hasta={(ps['split']=='train').sum()} | val={(ps['split']=='val').sum()} "
               f"| test={(ps['split']=='test').sum()} | dengeli train zon={int(zs['is_train_balanced_sample'].sum())}")
@@ -271,13 +299,14 @@ def main() -> None:
         "hypothesis": f"Kaynak-disi ortalama test ROC-AUC > {SUCCESS_AUC}.",
         "design": "leave-one-source-out; kontroller her kaynak icin orana uygun orneklenir; zon bazinda 1:1 dengeleme",
         "held_out_sources": HELD_OUT, "seeds": SEEDS,
+        "train_zone_cap": args.train_zone_cap,
         "random_split_reference": RANDOM_SPLIT_REF,
         "results": results,
         "tda_cnn_mean_test_auc": tda_avg, "fusion_mean_test_auc": fus_avg,
         "thresholds": {"success": SUCCESS_AUC, "fail": FAIL_AUC},
         "decision": decision,
     }
-    run_dir = new_run_dir(EXPERIMENT_ID, SLUG)
+    run_dir = new_run_dir(EXPERIMENT_ID, SLUG + (f"_{args.tag}" if args.tag else ""))
     (run_dir / "test_report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
     manifest = write_manifest(
         run_dir, EXPERIMENT_ID, inputs=[args.meta_path, args.tda_features, args.resnet_features],

@@ -221,14 +221,17 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | chestxray14 | 2635 | 0.7406 | **0.7821** |
 | padchest | 1341 | 0.8391 | **0.8499** |
 | jsrt | 636 | 0.9076 | **0.9085** |
-| **Ortalama** | | **0.8291** | **0.8468** |
+| **Ortalama** | | **0.8291** | **0.8468** → **0.8098** (eşit-boyut) |
 | *(rastgele split referansı — donmuş görüntü dalı)* | *734* | *0.8631* | *0.9190* |
+
+* ⚠️ **Eşit-boyut düzeltmesi (E5.3b) — makalede kullanılacak sayı:** Katların dengeli train boyutları farklıydı (1034 / 1876 / 2222 zon). **Tüm katlar 1034 zona eşitlendiğinde** padchest 0.8499 → **0.7625** (−0.0874), jsrt 0.9085 → **0.8847** (−0.0238), ortalama **0.8468 → 0.8098**. ⇒ Önceki 0.8468 **iyimserdi**; avantajın bir kısmı domain kolaylığı değil **veri miktarı**ydı.
+* ✅ **Düzeltilmiş sonuç:** kaynak-dışı ortalama **0.8098** (şansın çok üzerinde, eşik 0.75'in üstünde) ⇒ genelleme **gerçek**, ancak **domain-shift bedeli −0.109** (önceki tahmin −0.072).
 
 > ⚠️ **Not:** E5.3, **donmuş** görüntü dalıyla koşulduğu için referans 0.9190'dır. E0.6 ile füzyon **0.9516**'ya çıktığından, kaynak-dışı sayılar da benzer biçimde yükselme eğiliminde olabilir; ancak bu **test bütçesi tükendiği için doğrulanamadı** ve kayda geçirilmiş bir açık iştir.
 
-* ✅ **Model kaynak-dışı genelliyor** — ortalama 0.8468, şansın çok üzerinde.
-* ⚠️ **Domain-shift bedeli: −0.072** (0.9190 → 0.8468).
-* ⚠️ **Kısmi confound:** chestxray14 en büyük kaynak; dışarıda bırakıldığında dengeli train **1034 zona** düşüyor (diğer katlarda 1876 ve 2222). Yani en kötü katın düşüşünün bir kısmı **domain shift değil, veri azalması**dır. Eşit-boyutlu rastgele split kontrolü önerilir.
+* ✅ **Model kaynak-dışı genelliyor** — eşit-boyut düzeltmesiyle **0.8098**, şansın çok üzerinde.
+* ⚠️ **Domain-shift bedeli: −0.109** (0.9190 → 0.8098, eşit-boyut).
+* ⚠️ **Confound ÖLÇÜLDÜ ve düzeltildi (E5.3b):** chestxray14 en büyük kaynak; dışarıda bırakıldığında dengeli train **1034 zona** düşüyordu (diğer katlarda 1876 ve 2222). Eşitleme sonrası padchest 0.8499 → **0.7625**. **Ders:** kaynak-dışı genelleme çalışmalarında eğitim verisi miktarı mutlaka eşitlenmelidir.
 
 ---
 
@@ -277,7 +280,7 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | :-: | :--- | :--- |
 | 1 | **E5.2 — yazım**: metodoloji / sonuçlar / tartışma taslağı + figürler | Bekliyor |
 | 2 | **TDA-tek tutarsızlığı**: E0.6'da 0.8629, E3.4'te 0.8776 — sebep **bulundu** (zon düzeyi vs hasta düzeyi varyantı); bundle yükleme farkı **doğrulanmalı** | Kısmen çözüldü |
-| 3 | **E5.3 eşit-boyut kontrolü**: chestxray14 katındaki düşüşün ne kadarı domain shift, ne kadarı veri azalması | Önerildi |
+| 3 | ~~**E5.3 eşit-boyut kontrolü**~~: chestxray14 katındaki düşüşün ne kadarı domain shift, ne kadarı veri azalması | ✅ **TAMAM (E5.3b)** — confound ölçüldü: ortalama 0.8468 → **0.8098** |
 | 4 | **E3.2** — orta seviye füzyon (özellik birleştirme) | Planlandı |
 | 5 | **E2.1/E2.2/E2.3** — çift yön, çok ölçek, şablon filtrasyonu (Faz 3) | Planlandı (beklenti düşük) |
 | 6 | **E3.3** — aday-bazlı mimari | ⛔ **İPTAL** (E3.6: tavan ~0.69) |

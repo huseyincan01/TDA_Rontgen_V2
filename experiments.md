@@ -585,6 +585,26 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KEEP** — kaynak-dışı genelleme kanıtlandı; domain-shift bedeli ölçüldü.
 * **Manifest:** `artifacts/runs/E5.3_cross_source/manifest.json`
 
+#### E5.3b — Eşit-Boyut Kontrolü (confound düzeltmesi) ⚠️🎯
+
+* **Neden:** Yukarıdaki 4. notta işaretlenen confound'u ölçmek için. **Tüm katlar aynı miktarda veriyle** (dengeli train = **1034 zon**) eğitildi.
+* **Sonuç:** Confound **gerçekmiş ve büyükmüş**
+
+  | Dışarıda bırakılan kaynak | Doğal boyut | **Eşit-boyut (1034)** | Fark |
+  | :--- | :---: | :---: | :---: |
+  | chestxray14 | 0.7821 (1034 zon) | **0.7821** | 0 (değişmedi) |
+  | padchest | 0.8499 (1876 zon) | **0.7625** | **−0.0874** |
+  | jsrt | 0.9085 (2222 zon) | **0.8847** | −0.0238 |
+  | **Ortalama** | **0.8468** | **0.8098** | **−0.0370** |
+
+* **Yorum:**
+  1. ⚠️ **Önceki 0.8468 İYİMSERDİ.** padchest ve jsrt'nin avantajının büyük kısmı **daha fazla eğitim verisi** görmelerinden geliyordu, domain kolaylığından değil.
+  2. **Düzeltilmiş kaynak-dışı ortalama: 0.8098** ⇒ rastgele split'e (0.9190) göre **domain-shift bedeli −0.109** (önceki tahmin −0.072 idi).
+  3. Eşitleme sonrası **chestxray14 (0.782) ve padchest (0.763) benzer**; **jsrt (0.885)** belirgin biçimde en kolay kaynak olmaya devam ediyor.
+  4. ✅ **Ana sonuç yine de ayakta:** 0.8098 şansın çok üzerinde ve ön-kayıtlı eşiğin (0.75) üstünde ⇒ **model görülmemiş kaynağa genelliyor**, ama bedeli daha yüksek.
+* **Karar:** **KEEP** (genelleme) — ancak **makalede raporlanacak sayı 0.8098'dir**; 0.8468 confound'lu olduğu için kullanılmamalıdır.
+* **Manifest:** `artifacts/runs/E5.3_cross_source_eqsize/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
