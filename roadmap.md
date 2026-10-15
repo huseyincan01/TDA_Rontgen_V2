@@ -106,7 +106,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | Planlandı 🔓 |
 | **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | **KEEP** ✅ |
 | **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | **KILL** ⚠️ Adams zaten en iyi |
-| **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | Planlandı |
+| **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | **KEEP** ✅ iki kol sağlam |
 | **E5.3** | W5 | Harici doğrulama (JSRT / ChestX-ray14 nodül alt kümesi) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | Planlandı |
 | **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | Planlandı |
 | **E5.2** | W5 | Metin + figürler hakem beklentilerini karşılar | E5.1 | 4g | Orta | Yayın | Planlandı |
@@ -196,7 +196,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
-| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | 5/6 | E2.8 | 2 | 3 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | **6/6** ✅ | — | 3 | 3 |
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
@@ -235,6 +235,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E2.7** | **KILL** ⚠️ | Ağırlık fonksiyonu karşılaştırması (val-only, 5.710 zon, **test kullanılmadı**): **Adams `p` zaten en iyi (0.8736)**. Farklar hep negatif — arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. `p²`'nin en kötü olması **E4.4'ü bağımsız destekliyor**. Mevcut PI tasarımı **doğrulanmış** sayılır. |
 | 2026-10-14 | **E4.1** | **KILL** ⚠️ | Overlap sağlamlığı (hasta split'i dondurulmuş, **test kullanılmadı**): **%10 = 0.8922 (+0.0186)**, %20 = 0.8736, %30 = 0.8693 (−0.0043). En büyük fark **0.0186 ≥ tolerans 0.015** ⇒ sonuçlar kuraldan bağımsız sağlam **değil**; monoton eğilim var (gevşek eşik → iyi). ⚠️ Tek seed; **%10'a geçiş çok-seed doğrulaması gerektirir** → yeni deney **E4.6**. Yan kanıt: %20 sonucu E2.7 ile birebir aynı (0.8736) ⇒ PI rasterleştirmesi doğrulandı. |
 | 2026-10-14 | **E4.6** | **KILL** ⚠️ | Eşleştirilmiş 5 seed: ortalama fark **+0.0085** (std 0.0096), pozitif seed 4/5. Eşik +0.015 **aşılamadı** ⇒ E4.1'in +0.0186'sı **gürültü artefaktı**ydı (seed 42 beşin en büyüğü). **%20 kuralı korunur.** 📌 Yan bulgu: CNN seed varyansı **±0.02–0.03** (val 0.8321–0.8922) → makalede ana sonuçlar için **çok-seed ortalama** raporlanmalı; füzyon kazancı (+0.0862) bu gürültünün çok üzerinde olduğu için iddia sağlam. |
+| 2026-10-14 | **E2.8** | **KEEP** ✅ | σ/ızgara duyarlılığı (3 seed ortalaması, **test kullanılmadı**, tolerans 0.03). Kol A (σ): 0.5→0.8460 (**−0.0236**), **1.0→0.8697**, 1.5→0.8734 (+0.0038), 2.0→0.8712. Kol B (ızgara): 15→0.8545 (−0.0152), **20→0.8697**, 25→0.8469 (−0.0227). Her iki kol da **sağlam** ⇒ sonuç σ/ızgara seçimine aşırı duyarlı değil. Mevcut σ=1.0 / 20×20 korunur. **Faz 1 tamamlandı (6/6).** |
 
 ---
 

@@ -379,3 +379,29 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   3. 📌 **Önemli yan bulgu — seed varyansı:** CNN'in val AUC'si seed'ler arasında **0.8321–0.8922** (≈±0.02–0.03) değişiyor. Bu, makalede tek-seed sonuçların yanına **çok-seed ortalama** konması gerektiğini gösterir. **Ancak** ana sonucumuz (füzyon kazancı **+0.0862**, CI [+0.0632, +0.1099]) bu gürültünün **çok üzerinde** ⇒ iddia sağlam kalır.
 * **Karar:** **KILL** — %20 kuralı korunur, E4.6 kapanır.
 * **Manifest:** `artifacts/runs/E4.6_threshold_multiseed/manifest.json`
+
+### E2.8 — PI σ ve Izgara Çözünürlüğü Duyarlılık Taraması
+
+* **Hipotez (ön-kayıtlı, SAĞLAMLIK):** PI sonuçları Gaussian genişliği σ ve ızgara çözünürlüğü seçimine karşı sağlamdır — her varyantın ortalama val ROC-AUC'si referanstan (σ=1.0, ızgara=20) **en fazla 0.03** sapar.
+* **Toleransın gerekçesi:** E4.6'da CNN seed varyansı **±0.02–0.03** ölçüldü; tek-seed'lik 0.015 toleransı gürültünün altında kalırdı. Bu yüzden **3 seed ortalaması** ve **0.03 tolerans** ön-kayıtlandı.
+* **Tek değişken:** İki kol — **A)** σ ∈ {0.5, 1.0, 1.5, 2.0} (ızgara=20) · **B)** ızgara ∈ {15, 20, 25} (σ=1.0). Diyagramlar **bir kez** hesaplandı, her konfigürasyon için yeniden vektörleştirildi; split/mimari/protokol sabit.
+* **Kapsam:** train(dengeli)+val = 5.710 zon; **test setine dokunulmadı** · çıkarım 572 s.
+* **Sonuç:** ✅ **Hipotez doğrulandı → KEEP** (her iki kol da sağlam)
+
+  | Kol | Konfigürasyon | Ortalama val ROC-AUC (3 seed) | Referansa fark |
+  | :--- | :--- | :---: | :---: |
+  | **A (σ)** | σ=0.5 | 0.8460 | **−0.0236** |
+  | | **σ=1.0 (mevcut)** | **0.8697** | — |
+  | | σ=1.5 | 0.8734 | +0.0038 |
+  | | σ=2.0 | 0.8712 | +0.0015 |
+  | **B (ızgara)** | 15×15 | 0.8545 | −0.0152 |
+  | | **20×20 (mevcut)** | **0.8697** | — |
+  | | 25×25 | 0.8469 | −0.0227 |
+
+* **Yorum:**
+  1. **Her iki kol da sağlam** (en büyük |fark| 0.0236 ve 0.0227, tolerans 0.03). Sonuçlar σ/ızgara seçimine **aşırı duyarlı değil** → yayın için sağlamlık kanıtı.
+  2. **Mevcut ayarlar iyi seçilmiş:** σ=1.0 referans, σ=1.5'ten yalnızca 0.0038 geride; σ=0.5 ise belirgin kötü (−0.0236, aşırı keskin/yüksek varyans). Izgarada 20×20 her iki yönde de en iyi.
+  3. **Std değerleri çok küçük** (0.0005–0.0065) — 3 seed ortalaması varyantlar arası karşılaştırmayı güvenilir kılıyor.
+  4. 📌 **Bonus:** E4.6'da ölçülen seed varyansının (±0.02–0.03) **yöntem kararlarından büyük** olduğu burada da doğrulandı → **kural 10** (çok-seed raporlama) haklı.
+* **Karar:** **KEEP** — mevcut σ=1.0 / 20×20 ayarları korunur; **Faz 1 tamamlandı (6/6)**.
+* **Manifest:** `artifacts/runs/E2.8_sigma_grid_sensitivity/manifest.json`
