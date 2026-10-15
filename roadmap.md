@@ -20,6 +20,7 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 7. **Öldürme kriteri.** Yüksek riskli her deney için önceden "hangi durumda bırakırım" tanımlanır (bkz. §6). Kriter tetiklenirse deney **KILL** işaretlenir ve zaman harcanmaz.
 8. **Karar günlüğü.** Her hafta sonunda roadmap.md durum tablosu + experiments.md güncellenir; verilen KEEP/KILL kararlarının **gerekçesi** yazılır. Bu, yazım aşamasında "neden bunu seçtiniz?" sorularının cevabıdır.
 9. **SPLIT BEYANI (ZORUNLU).** Verimiz NODE21'in **halka açık training setidir** (4882 = 1134 + 3748; yerel olarak doğrulandı). Test setimiz bu setin **kendi iç bölünmesidir**; NODE21'in resmî test setleri (281 experimental + 298 final) **özeldir ve kullanılmamıştır**. Bu nedenle **leaderboard ile karşılaştırma yapılmaz**; her sonuç "kendi iç split'imizde" olarak sunulur. Sızıntı yoktur (hasta düzeyi, 0 kesişim). Ayrıntı: [literature.md §3.4](literature.md).
+10. **ÇOK-SEED RAPORLAMA.** E4.6'da CNN'in seed varyansı **±0.02–0.03** ölçüldü (val AUC 0.8321–0.8922). Bu nedenle makalede raporlanan model performansları **en az 3 seed ortalaması** (± std) olarak verilir. Tek-seed sonuç verilirse yanında **seed varyansı** belirtilir. Sınıflandırıcı-olmayan analizler (E4.4, E2.7, E4.2) ve bootstrap CI'lı füzyon karşılaştırmaları bu kuralın dışındadır.
 
 ### Anlamlı "kanıt" ne demek?
 
@@ -87,7 +88,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | **BASELINE** ✅ test 0.8349 |
 | **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | **KEEP** ✅ test 0.8776 |
 | **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | **KILL** ⚠️ %10 +0.0186 > tolerans |
-| **E4.6** | W4 | %10 kuralı, çok-seed val doğrulamasında %20'yi ≥ +0.015 geçer | E4.1 | 1.5g | Orta | Yüksek | Planlandı |
+| **E4.6** | W4 | %10 kuralı, çok-seed val doğrulamasında %20'yi ≥ +0.015 geçer | E4.1 | 1.5g | Orta | Yüksek | **KILL** ⚠️ ortalama +0.0085 |
 | **E1.1** | W1 | Kemik bastırma H1 kemik gürültüsünü azaltır, val AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
 | **E1.2** | W1 | Frangi damar bastırma H1 damar döngülerini temizler, AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
 | **E3.1** | W3 | Pretrainli CNN + TDA geç füzyon > her ikisi tek başına (CI ile) | E0.3 | 1.5g | Düşük | **Çok Yüksek** (ana iddia) | **KEEP** 🏆 test 0.9211 |
@@ -195,7 +196,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
-| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 4/5 | E2.8 | 2 | 2 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | 5/6 | E2.8 | 2 | 3 |
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
@@ -233,6 +234,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E0.0** | **Ertelendi** 🔽 | Tüm Faz 0/1/2 deneyleri CPU'da başarıyla üretildi (ensemble 0.8776, füzyon 0.9211). CUDA torch artık **kritik değil**; yalnızca uçtan uca fine-tuning denenirse gerekir. |
 | 2026-10-14 | **E2.7** | **KILL** ⚠️ | Ağırlık fonksiyonu karşılaştırması (val-only, 5.710 zon, **test kullanılmadı**): **Adams `p` zaten en iyi (0.8736)**. Farklar hep negatif — arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. `p²`'nin en kötü olması **E4.4'ü bağımsız destekliyor**. Mevcut PI tasarımı **doğrulanmış** sayılır. |
 | 2026-10-14 | **E4.1** | **KILL** ⚠️ | Overlap sağlamlığı (hasta split'i dondurulmuş, **test kullanılmadı**): **%10 = 0.8922 (+0.0186)**, %20 = 0.8736, %30 = 0.8693 (−0.0043). En büyük fark **0.0186 ≥ tolerans 0.015** ⇒ sonuçlar kuraldan bağımsız sağlam **değil**; monoton eğilim var (gevşek eşik → iyi). ⚠️ Tek seed; **%10'a geçiş çok-seed doğrulaması gerektirir** → yeni deney **E4.6**. Yan kanıt: %20 sonucu E2.7 ile birebir aynı (0.8736) ⇒ PI rasterleştirmesi doğrulandı. |
+| 2026-10-14 | **E4.6** | **KILL** ⚠️ | Eşleştirilmiş 5 seed: ortalama fark **+0.0085** (std 0.0096), pozitif seed 4/5. Eşik +0.015 **aşılamadı** ⇒ E4.1'in +0.0186'sı **gürültü artefaktı**ydı (seed 42 beşin en büyüğü). **%20 kuralı korunur.** 📌 Yan bulgu: CNN seed varyansı **±0.02–0.03** (val 0.8321–0.8922) → makalede ana sonuçlar için **çok-seed ortalama** raporlanmalı; füzyon kazancı (+0.0862) bu gürültünün çok üzerinde olduğu için iddia sağlam. |
 
 ---
 
@@ -263,29 +265,35 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 
 ---
 
-## 12. Devam Noktası (Handoff — 2026-10-14)
+## 12. Devam Noktası (Handoff — güncellendi 2026-10-14, round 4)
 
-**Durum:** Faz 0 ✅ tamam · Faz 1 kısmi (2/5) · Faz 2 kısmi (1/2) · Faz 5 kısmi (1/5, 1 KILL).
+**Durum:** Faz 0 ✅ tamam · Faz 1 **5/6** (yalnız E2.8 kaldı) · Faz 2 kısmi (1/2) · Faz 5 kısmi (1/5, 1 KILL).
 Çalışma ağacı **temiz**, tüm iş **commit'li**. Deney manifest'leri `artifacts/runs/` altında (gitignored, yerelde mevcut).
 
-**Ana sonuç (yayının çekirdeği):** E3.1 füzyonu → **0.9211** hasta düzeyi test ROC-AUC.
+**Ana sonuç (yayının çekirdeği):** E3.1 füzyonu → **0.9211** hasta düzeyi test ROC-AUC (NODE21 ensemble'ı +0.044 geçiyor).
+
+**Kapanan deneyler:** E0.1 ✅ · E0.2 ✅ · E4.4 ✅ · E3.4 ✅ · E0.3 ✅ (baseline) · E3.1 ✅ · E4.2 ⚠️ · E2.7 ⚠️ · E4.1 ⚠️ · E4.6 ⚠️
 
 **Devam edilecek ilk işler** — test bütçesi harcanmadan, yalnızca validation'da karar verilecek:
 
 | Öncelik | Deney | Not |
 | :-: | :--- | :--- |
-| 1 | **E2.7** — PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) | Özellik yeniden çıkarımı gerekir (~36 dk/varyant) |
-| 2 | **E4.1** — %10/%20/%30 overlap robustness | `02_create_labels_v2.py --threshold` destekliyor; **yeniden çıkarım GEREKMEZ** (etiket→split→eğitim) |
-| 3 | **E4.5** — E4.2 takibi (H1 düzgün bölgelerde mi oluşuyor?) | Temsilci döngü hücreleri gerekir |
-| 4 | **E2.8** — σ/ızgara duyarlılık taraması | Yeniden çıkarım gerekir |
-| 5 | **E2.1/E2.2** — çift yön filtrasyon + çok ölçek | Yeniden çıkarım gerekir |
+| 1 | **E2.8** — σ/ızgara duyarlılık taraması | **Faz 1'in kalan tek maddesi.** Yeniden çıkarım gerekir (~10 dk/varyant) |
+| 2 | **E2.1/E2.2** — çift yön filtrasyon + çok ölçek (Faz 3) | Yeni topolojik katkı arayışı; yeniden çıkarım gerekir |
+| 3 | **E2.3** — SEDT-3 / sağlıklı şablon filtrasyonu | Literatürde boşluk; kemik maskesiyle H1 süzme |
+| 4 | **E4.5** — E4.2 takibi (H1 düzgün bölgelerde mi oluşuyor?) | Temsilci döngü hücreleri gerekir |
+| 5 | **E3.2** — orta seviye füzyon (özellik birleştirme) | E3.1 geç füzyonu kanıtladı; bu derinleştirme |
+| 6 | **E4.3** — zon bazlı hata analizi | Ucuz, yayın için değerli |
 
 **Test bütçesi: 4/6 kullanıldı.** Kalan 2 → **E5.1** (final ablasyon matrisi) + **E5.3** (harici doğrulama).
+
+⚠️ **Yeni protokol kuralı 10 (çok-seed raporlama):** E4.6'da CNN seed varyansı **±0.02–0.03** ölçüldü → makalede model performansları **≥3 seed ortalaması** olarak raporlanmalı.
 
 **Ortam notları:**
 * `torch 2.14.1+cpu` — **CUDA yok**; CPU yeterli çıktı (E0.0 ertelendi).
 * Pretrained ağırlıklar indirildi: `~/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth`.
 * `data/processed/features_resnet18/X_zone_features.npy` (24410, 512) — E3.1/E3.2 tarafından yeniden kullanılabilir.
+* `data/processed/features_weights/E2_7_zone_features.npy` — 5 ağırlık varyantı (test dışı zonlar).
 * Tüm deney betikleri: `pipelines/exp/`.
 
-**Devam komutu:** §9 (durum tablosu) + §10 (karar günlüğü) oku → yukarıdaki tablonun 1. maddesinden başla.
+**Devam komutu:** §9 (durum tablosu) + §10 (karar günlüğü) oku → yukarıdaki tablonun 1. maddesinden (E2.8) başla.

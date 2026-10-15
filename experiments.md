@@ -356,3 +356,26 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   5. Referans: tam boru hattı (`05_train_cnn.py`) %20'de 0.8607 verir; fark, o betiğin RNG'yi global olarak **bir kez** tohumlamasından kaynaklanır (protokol farkı, hata değil).
 * **Karar:** **KILL** (hipotez reddedildi) — ancak **%10 kuralı güçlü bir iyileştirme adayı** olarak kaydedildi (E4.6).
 * **Manifest:** `artifacts/runs/E4.1_overlap_robustness/manifest.json`
+
+### E4.6 — %10 vs %20 Örtüşme Kuralı: Çok-Seed (Eşleştirilmiş) Doğrulama
+
+* **Hipotez (ön-kayıtlı):** %10 kuralı, %20'ye kıyasla **ortalama** val ROC-AUC'yi **≥ +0.015** artırır ve fark 5 seed'in **≥4'ünde** pozitiftir.
+* **Tasarım:** **Eşleştirilmiş (paired) çok-seed.** Hasta split'i dondurulmuş; her seed hem 1:1 dengeleme seçimini hem CNN eğitim tohumunu kontrol eder. **Test setine dokunulmadı.**
+* **Gerekçe:** E4.1 tek-seed'lik +0.0186 bulgusunu vermişti; CNN gürültüsü ±0.01–0.02 olduğu için bu doğrulanmalıydı.
+* **Sonuç:** ❌ **Hipotez reddedildi → KILL** — **E4.1'in bulgusu çürütüldü**
+
+  | Seed | %10 | %20 | Fark |
+  | :---: | :---: | :---: | :---: |
+  | 42 | 0.8922 | 0.8736 | **+0.0186** |
+  | 43 | 0.8546 | 0.8434 | +0.0112 |
+  | 44 | 0.8395 | 0.8477 | −0.0082 |
+  | 45 | 0.8369 | 0.8321 | +0.0048 |
+  | 46 | 0.8701 | 0.8538 | +0.0163 |
+  | **Ortalama** | **0.8587** | **0.8501** | **+0.0085** (std 0.0096) |
+
+* **Yorum:**
+  1. **Ortalama kazanç yalnızca +0.0085** — ön-kayıtlı eşiğin (+0.015) **altında** ve standart sapması (0.0096) mertebesinde. Yön tutarlı (4/5 pozitif) ama **büyüklük gürültü içinde**.
+  2. ⇒ **Mevcut %20 kuralı korunur.** E4.1'in +0.0186'sı, seed=42'nin beş içinde **en büyük fark** olmasından kaynaklanan bir **aşırı tahmin**di. Çok-seed doğrulaması, bir gürültü artefaktını kovalamayı **önledi** — ön-kayıt + öldürme kriteri protokolünün doğrudan faydası.
+  3. 📌 **Önemli yan bulgu — seed varyansı:** CNN'in val AUC'si seed'ler arasında **0.8321–0.8922** (≈±0.02–0.03) değişiyor. Bu, makalede tek-seed sonuçların yanına **çok-seed ortalama** konması gerektiğini gösterir. **Ancak** ana sonucumuz (füzyon kazancı **+0.0862**, CI [+0.0632, +0.1099]) bu gürültünün **çok üzerinde** ⇒ iddia sağlam kalır.
+* **Karar:** **KILL** — %20 kuralı korunur, E4.6 kapanır.
+* **Manifest:** `artifacts/runs/E4.6_threshold_multiseed/manifest.json`

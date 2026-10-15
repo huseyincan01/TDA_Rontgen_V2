@@ -292,6 +292,7 @@ v2.1 benchmark'ının ardından, **yayınlanabilir bir katkı** üretmek için v
 | **E4.2** | Persistence → görüntü geri izleme (yorumlanabilirlik) | **KILL** ⚠️ | Ön-kayıtlı H1 hipotezi çürütüldü (medyan gradyan oranı 1.021); **ancak H0 güçlü doğrulandı** (oran 6.176, zonların %90'ında >1.5) → H0 PI ağırlıklı olarak **arka plan/sınır** kodluyor |
 | **E2.7** | PI ağırlık fonksiyonu karşılaştırması (val-only) | **KILL** ⚠️ | **Adams `p` zaten en iyi (0.8736)**; arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. Mevcut PI tasarımı **doğrulanmış**; `p²`'nin en kötü olması E4.4'ü bağımsız destekliyor |
 | **E4.1** | Etiketleme kuralı sağlamlığı %10/%20/%30 (val-only) | **KILL** ⚠️ | Hasta split'i dondurulmuş. **%10 = 0.8922 (+0.0186)**, %20 = 0.8736, %30 = 0.8693. En büyük fark toleransı (0.015) aştı ⇒ sonuçlar kuraldan bağımsız **sağlam değil**. Monoton eğilim var; **%10 iyileştirme adayı → E4.6** |
+| **E4.6** | %10 vs %20 — eşleştirilmiş 5-seed doğrulama (val-only) | **KILL** ⚠️ | Ortalama fark yalnızca **+0.0085** (std 0.0096), pozitif seed 4/5 → eşik (+0.015) aşılamadı. **E4.1'in bulgusu gürültü artefaktıydı**; **%20 kuralı korunur**. 📌 Yan bulgu: CNN seed varyansı **±0.02–0.03** → makalede çok-seed ortalama raporlanmalı |
 
 > **E3.1 bağımsız doğrulaması** ([scratch/verify_E3_1.py](scratch/verify_E3_1.py)): ResNet ve TDA hasta olasılıkları arasındaki korelasyon yalnızca **r ≈ 0.30–0.35** → iki temsil neredeyse **dik**, gerçek tamamlayıcılık. Etiket permütasyonu → AUC **0.4378** (şans) ⇒ **sızıntı yok**.
 
