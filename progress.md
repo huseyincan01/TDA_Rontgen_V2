@@ -315,6 +315,8 @@ v2.1 benchmark'ının ardından, **yayınlanabilir bir katkı** üretmek için v
 
 ### 7.5 Sıradaki adımlar
 
+📄 **Tüm sonuçlar tek belgede:** **[ablation_matrix.md](ablation_matrix.md)** — makale tablolarının taslağı (liderlik, 5 ablasyon, sağlamlık, istatistik, yenilik konumlandırması). E5.1 olarak taslak hâlinde hazır.
+
 ⚠️ **Test seti bütçesi: 4/6 kullanıldı** (E0.2, E3.4, E0.3, E3.1). Kalan 2 değerlendirme → **final ablasyon matrisi** + **harici doğrulama**. Ara deneyler **yalnızca validation**'da karar verir.
 
 Devam noktası ve öncelik sırası: **[roadmap.md §12](roadmap.md)** (Handoff).

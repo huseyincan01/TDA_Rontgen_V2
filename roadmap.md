@@ -108,7 +108,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | **KILL** ⚠️ Adams zaten en iyi |
 | **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | **KEEP** ✅ iki kol sağlam |
 | **E5.3** | W5 | Harici doğrulama (JSRT / ChestX-ray14 nodül alt kümesi) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | Planlandı |
-| **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | Planlandı |
+| **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | **TASLAK** 📝 [ablation_matrix.md](ablation_matrix.md) |
 | **E5.2** | W5 | Metin + figürler hakem beklentilerini karşılar | E5.1 | 4g | Orta | Yayın | Planlandı |
 
 ---
@@ -200,7 +200,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
-| Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 1/5 | E4.3 | 0 | 1 |
+| Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 2/5 | E4.3 / E5.1 finalize | 0 | 1 |
 
 **Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
 
