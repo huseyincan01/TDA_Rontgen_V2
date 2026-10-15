@@ -102,6 +102,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E4.3** | W4 | Hangi zonlarda sistematik hata yapıyoruz? | E0.2 | 1g | Düşük | Orta | **KILL** ⚠️ zayıf zon yok |
 | **E4.7** | W4 | Modelin maksimum olasılığı gerçek nodül zonuna şanstan sık düşer (lokalite testi) | E4.3 | 1g | Orta | **Yüksek** (geçerlilik) | **KILL** 🚨 lokalizasyon YOK |
 | **E3.5** | W3 | Tek global model, 5-zon max-pooling'e denk mi? (zon ayrıştırmasının katkısı) | E4.7 | 2g | Orta | **Yüksek** (kapsam) | **KEEP** ⚠️ eşdeğer (fark −0.0076) |
+| **E3.7** | W3 | Ana sonuç (füzyon) 3 seed ortalamasında tek-seed'den <0.03 sapar | E3.1 | 1g | Düşük | **Yüksek** (Kural 10) | **KEEP** ✅ 0.9190 ± 0.0056 |
 | **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | **İPTAL** ⛔ E3.6: tavan ~0.69 |
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | Planlandı |
 | **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
@@ -199,7 +200,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
 | Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | **6/6** ✅ | — | 3 | 3 |
-| Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
+| Faz 2 | E3.1, E3.2, E3.7 | 2/3 | E3.2 | 2 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 2/6 | E2.1/E2.2 | 0 | 1 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 1/4 | E2.5/E1.4/E2.6 | 0 | 1 |
 | Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 4/6 | E5.1 finalize | 0 | 3 |
@@ -208,7 +209,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 
 | Sıra | Model | Test ROC-AUC | Durum |
 | :-: | :--- | :---: | :--- |
-| 🥇 | **E3.1 Füzyon (ResNet18 + TDA ensemble)** | **0.9211** | KEEP 🏆 |
+| 🥇 | **E3.1/E3.7 Füzyon (ResNet18 + TDA ensemble)** | **0.9190 ± 0.0056** (3 seed) | KEEP 🏆 |
 | 🥈 | E3.4 TDA ensemble (CNN + SVM) | 0.8776 | KEEP |
 | 🥉 | TDA PI küçük CNN (v2.1) | 0.8631 | kilitli referans |
 | 4 | E0.3 ResNet18 (donmuş) + lojistik regresyon | 0.8349 | baseline |
@@ -244,6 +245,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E1.1** | ⛔ **UYGULANAMAZ** | Kemik bastırma (Qure.ai) — README CPU'da **~1 dk/görüntü**; gereken ~1700 hasta ⇒ **~28 saat**; ayrıca `cv2`/`huggingface_hub` kurulu değil. Deney KILL değil **ertelendi** (GPU gelirse yeniden değerlendirilir). Yerine E1.2 uygulandı. |
 | 2026-10-14 | **E1.2** | **KILL** ⚠️ | Frangi vesselness ile H1 filtrelemesi (3 seed, val-only, **test kullanılmadı**): filtreleme **monoton zarar veriyor** — base 0.8697 → v90 0.8606 → v75 0.8547 → v50 **0.8358** (−0.0338). ⇒ **Damar kaynaklı H1 sınıfları gürültü değil, faydalı.** 📌 **Üç deney tutarlı bir sonuca bağlanıyor:** E4.4 (zarf arka planla doygun) + E4.7 (lokalizasyon yok) + E1.2 (arka planı kesmek zararlı) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan topolojisindedir.** "Arka planı bastırınca lokal sinyal açılır" beklentisi **çürütüldü**. |
 | 2026-10-14 | **E3.6** | **KILL** 🎯 | **Oracle-lokalize TDA testi** (ground-truth bbox ile nodül merkezine oturan yama vs **boyut-eşleştirilmiş** kontrol; train+val, **test kullanılmadı**): val yama AUC yalnızca **0.6866**. 🚨 Confound uyarısı: eşleştirilmemiş ilk koşuda kontroller sabit 60×60 iken pozitifler değişkendi → sınıflandırıcı **yama boyutunu** öğrendi ve AUC **0.994** çıktı; boyut eşleştirilince **0.687**'ye düştü. ⇒ **Nodülün tam yerini bilsek bile lokal TDA ayrımı zayıf** ⇒ **aday-bazlı mimarinin (E3.3) tavanı düşük, İPTAL.** Hasta düzeyi 0.9211 ağırlıklı olarak **global sinyalden** geliyor. **Seçenek A** (daraltılmış dürüst kapsamla yayın) benimsenir. |
+| 2026-10-14 | **E3.7** | **KEEP** ✅ | **Ana sonucun 3-seed doğrulaması (Kural 10 uyumu)** — test seti seed belirsizliğini ölçmek için bir kez kullanıldı. Seed 42/43/44 → test ROC-AUC **0.9238 / 0.9111 / 0.9222** ⇒ **0.9190 ± 0.0056** (tek-seed 0.9211'e fark **−0.0021**). Füzyon ağırlığı üç seed'de de **a=0.55**. TDA-tek dal **0.8750 ± 0.0079**. ⇒ Tek-seed sonucumuz **şanslı değildi**; **makalenin ana sayısı artık 0.9190 ± 0.0056**. |
 
 ---
 

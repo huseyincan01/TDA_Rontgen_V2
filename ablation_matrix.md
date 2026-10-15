@@ -21,7 +21,7 @@ Veri kümemiz **NODE21'in halka açık TRAINING setiyle birebir aynıdır** (488
 
 | Sıra | Model | Temsil | Val ROC-AUC | **Test ROC-AUC** | Kaynak |
 | :-: | :--- | :--- | :---: | :---: | :--- |
-| 🥇 | **Füzyon: ResNet18 + TDA ensemble** | görüntü + topoloji | 0.9572 | **0.9211** | **E3.1** · [betik](pipelines/exp/E3_1_tda_image_fusion.py) |
+| 🥇 | **Füzyon: ResNet18 + TDA ensemble** | görüntü + topoloji | 0.9572 | **0.9190 ± 0.0056** (3 seed) | **E3.1 + E3.7** · [betik](pipelines/exp/E3_1_tda_image_fusion.py) |
 | 🥈 | TDA ensemble (CNN + SVM soft-voting) | PI vektörü | 0.8821 | **0.8776** | **E3.4** · [betik](pipelines/exp/E3_4_ensemble_cnn_svm.py) |
 | 🥉 | **TDA PI küçük CNN** | PI (2,20,20) | 0.8607 | **0.8631** | v2.1 · E0.2 ile birebir üretildi |
 | 4 | ResNet18 (donmuş) + lojistik regresyon | 512-D ImageNet | 0.8884 | **0.8349** | **E0.3** · [betik](pipelines/exp/E0_3_resnet_baseline.py) |

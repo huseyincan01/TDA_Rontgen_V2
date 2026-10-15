@@ -537,3 +537,26 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   4. ✅ **Klinik olarak anlamlı:** Nodül varlığı, lokal topolojiden çok **akciğerin genel topolojik/görüntüsel örüntüsüne** yansıyor. Bu, yayın için değerli ve dürüst bir çerçeve.
 * **Karar:** **KILL** — lokalizasyon arayışı kapatıldı; **Seçenek A** (daraltılmış, dürüst kapsamla yayına hazırlık) benimsenir.
 * **Manifest:** `artifacts/runs/E3.6_oracle_localized_tda/manifest.json`
+
+### E3.7 — Ana Sonucun Çok-Seed Doğrulaması (Protokol Kural 10 uyumu)
+
+* **Hipotez (ön-kayıtlı):** Füzyonun 3-seed ortalama test ROC-AUC'si, tek-seed değerinden (0.9211) **0.03'ten az** sapar ve ortalaması **> 0.89** kalır.
+* **Gerekçe:** E4.6'da CNN seed varyansı **±0.02–0.03** ölçüldü ve **Kural 10** eklendi (performanslar ≥3 seed ortalaması). Ana sonuç hâlâ **tek seed**'likti — bu boşluk kapatıldı.
+* **Tek değişken:** CNN eğitim tohumu (42/43/44). TDA özellikleri, split, mimari, SVM dalı, ResNet dalı (deterministik) ve füzyon protokolü **sabit**; her seed için füzyon ağırlığı ve eşiği **yalnızca validation'da** seçildi.
+* **Sonuç:** ✅ **KEEP — ana sonuç seed'e karşı kararlı**
+
+  | Seed | Füzyon ağırlığı `a` | Val AUC | **Test ROC-AUC** | Test doğruluk | TDA-tek test AUC |
+  | :---: | :---: | :---: | :---: | :---: | :---: |
+  | 42 | 0.55 | 0.9576 | **0.9238** | 0.8583 | 0.8833 |
+  | 43 | 0.55 | 0.9511 | **0.9111** | 0.8529 | 0.8645 |
+  | 44 | 0.55 | 0.9571 | **0.9222** | 0.8460 | 0.8773 |
+  | **Ortalama** | | | **0.9190 ± 0.0056** | | **0.8750 ± 0.0079** |
+
+* **Yorum:**
+  1. **Üç seed'in hepsi 0.911–0.924 bandında** ve ortalama **0.9190 ± 0.0056**. Tek-seed 0.9211'e fark **−0.0021** ⇒ tek-seed sonucumuz **şanslı değildi**; seed varyansı burada beklenenden de küçük (±0.006).
+  2. Füzyon ağırlığı üç seed'de de **a=0.55** seçildi ⇒ hiperparametre de kararlı.
+  3. **Makalede raporlanacak ana sayı artık: 0.9190 ± 0.0056** (tek-seed 0.9211 yerine). Kural 10 uyumu sağlandı.
+  4. TDA-tek dalı da kararlı: **0.8750 ± 0.0079**.
+* **Karar:** **KEEP** — ana sonuç çok-seed ile doğrulandı.
+* **Not:** Test seti bu deneyde ana sonucun **seed belirsizliğini ölçmek** için bir kez kullanıldı (model seçimi yapılmadı).
+* **Manifest:** `artifacts/runs/E3.7_headline_multiseed/manifest.json`
