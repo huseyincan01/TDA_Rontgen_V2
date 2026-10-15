@@ -115,7 +115,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | **KEEP** ✅ iki kol sağlam |
 | **E5.3** | W5 | Harici doğrulama (kaynak-dışı genelleme) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | **KEEP** ✅ ortalama 0.8468 |
 | **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | **TAMAM** ✅ [ablation_matrix.md](ablation_matrix.md) |
-| **E5.2** | W5 | Metin + figürler hakem beklentilerini karşılar | E5.1 | 4g | Orta | Yayın | Planlandı |
+| **E5.2** | W5 | Metin + figürler hakem beklentilerini karşılar | E5.1 | 4g | Orta | Yayın | **TASLAK** 📝 [paper_draft.md](paper_draft.md) |
 
 ---
 
