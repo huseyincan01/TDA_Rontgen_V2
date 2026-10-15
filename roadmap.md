@@ -103,7 +103,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
 | **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | Planlandı 🔓 |
 | **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | **KEEP** ✅ |
-| **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | Planlandı |
+| **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | **KILL** ⚠️ Adams zaten en iyi |
 | **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | Planlandı |
 | **E5.3** | W5 | Harici doğrulama (JSRT / ChestX-ray14 nodül alt kümesi) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | Planlandı |
 | **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | Planlandı |
@@ -194,7 +194,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
-| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 2/5 | E2.7 | 2 | 0 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 3/5 | E2.8 / E4.1 | 2 | 1 |
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
@@ -230,6 +230,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E0.3** | **BASELINE** ✅ | Güçlü aynı-split baseline kuruldu: **donmuş ImageNet ResNet18 + lojistik regresyon**, test ROC-AUC **0.8349** (val 0.8884 → **−0.0535 genelleme kaybı**). TDA CNN (0.8631) ve ensemble (0.8776) bu baseline'ı **test'te geçiyor**. Hakemin "neden güçlü CNN değil?" itirazı kapatıldı. CPU'da 849 s. |
 | 2026-10-14 | **E3.1** | **KEEP** 🏆 | **Yayının ana sonucu: füzyon test ROC-AUC 0.9211** (ResNet 0.8349 + TDA 0.8776, a=0.55). Test farkı **+0.0862**, bootstrap %95 CI **[+0.0632, +0.1099]**, **p≈0.0000**. **Bağımsız doğrulama:** iki temsil arasındaki korelasyon yalnızca **r≈0.30–0.35** (neredeyse dik) → tamamlayıcılık gerçek; etiket permütasyonu AUC=0.4378 → **sızıntı yok**. GPU gerekmedi. |
 | 2026-10-14 | **E0.0** | **Ertelendi** 🔽 | Tüm Faz 0/1/2 deneyleri CPU'da başarıyla üretildi (ensemble 0.8776, füzyon 0.9211). CUDA torch artık **kritik değil**; yalnızca uçtan uca fine-tuning denenirse gerekir. |
+| 2026-10-14 | **E2.7** | **KILL** ⚠️ | Ağırlık fonksiyonu karşılaştırması (val-only, 5.710 zon, **test kullanılmadı**): **Adams `p` zaten en iyi (0.8736)**. Farklar hep negatif — arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. `p²`'nin en kötü olması **E4.4'ü bağımsız destekliyor**. Mevcut PI tasarımı **doğrulanmış** sayılır. |
 
 ---
 

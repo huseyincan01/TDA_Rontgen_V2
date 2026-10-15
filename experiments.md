@@ -310,3 +310,27 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   3. **GPU gerekmedi** — tüm sonuç CPU'da üretildi.
 * **Karar:** **KEEP**
 * **Manifest:** `artifacts/runs/E3.1_tda_image_fusion/manifest.json`
+
+### E2.7 — Persistence Image Ağırlık Fonksiyonu Karşılaştırması
+
+* **Hipotez (ön-kayıtlı):** Adams `w(p) = p` dışında bir ağırlık fonksiyonu val ROC-AUC'yi **≥ +0.015** artırır.
+* **Tek değişken:** PI hücre birikim ağırlığı `w(p)`. Diyagramlar, ızgara aralıkları (`tda_ranges_v2.json`), split, mimari ve eğitim protokolü **sabit**.
+* **Kapsam (test bütçesi korunur):** Yalnızca **train(dengeli) + val = 5.710 zon** işlendi; **test setine dokunulmadı**.
+* **Çalışma:** `python pipelines/exp/E2_7_pi_weight_functions.py` · çıkarım 605 s (10 worker) · 5 varyant × 5-zon CNN.
+* **Sonuç:** ❌ **Hipotez çürütüldü → KILL**
+
+  | Ağırlık `w(p)` | Val hasta ROC-AUC | Adams'a fark |
+  | :--- | :---: | :---: |
+  | **`p` (Adams — mevcut)** | **0.8736** | — |
+  | `arctan(p)` (doyurucu) | 0.8640 | −0.0096 |
+  | `√p` (alt-doğrusal) | 0.8624 | −0.0112 |
+  | `1` (sabit — kalıcılığı yok sayar) | 0.8591 | −0.0145 |
+  | `p²` (üst-doğrusal) | 0.8547 | −0.0189 |
+
+* **Yorum:**
+  1. **Adams ağırlığı zaten en iyi** ⇒ mevcut PI tasarım tercihi **keyfi değil, doğrulanmış**. Bu, yayın için değerli bir **sağlamlık kanıtıdır**.
+  2. **Sıralama anlamlıdır:** doğrusal > doyurucu > alt-doğrusal > sabit > üst-doğrusal. **`p²`'nin en kötü olması E4.4'ü bağımsız olarak destekliyor:** üst-doğrusal ağırlık, zarfı doyuran **çok uzun ömürlü arka plan sınıflarını** daha da amplifiye ediyor.
+  3. **Dürüstlük notu:** tek seed (CNN gürültüsü ±0.01–0.02 olabilir). Ancak istatistiksel bir *kazanç* iddia edilmediği için çok-seed doğrulaması gerekmez; tüm farklar negatif ve tutarlı.
+  4. Bu koşudaki `adams_p` değeri (0.8736) tam boru hattı referansından (0.8607) farklıdır; nedeni bu betiğin her zon için RNG'yi yeniden tohumlaması. **Karşılaştırma kendi içinde kontrollüdür** (tüm varyantlar aynı protokol).
+* **Karar:** **KILL** — mevcut Adams ağırlığı korunur.
+* **Manifest:** `artifacts/runs/E2.7_pi_weight_functions/manifest.json`

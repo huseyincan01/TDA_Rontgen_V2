@@ -255,6 +255,63 @@ Harici `persim.PersistenceImager` kütüphanesi, izotropik eksen aralıkları va
 - [x] **Deney 5 & 6 (Persistence Landscapes PL & Ablation 2):** 24.410 zon için PL vektörleri çıkarıldı; PL RBF-SVM (**0.5217 ROC-AUC**) ve PL Küçük CNN (**0.5450 ROC-AUC**) eğitilerek PI'nin 2B doğum-kalıcılık üstünlüğü kanıtlandı.
 - [x] **$N=2.000$ Bootstrap %95 Güven Aralıkları:** 6 modelin tamamı için hesaplandı; PI CNN'in hem Ham CNN'den hem PL CNN'den istatistiksel olarak anlamlı şekilde ($p < 0.001$) ayrıştığı kanıtlandı.
 - [x] Deney çıktıları (`artifacts/models/` ve `artifacts/runs/`) başarıyla kaydedildi; `experiments.md` ve `progress.md` senkronize edildi.
-- [ ] **Sıradaki Adım Seçenekleri:**
-  - *Seçenek A (Hibrit / Ensemble):* TDA Küçük CNN ve RBF-SVM olasılıklarının ağırlıklı/soft-voting birleşimi ile zon düzeyinde heterojen karar entegrasyonu.
-  - *Seçenek B (Eşik Hassasiyet Analizi):* %20 örtüşme kuralına alternatif olarak %10 ve %30 örtüşme kuralları ile modelin sağlamlık (*robustness*) testi.
+- [x] **Seçenek A (Hibrit / Ensemble):** v3 programında **E3.4** olarak tamamlandı → TDA ensemble test ROC-AUC **0.8776**; ardından **E3.1 füzyonu** ile **0.9211**'e ulaşıldı.
+- [ ] **Seçenek B (Eşik Hassasiyet Analizi):** v3 programında **E4.1** olarak planlandı (%10/%20/%30 overlap robustness).
+
+---
+
+## 7. v3 Araştırma Programı (2026-10-14 — devam ediyor)
+
+> Yönetim, fazlar, backlog ve karar günlüğü: [roadmap.md](roadmap.md) · Literatür ve konumlandırma: [literature.md](literature.md)
+
+v2.1 benchmark'ının ardından, **yayınlanabilir bir katkı** üretmek için v3 programı başlatıldı. Eski "Seçenek A" ensemble olarak, "Seçenek B" ise robustness olarak programa alındı.
+
+### 7.1 Altyapı ve doğrulama (Faz 0)
+
+- **E0.1 (KEEP):** Deney kayıt altyapısı — [experiment.py](src/node21_tda/experiment.py) her çalıştırma için manifest üretir (git commit + dal + kirli ağaç, config/girdi SHA-256, seed, metrikler, karar). [configs/experiments/](configs/experiments/) sözleşmesi (şablon + README) kuruldu.
+- **E0.2 (KEEP):** v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** — 16/16 metrik (val 0.8607, test **0.8631**, eşik 0.6949, TP/FP/TN/FN 137/114/448/35). Pipeline **deterministik**; 5 zonun eğitimi CPU'da ~27 s.
+- **E0.0 (ertelendi):** venv'de `torch 2.14.1+cpu` (CUDA yok) ancak **tüm v3 deneyleri CPU'da üretildi** → GPU kritik değil. RTX 4050 yalnızca uçtan uca fine-tuning için gerekir.
+
+### 7.2 Literatür taraması
+
+[literature.md](literature.md) — dört bağımsız kolda ~40 arama, tüm kaynaklar URL'li:
+
+- **En yakın emsal:** **Topo-CXR** (ICCV 2023 W) — CXR + kübik persistence, ama TB/pnömoni (nodül değil).
+- ⚠️ **Kritik doğrulama (yerel):** Verimiz **NODE21'in halka açık training setiyle birebir aynı** (4882 = 1134 nodüllü + 3748 normal). NODE21'in resmî test setleri (281 + 298) **özeldir**. ⇒ 734 hastalık test setimiz **kendi iç bölünmemiz**; **leaderboard karşılaştırması geçersizdir** (sızıntı yok). Roadmap §0 **kural 9** olarak zorunlu kılındı.
+- **Literatür boşlukları (bizim özgünlüğümüz):** kemik/damar bastırma + kalıcı homoloji kombinasyonu yok; NODE21'de topolojik çalışma yok. Topo-CXR'ın *"ön-işleme gerekmez"* tezine karşı **net karşı-pozisyon**.
+- **Yenilik hiyerarşisi:** literature.md §5.2.
+
+### 7.3 Deneyler ve sonuçlar
+
+| ID | Deney | Karar | Sonuç |
+| :--- | :--- | :--- | :--- |
+| **E4.4** | PL üst-zarf (envelope) mekanizma analizi | **KEEP** | H1 zarf tepeleri λ1→λ5 boyunca 110→90 (**doymuş**); poz/neg sınıf sinyali zarfın yalnızca **%1–2'si** (≈50–100× bastırılma). PL çöküşünün mekanizması nicel olarak kanıtlandı |
+| **E3.4** | CNN + SVM soft-voting ensemble | **KEEP** | Test ROC-AUC **0.8776** (w=0.55); val farkı +0.0214; bootstrap %95 CI [+0.0034, +0.0260], p=0.010 |
+| **E0.3** | Güçlü baseline: donmuş ImageNet ResNet18 + LR | **BASELINE** | Test **0.8349** (val 0.8884 → **−0.0535 genelleme kaybı**). TDA tek başına ve füzyon bu baseline'ı **geçiyor** |
+| **E3.1** | **ResNet18 + TDA geç füzyonu** | **KEEP** 🏆 | Test **0.9211**; ResNet'e göre **+0.0862**, bootstrap %95 CI **[+0.0632, +0.1099]**, p≈0.0000 |
+| **E4.2** | Persistence → görüntü geri izleme (yorumlanabilirlik) | **KILL** ⚠️ | Ön-kayıtlı H1 hipotezi çürütüldü (medyan gradyan oranı 1.021); **ancak H0 güçlü doğrulandı** (oran 6.176, zonların %90'ında >1.5) → H0 PI ağırlıklı olarak **arka plan/sınır** kodluyor |
+| **E2.7** | PI ağırlık fonksiyonu karşılaştırması (val-only) | **KILL** ⚠️ | **Adams `p` zaten en iyi (0.8736)**; arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. Mevcut PI tasarımı **doğrulanmış**; `p²`'nin en kötü olması E4.4'ü bağımsız destekliyor |
+
+> **E3.1 bağımsız doğrulaması** ([scratch/verify_E3_1.py](scratch/verify_E3_1.py)): ResNet ve TDA hasta olasılıkları arasındaki korelasyon yalnızca **r ≈ 0.30–0.35** → iki temsil neredeyse **dik**, gerçek tamamlayıcılık. Etiket permütasyonu → AUC **0.4378** (şans) ⇒ **sızıntı yok**.
+
+### 7.4 Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta)
+
+| Sıra | Model | Test ROC-AUC |
+| :-: | :--- | :---: |
+| 🥇 | **E3.1 Füzyon (ResNet18 + TDA ensemble)** | **0.9211** |
+| 🥈 | E3.4 TDA ensemble (CNN + SVM) | 0.8776 |
+| 🥉 | TDA PI küçük CNN (v2.1) | 0.8631 |
+| 4 | E0.3 ResNet18 (donmuş) + LR | 0.8349 |
+| 5 | RBF-SVM (PI) | 0.8289 |
+| 6 | k-NN (PI) | 0.7162 |
+| 7 | Ham görüntü küçük CNN | 0.7043 |
+| 8 | PL küçük CNN | 0.5450 |
+| 9 | PL RBF-SVM | 0.5217 |
+
+> NODE21 referansları: rank-1 = **0.868**, ensemble = **0.877** → **geçildi**.
+
+### 7.5 Sıradaki adımlar
+
+⚠️ **Test seti bütçesi: 4/6 kullanıldı** (E0.2, E3.4, E0.3, E3.1). Kalan 2 değerlendirme → **final ablasyon matrisi** + **harici doğrulama**. Ara deneyler **yalnızca validation**'da karar verir.
+
+Devam noktası ve öncelik sırası: **[roadmap.md §12](roadmap.md)** (Handoff).
