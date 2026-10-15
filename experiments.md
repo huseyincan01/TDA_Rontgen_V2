@@ -560,3 +560,27 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KEEP** — ana sonuç çok-seed ile doğrulandı.
 * **Not:** Test seti bu deneyde ana sonucun **seed belirsizliğini ölçmek** için bir kez kullanıldı (model seçimi yapılmadı).
 * **Manifest:** `artifacts/runs/E3.7_headline_multiseed/manifest.json`
+
+### E5.3 — Kaynak-Dışı Genelleme (leave-one-source-out)
+
+* **Hipotez (ön-kayıtlı):** 3 kaynağın ortalamasında füzyon test ROC-AUC **> 0.75** ⇒ model kaynak-dışı genelliyor.
+* **Neden:** Splitimiz rastgele; hakemin soracağı soru *"eğitimde görmediği bir kaynak veri setinden gelen nodülleri tanıyor mu?"*. Kaynak bilgisi `patient_info.json`'da mevcut → **yeni veri indirmeye gerek yok**.
+* **Tasarım:** Her kaynak sırayla dışarıda bırakıldı. **Test** = o kaynağın nodüllü hastaları + orana uygun (~1:3,27) kontrol örneklemi; **val/train** = kalanlar (zon bazında 1:1 denge). Tek değişken: test edilen kaynak.
+* **Sonuç:** ✅ **KEEP**
+
+  | Dışarıda bırakılan kaynak | Test hastası | TDA CNN | **Füzyon** |
+  | :--- | :---: | :---: | :---: |
+  | chestxray14 | 2635 | 0.7406 | **0.7821** |
+  | padchest | 1341 | 0.8391 | **0.8499** |
+  | jsrt | 636 | 0.9076 | **0.9085** |
+  | **Ortalama** | | **0.8291** | **0.8468** |
+  | *(rastgele split referansı)* | *734* | *0.8631* | *0.9190* |
+
+* **Yorum:**
+  1. **Model kaynak-dışı genelliyor:** ortalama füzyon AUC **0.8468**, şansın çok üzerinde ve eşiğin (0.75) üstünde.
+  2. **Domain-shift bedeli gerçek:** rastgele split 0.9190 → kaynak-dışı 0.8468 (**−0.072**). Yani kaynak değişince belirgin ama yıkıcı olmayan bir düşüş var.
+  3. **Kaynaklar arası büyük fark:** jsrt **0.9085** (en iyi) ↔ chestxray14 **0.7821** (en kötü).
+  4. ⚠️ **Dürüstlük notu — kısmi confound:** chestxray14 en büyük kaynak olduğu için dışarıda bırakıldığında **eğitim verisi yarıya iniyor** (dengeli train 1034 zon; diğer katlarda 1876 ve 2222). Yani chestxray14 katındaki düşüşün bir kısmı **domain shift değil, veri azalması**. Kıyaslama için eşit-boyutlu rastgele split kontrolü yapılmalı (kayda geçirildi).
+  5. Bu bir **genelleme çalışmasıdır**; dondurulmuş test seti kullanılmadı, model seçimi yapılmadı (her kat kendi train/val/test'ini kurar).
+* **Karar:** **KEEP** — kaynak-dışı genelleme kanıtlandı; domain-shift bedeli ölçüldü.
+* **Manifest:** `artifacts/runs/E5.3_cross_source/manifest.json`

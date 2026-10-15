@@ -110,7 +110,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | **KEEP** ✅ |
 | **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | **KILL** ⚠️ Adams zaten en iyi |
 | **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | **KEEP** ✅ iki kol sağlam |
-| **E5.3** | W5 | Harici doğrulama (JSRT / ChestX-ray14 nodül alt kümesi) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | Planlandı |
+| **E5.3** | W5 | Harici doğrulama (kaynak-dışı genelleme) genellemeyi kanıtlar | E3.1 | 3g | Yüksek | Yüksek | **KEEP** ✅ ortalama 0.8468 |
 | **E5.1** | W5 | Tüm ablasyonlar tek matriste tutarlı sunulabilir | Faz 1–4 | 2g | Düşük | Yayın | **TASLAK** 📝 [ablation_matrix.md](ablation_matrix.md) |
 | **E5.2** | W5 | Metin + figürler hakem beklentilerini karşılar | E5.1 | 4g | Orta | Yayın | Planlandı |
 
@@ -203,7 +203,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 2 | E3.1, E3.2, E3.7 | 2/3 | E3.2 | 2 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 2/6 | E2.1/E2.2 | 0 | 1 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 1/4 | E2.5/E1.4/E2.6 | 0 | 1 |
-| Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 4/6 | E5.1 finalize | 0 | 3 |
+| Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 5/6 | E5.1 finalize | 1 | 3 |
 
 **Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
 
@@ -246,6 +246,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E1.2** | **KILL** ⚠️ | Frangi vesselness ile H1 filtrelemesi (3 seed, val-only, **test kullanılmadı**): filtreleme **monoton zarar veriyor** — base 0.8697 → v90 0.8606 → v75 0.8547 → v50 **0.8358** (−0.0338). ⇒ **Damar kaynaklı H1 sınıfları gürültü değil, faydalı.** 📌 **Üç deney tutarlı bir sonuca bağlanıyor:** E4.4 (zarf arka planla doygun) + E4.7 (lokalizasyon yok) + E1.2 (arka planı kesmek zararlı) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan topolojisindedir.** "Arka planı bastırınca lokal sinyal açılır" beklentisi **çürütüldü**. |
 | 2026-10-14 | **E3.6** | **KILL** 🎯 | **Oracle-lokalize TDA testi** (ground-truth bbox ile nodül merkezine oturan yama vs **boyut-eşleştirilmiş** kontrol; train+val, **test kullanılmadı**): val yama AUC yalnızca **0.6866**. 🚨 Confound uyarısı: eşleştirilmemiş ilk koşuda kontroller sabit 60×60 iken pozitifler değişkendi → sınıflandırıcı **yama boyutunu** öğrendi ve AUC **0.994** çıktı; boyut eşleştirilince **0.687**'ye düştü. ⇒ **Nodülün tam yerini bilsek bile lokal TDA ayrımı zayıf** ⇒ **aday-bazlı mimarinin (E3.3) tavanı düşük, İPTAL.** Hasta düzeyi 0.9211 ağırlıklı olarak **global sinyalden** geliyor. **Seçenek A** (daraltılmış dürüst kapsamla yayın) benimsenir. |
 | 2026-10-14 | **E3.7** | **KEEP** ✅ | **Ana sonucun 3-seed doğrulaması (Kural 10 uyumu)** — test seti seed belirsizliğini ölçmek için bir kez kullanıldı. Seed 42/43/44 → test ROC-AUC **0.9238 / 0.9111 / 0.9222** ⇒ **0.9190 ± 0.0056** (tek-seed 0.9211'e fark **−0.0021**). Füzyon ağırlığı üç seed'de de **a=0.55**. TDA-tek dal **0.8750 ± 0.0079**. ⇒ Tek-seed sonucumuz **şanslı değildi**; **makalenin ana sayısı artık 0.9190 ± 0.0056**. |
+| 2026-10-14 | **E5.3** | **KEEP** ✅ | **Kaynak-dışı genelleme (leave-one-source-out)** — dondurulmuş test kullanılmadı; her kat kendi split'ini kurar. Füzyon: chestxray14 **0.7821**, padchest **0.8499**, jsrt **0.9085** ⇒ ortalama **0.8468** (rastgele split 0.9190, **−0.072 domain-shift bedeli**). ⇒ Model görülmemiş kaynağa genelliyor. ⚠️ Kısmi confound: chestxray14 (en büyük kaynak) dışarıda kalınca dengeli train 1034 zona düşüyor (diğer katlarda 1876/2222) → düşüşün bir kısmı veri azalması. |
 
 ---
 

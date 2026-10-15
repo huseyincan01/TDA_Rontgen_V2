@@ -177,6 +177,26 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 
 ---
 
+## 7.1 Kaynak-Dışı Genelleme (leave-one-source-out)
+
+**E5.3** · [betik](pipelines/exp/E5_3_cross_source.py) · dondurulmuş test kullanılmadı; her kat kendi split'ini kurar
+
+NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **padchest (314)**, **jsrt (149)**, openi (54). Her kaynak sırayla dışarıda bırakılıp, modelin **görülmemiş kaynaktan gelen nodülleri** tanıması test edildi.
+
+| Dışarıda bırakılan kaynak | Test hastası | TDA CNN | **Füzyon** |
+| :--- | :---: | :---: | :---: |
+| chestxray14 | 2635 | 0.7406 | **0.7821** |
+| padchest | 1341 | 0.8391 | **0.8499** |
+| jsrt | 636 | 0.9076 | **0.9085** |
+| **Ortalama** | | **0.8291** | **0.8468** |
+| *(rastgele split referansı)* | *734* | *0.8631* | *0.9190* |
+
+* ✅ **Model kaynak-dışı genelliyor** — ortalama 0.8468, şansın çok üzerinde.
+* ⚠️ **Domain-shift bedeli: −0.072** (0.9190 → 0.8468).
+* ⚠️ **Kısmi confound:** chestxray14 en büyük kaynak; dışarıda bırakıldığında dengeli train **1034 zona** düşüyor (diğer katlarda 1876 ve 2222). Yani en kötü katın düşüşünün bir kısmı **domain shift değil, veri azalması**dır. Eşit-boyutlu rastgele split kontrolü önerilir.
+
+---
+
 ## 8. İstatistiksel Kanıt Özeti (N=2.000 bootstrap)
 
 | Karşılaştırma | Fark | %95 CI | p | Deney |
