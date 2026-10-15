@@ -89,8 +89,8 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | **KEEP** ✅ test 0.8776 |
 | **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | **KILL** ⚠️ %10 +0.0186 > tolerans |
 | **E4.6** | W4 | %10 kuralı, çok-seed val doğrulamasında %20'yi ≥ +0.015 geçer | E4.1 | 1.5g | Orta | Yüksek | **KILL** ⚠️ ortalama +0.0085 |
-| **E1.1** | W1 | Kemik bastırma H1 kemik gürültüsünü azaltır, val AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
-| **E1.2** | W1 | Frangi damar bastırma H1 damar döngülerini temizler, AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
+| **E1.1** | W1 | Kemik bastırma H1 kemik gürültüsünü azaltır, val AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | ⛔ **UYGULANAMAZ** (~28 saat CPU) |
+| **E1.2** | W1 | Frangi damar bastırma H1 damar döngülerini temizler, AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | **KILL** ⚠️ monoton zarar (−0.0338) |
 | **E3.1** | W3 | Pretrainli CNN + TDA geç füzyon > her ikisi tek başına (CI ile) | E0.3 | 1.5g | Düşük | **Çok Yüksek** (ana iddia) | **KEEP** 🏆 test 0.9211 |
 | **E3.2** | W3 | TDA özellikleri CNN özellik vektörüne eklenince AUC artar | E0.3 | 1.5g | Orta | **Çok Yüksek** | Planlandı |
 | **E2.1** | W2 | Çift yön (sublevel+superlevel) filtrasyon tek yönden ≥ +0.015 iyi | — | 1.5g | Düşük | Orta | Planlandı |
@@ -200,7 +200,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
 | Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | **6/6** ✅ | — | 3 | 3 |
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
-| Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
+| Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 2/6 | E2.1/E2.2 | 0 | 1 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
 | Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 4/6 | E5.1 finalize | 0 | 3 |
 
@@ -241,6 +241,8 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E4.3** | **KILL** ⚠️ | Zon bazlı hata analizi (val-only, yeni model eğitilmedi): **zayıf zon yok** — her zon tek başına 0.74–0.84 hasta düzeyi AUC veriyor. Karar 5 zona yayılıyor (tek-zon hakimiyeti yok); FN'ler "kıl payı" (ort 0.581 vs eşik 0.636). 📌 **Kritik çıkarım:** zon-bazlı sinyalin önemli kısmı **hasta-global** olabilir (saf lokal olsaydı nodülsüz zonlar şans düzeyinde kalırdı) → yeni **E4.7 lokalite testi** kaydedildi; makalede sınırlama olarak belirtilmeli. |
 | 2026-10-14 | **E4.7** | **KILL** 🚨 | **Lokalite testi — modeller lokalize ETMİYOR** (val, 171 nodül-pozitif hasta, **test kullanılmadı**). İsabet oranı şans düzeyinde (0.228–0.298 vs şans 0.268; binom p=0.21–0.90) ve **zon düzeyi AUC yalnızca 0.48–0.53**. ⇒ Hasta düzeyi 0.9211 sonucu **gerçek** ama mekanizma "nodülü doğru zonda bulmak" **değil**. **"5-zon lokalizasyon" yenilik iddiası DÜŞTÜ**; doğru ifade "5-zon paralel ayrıştırma + max-pooling". Geçerli kalan katkılar: füzyon (E3.1), tamamlayıcılık (r≈0.30), PL mekanizması (E4.4). Yeni aday **E3.5** (global model vs 5-zon) kaydedildi. |
 | 2026-10-14 | **E3.5** | **KEEP** ⚠️ | **Havuzlanmış tek model vs 5-zon özel modeli** (3 seed, val-only, **test kullanılmadı**): 0.8585 vs 0.8661 → fark **−0.0076** < tolerans 0.015 ⇒ **eşdeğer**. Havuzlanmış model model başına **5× veri** görüyor ama daha iyi değil ⇒ zon bölünmesi **model topluluğu çeşitliliği** sağlıyor, **anatomik uzmanlaşma** değil. ⚠️ E4.7 + E3.5 birlikte: mimari *"5 kırpıntı üzerinde model topluluğu + max-pooling"* olarak, **lokalizasyon/uzmanlaşma iddiası olmadan** sunulmalı. |
+| 2026-10-14 | **E1.1** | ⛔ **UYGULANAMAZ** | Kemik bastırma (Qure.ai) — README CPU'da **~1 dk/görüntü**; gereken ~1700 hasta ⇒ **~28 saat**; ayrıca `cv2`/`huggingface_hub` kurulu değil. Deney KILL değil **ertelendi** (GPU gelirse yeniden değerlendirilir). Yerine E1.2 uygulandı. |
+| 2026-10-14 | **E1.2** | **KILL** ⚠️ | Frangi vesselness ile H1 filtrelemesi (3 seed, val-only, **test kullanılmadı**): filtreleme **monoton zarar veriyor** — base 0.8697 → v90 0.8606 → v75 0.8547 → v50 **0.8358** (−0.0338). ⇒ **Damar kaynaklı H1 sınıfları gürültü değil, faydalı.** 📌 **Üç deney tutarlı bir sonuca bağlanıyor:** E4.4 (zarf arka planla doygun) + E4.7 (lokalizasyon yok) + E1.2 (arka planı kesmek zararlı) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan topolojisindedir.** "Arka planı bastırınca lokal sinyal açılır" beklentisi **çürütüldü**. |
 
 ---
 

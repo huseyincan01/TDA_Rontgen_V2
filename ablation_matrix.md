@@ -153,11 +153,14 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 **Sorumlu zon dağılımı** (fusion kararı hangi zondan geliyor): Zon 5 %26.7 · Zon 1 %25.3 · Zon 3 %21.5 · Zon 4 %18.9 · Zon 2 %7.5 ⇒ **tek-zon hakimiyeti yok**.
 **Yanlış negatifler (n=12):** ortalama olasılık 0.5812, maksimum 0.6317 — eşiğin (0.6357) hemen altında **"kıl payı"** hatalar (TP ortalaması 0.7271).
 
-> 🚨 **DOĞRULANMIŞ SINIRLAMA — model lokalize ETMİYOR (E4.7) ve zon-özel modelleme katkı sağlamıyor (E3.5).**
+> 🚨 **DOĞRULANMIŞ SINIRLAMA — model lokalize ETMİYOR (E4.7), zon-özel modelleme katkı sağlamıyor (E3.5) ve sinyal GLOBAL/arka plan topolojisindedir (E1.2).**
 > **E4.7:** nodül-pozitif hastalarda modelin argmax zonu gerçek nodül zonuna **şans düzeyinde** düşüyor (isabet 0.228–0.298 vs şans 0.268; binom p = 0.21–0.90) ve **zon düzeyi AUC yalnızca 0.48–0.53** — modeller bir hastanın nodüllü zonunu nodülsüz zonlarından **ayırt edemiyor**.
 > **E3.5:** zon kimliğini yok sayan **havuzlanmış tek model**, 5-zon özel modeliyle **eşdeğer** (0.8585 vs 0.8661, fark −0.0076 < 0.015) — üstelik model başına 5× daha fazla veri görmesine rağmen daha iyi değil.
+> **E1.2:** Frangi vesselness ile damar-kaynaklı H1 sınıflarını elemek başarımı **monoton olarak düşürüyor** (base 0.8697 → v90 0.8606 → v75 0.8547 → v50 0.8358) ⇒ damar/arka plan H1 sınıfları **gürültü değil, faydalı**.
 >
-> **Sonuçları geçersiz kılmaz** — hasta düzeyi sınıflandırma (füzyon 0.9211) ve PL mekanizması (E4.4) bundan bağımsız olarak geçerlidir. Ancak **iddianın kapsamını belirler**: *"nodülü doğru zonda tespit ediyoruz"* **denemez**; *"her zon ayrı uzmanlaşır"* da **denemez**. Doğru ifade: **"akciğerin 5 kırpıntısı üzerinde bir model topluluğu + hasta düzeyi max-pooling agregasyonu"**. Bölünmenin katkısı **lokalizasyon değil, topluluk çeşitliliğidir**.
+> 🔗 **Üç bulgu birleşince:** E4.4 (zarf arka plan sınıflarıyla doygun) + E4.7 (lokalizasyon yok) + E1.2 (arka planı kesmek zararlı) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan (damar, göğüs duvarı) topolojisindedir.** "Arka planı bastırınca lokal nodül sinyali açığa çıkar" hipotezi **çürütülmüştür**.
+>
+> **Sonuçları geçersiz kılmaz** — hasta düzeyi sınıflandırma (füzyon 0.9211) ve PL mekanizması (E4.4) bundan bağımsız olarak geçerlidir. Ancak **iddianın kapsamını belirler**: *"nodülü doğru zonda tespit ediyoruz"* **denemez**; *"her zon ayrı uzmanlaşır"* da **denemez**; *"lokal nodül topolojisini okuyoruz"* da **denemez**. Doğru ifade: **"akciğerin 5 kırpıntısı üzerinde bir model topluluğu + hasta düzeyi max-pooling; ayırt edici sinyal global/arka plan topolojisinde"**.
 
 
 | Boyut | Test edilen | Sonuç | Deney |

@@ -483,3 +483,36 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   4. ✅ Geçerli kalan katkılar değişmiyor: **füzyon 0.9211** (E3.1), **tamamlayıcılık r≈0.30**, **PL zarf mekanizması** (E4.4).
 * **Karar:** **KEEP** (eşdeğerlik) — mimari basitleştirilebilir; iddia kapsamı daraltıldı.
 * **Manifest:** `artifacts/runs/E3.5_pooled_vs_zone/manifest.json`
+
+### E1.1 — Kemik Bastırma (Qure.ai) — **UYGULANAMAZ (feasibility blocker)** ⛔
+
+* **Neden denenecek:** Literatür, kemik gölgelerinin H1 döngülerinin en büyük yapay kaynağı olduğunu ve Qure.ai modelinin **NODE21'de zaten doğrulandığını** söylüyordu (literature.md §4.1).
+* **Uygulanabilirlik ölçümü (bu turda yapıldı):**
+  * Model: [huggingface.co/qureaiorg/bone-suppression](https://huggingface.co/qureaiorg/bone-suppression) — iki TorchScript izi, **~400 MB × 2**, CC-BY-NC-SA-4.0 (ticari kullanım yasak).
+  * README açıkça: **CPU'da ~1 dakika/görüntü**.
+  * Gereken hasta sayısı (train dengeli + val) ≈ **1700** → **≈ 28 saat** CPU.
+  * Ek engel: `cv2`, `huggingface_hub`, `pydicom` **kurulu değil** (+ kurulum ve indirme).
+* **Karar:** **UYGULANAMAZ** — tek oturumda (ve CPU-only ortamda) maliyeti kabul edilemez. Deney **KILL değil, ERTELENDİ**; GPU erişimi (E0.0) sağlanırsa yeniden değerlendirilebilir.
+* **Yerine geçen:** E1.2 (aynı kök nedeni — damar döngüleri — hedefler ve **çok ucuz**).
+
+### E1.2 — Frangi Damar-Bastırma ile H1 Diyagram Filtrelemesi
+
+* **Hipotez (ön-kayıtlı):** Damar-baskın H1 sınıflarının elenmesi, 5-zon CNN'in ortalama val ROC-AUC'sini **≥ +0.015 artırır** (3 seed).
+* **Tek değişken:** Frangi vesselness eşiği `q` — H1 sınıfının **doğum hücresindeki** vesselness değeri, doku dağılımının `q` kantilini aşarsa sınıf elenir. **Görüntü değiştirilmez**, yalnızca H1 diyagramı süzülür.
+* **Kapsam:** train(dengeli)+val = 5.710 zon · çıkarım 411 s (14 zon/s) · **test setine dokunulmadı**.
+* **Sonuç:** ❌ **Hipotez çürütüldü → KILL** (filtreleme **monoton olarak zarar veriyor**)
+
+  | Varyant | Ortalama val ROC-AUC (3 seed) | Base'e fark |
+  | :--- | :---: | :---: |
+  | **base** (filtre yok) | **0.8697** | — |
+  | v90 (en damarsal %10 elenir) | 0.8606 | −0.0091 |
+  | v75 (en damarsal %25) | 0.8547 | −0.0150 |
+  | v50 (en damarsal %50) | 0.8358 | **−0.0338** |
+
+* **📌 Yorum — E4.4 ve E4.7 ile tutarlı bir tabloya oturuyor:**
+  1. Damar kaynaklı H1 sınıfları **gürültü değil, aksine faydalı**. Onları elemek başarımı monoton olarak düşürüyor.
+  2. Bu, **E4.7'nin bulgusunu açıklıyor**: modeller lokalize etmiyorsa, ayırt edici sinyal büyük ölçüde **global damar/arka plan topolojisinde** olmalı — ve E1.2 tam da o sinyali kesiyor.
+  3. Üç deney birleşince tutarlı bir sonuç: **E4.4** (zarf arka plan sınıflarıyla doygun) + **E4.7** (lokalizasyon yok) + **E1.2** (arka planı kesmek zarar veriyor) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan topolojisindedir.**
+  4. ⚠️ Bu, "arka planı bastırırsak lokal sinyal açığa çıkar" beklentisini **çürütüyor**. Kemik bastırma (E1.1) da benzer şekilde zarar verebilir — ki zaten uygulanamaz durumda.
+* **Karar:** **KILL** — H1 filtrelenmez; mevcut hat korunur.
+* **Manifest:** `artifacts/runs/E1.2_vesselness_h1_filter/manifest.json`
