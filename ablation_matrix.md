@@ -142,6 +142,8 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 | | 25×25 | 0.8469 (−0.0227) | | E2.8 |
 | **Zon füzyonu (TDA içi)** | Hasta düzeyi soft voting | **0.8821 / test 0.8776** | **KEEP** | E3.4 |
 | | Zon düzeyi füzyon | 0.8699 / test 0.8629 | | E3.4 |
+| **Füzyon seviyesi** | **Geç (karar) füzyon** | **0.9538** | **KEEP** | E3.1/E3.2 |
+| | Orta seviye (PI ⊕ ResNet → LR) | 0.9482 (**−0.0056**) | | **E3.2** |
 | **Etiketleme eşiği** | %10 | 0.8922 (tek seed) → **0.8587** (5 seed) | | E4.1 → E4.6 |
 | | **%20** | **0.8736** → **0.8501** | **KEEP** | E4.1 → E4.6 |
 | | %30 | 0.8693 | | E4.1 |

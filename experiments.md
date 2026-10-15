@@ -605,6 +605,31 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KEEP** (genelleme) — ancak **makalede raporlanacak sayı 0.8098'dir**; 0.8468 confound'lu olduğu için kullanılmamalıdır.
 * **Manifest:** `artifacts/runs/E5.3_cross_source_eqsize/manifest.json`
 
+### E3.2 — Orta Seviye Füzyon (özellik birleştirme) vs Geç Füzyon
+
+* **Hipotez (ön-kayıtlı):** Orta seviye füzyon (PI ⊕ ResNet özellikleri → tek lojistik regresyon), geç füzyonun **val** ROC-AUC'sini (0.9572) **≥ +0.015** geçer.
+* **Tek değişken:** Füzyon seviyesi (özellik birleştirme vs karar birleştirme). Özellikler, split, zon yapısı ve hasta düzeyi max-pooling **sabit**.
+* **Kapsam:** Yalnızca **validation** (test bütçesi tükendi).
+* **Sonuç:** ❌ **KILL**
+
+  | Varyant | Val ROC-AUC |
+  | :--- | :---: |
+  | TDA lojistik sondası (tek) | 0.8365 |
+  | ResNet18 sondası (tek) | 0.8884 |
+  | TDA ensemble (CNN+SVM) | 0.8699 |
+  | **Geç füzyon (a=0.60)** | **0.9538** |
+  | **Orta seviye (PI+ResNet → LR)** | **0.9482** |
+
+  **Orta − Geç fark: −0.0056** (kriter ≥ +0.015 ✗)
+
+* **Yorum:**
+  1. **Özellik düzeyinde birleştirme, karar düzeyinde birleştirmeden daha iyi değil** — aksine hafifçe kötü.
+  2. Muhtemel sebep: TDA dalındaki **doğrusal olmayan** bileşen (CNN + RBF-SVM) karar füzyonunda korunuyor; 1312 boyutlu birleşik vektör üzerinde **tek doğrusal** sınıflandırıcı bu ifade gücünü kaybediyor.
+  3. ⇒ **Geç füzyon tasarımı doğrulanmış** sayılır; ana sonuç bu ablasyonla da destekleniyor.
+* ⚠️ **Küçük yeniden üretilebilirlik notu:** TDA ensemble val değeri bu koşuda **0.8699**, E3.4'te **0.8821** (−0.0122). Kayıtlı bundle'ların (CNN + SVM) yeniden yüklenmesi, E3.4'ün betik içi hesabıyla tam örtüşmüyor. Ana sonuçları etkilemez (füzyon aynı koşu içinde tutarlı) ama **TDA-tek satırı için E3.4 değeri esas alınmalı** ve fark ileride açıklanmalıdır.
+* **Karar:** **KILL** — geç füzyon korunur.
+* **Manifest:** `artifacts/runs/E3.2_midlevel_fusion/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
