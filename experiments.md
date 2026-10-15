@@ -516,3 +516,24 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   4. ⚠️ Bu, "arka planı bastırırsak lokal sinyal açığa çıkar" beklentisini **çürütüyor**. Kemik bastırma (E1.1) da benzer şekilde zarar verebilir — ki zaten uygulanamaz durumda.
 * **Karar:** **KILL** — H1 filtrelenmez; mevcut hat korunur.
 * **Manifest:** `artifacts/runs/E1.2_vesselness_h1_filter/manifest.json`
+
+### E3.6 — Oracle-Lokalize TDA: Lokal Topolojik Sinyal Var mı? 🎯
+
+* **Hipotez (ön-kayıtlı):** Nodül merkezine oturan yamaların TDA özellikleri, kontrol yamalarından **val ROC-AUC ≥ 0.70** ile ayrılır.
+* **Neden:** E4.7 (lokalizasyon yok) + E1.2 (arka plan faydalı) lokal sinyalin zayıf olabileceğini düşündürdü. Ama **doğrudan test edilmemişti.** Eğer *ground-truth bbox ile* (yani nodülün tam nerede olduğunu bilerek) bile ayrım yoksa, **aday-bazlı mimari (E3.3) işe yaramaz.**
+* **Tasarım:** `patient_info.json`'daki `crop_bbox` + nodül `center_x/center_y` kullanılarak nodül merkezine oturan yama çıkarıldı. Kontrol yaması **AYNI BOYUTTA** (`half` birebir eşleştirildi). Sınıflandırıcı: lojistik regresyon (deterministik). Hasta split'i sabit; **test hastaları kullanılmadı.**
+* **Sonuç:** ⚠️ **KILL — lokal sinyal ZAYIF**
+
+  | Tasarım | Val yama ROC-AUC |
+  | :--- | :---: |
+  | **Boyut-eşleştirilmiş (geçerli)** | **0.6866** (train 0.6735) |
+  | ~~Eşleştirilmemiş (confound'lu)~~ | ~~0.9940~~ |
+
+* **🚨 Kritik metodolojik uyarı (confound kontrolü):** İlk koşuda kontroller sabit **60×60**, pozitifler ise değişken boyuttaydı (2,5 × bbox). Sınıflandırıcı **nodülü değil, yama BOYUTUNU** öğrendi ve AUC **0.994** çıktı. Boyut eşleştirilince **0.687**'ye düştü. Bu, "fazla iyi" sonuçların sistematik olarak confound açısından denetlenmesi gerektiğinin çarpıcı bir örneğidir.
+* **Yorum — stratejik sonuç:**
+  1. **Oracle lokalizasyonla bile** — nodülün tam merkezini *bildiğimiz* hâlde — yama düzeyi AUC yalnızca **0.687**.
+  2. ⇒ **Aday-bazlı mimarinin (E3.3) tavanı düşük.** Mükemmel lokalizasyon varsayımında ~0.69; gerçek (hatalı) aday üretimiyle daha da düşer. **Seçenek B (lokalizasyonu kurtarma) kapatıldı.**
+  3. ⇒ Hasta düzeyi **0.9211**'in kaynağı ağırlıklı olarak **global sinyal** — E4.7 ve E1.2 ile tam tutarlı.
+  4. ✅ **Klinik olarak anlamlı:** Nodül varlığı, lokal topolojiden çok **akciğerin genel topolojik/görüntüsel örüntüsüne** yansıyor. Bu, yayın için değerli ve dürüst bir çerçeve.
+* **Karar:** **KILL** — lokalizasyon arayışı kapatıldı; **Seçenek A** (daraltılmış, dürüst kapsamla yayına hazırlık) benimsenir.
+* **Manifest:** `artifacts/runs/E3.6_oracle_localized_tda/manifest.json`

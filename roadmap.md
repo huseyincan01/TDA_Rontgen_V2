@@ -102,7 +102,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E4.3** | W4 | Hangi zonlarda sistematik hata yapıyoruz? | E0.2 | 1g | Düşük | Orta | **KILL** ⚠️ zayıf zon yok |
 | **E4.7** | W4 | Modelin maksimum olasılığı gerçek nodül zonuna şanstan sık düşer (lokalite testi) | E4.3 | 1g | Orta | **Yüksek** (geçerlilik) | **KILL** 🚨 lokalizasyon YOK |
 | **E3.5** | W3 | Tek global model, 5-zon max-pooling'e denk mi? (zon ayrıştırmasının katkısı) | E4.7 | 2g | Orta | **Yüksek** (kapsam) | **KEEP** ⚠️ eşdeğer (fark −0.0076) |
-| **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | Planlandı |
+| **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | **İPTAL** ⛔ E3.6: tavan ~0.69 |
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | Planlandı |
 | **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
 | **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | Planlandı 🔓 |
@@ -201,7 +201,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | **6/6** ✅ | — | 3 | 3 |
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 2/6 | E2.1/E2.2 | 0 | 1 |
-| Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
+| Faz 4 | E3.3, E2.5, E1.4, E2.6 | 1/4 | E2.5/E1.4/E2.6 | 0 | 1 |
 | Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 4/6 | E5.1 finalize | 0 | 3 |
 
 **Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
@@ -243,6 +243,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E3.5** | **KEEP** ⚠️ | **Havuzlanmış tek model vs 5-zon özel modeli** (3 seed, val-only, **test kullanılmadı**): 0.8585 vs 0.8661 → fark **−0.0076** < tolerans 0.015 ⇒ **eşdeğer**. Havuzlanmış model model başına **5× veri** görüyor ama daha iyi değil ⇒ zon bölünmesi **model topluluğu çeşitliliği** sağlıyor, **anatomik uzmanlaşma** değil. ⚠️ E4.7 + E3.5 birlikte: mimari *"5 kırpıntı üzerinde model topluluğu + max-pooling"* olarak, **lokalizasyon/uzmanlaşma iddiası olmadan** sunulmalı. |
 | 2026-10-14 | **E1.1** | ⛔ **UYGULANAMAZ** | Kemik bastırma (Qure.ai) — README CPU'da **~1 dk/görüntü**; gereken ~1700 hasta ⇒ **~28 saat**; ayrıca `cv2`/`huggingface_hub` kurulu değil. Deney KILL değil **ertelendi** (GPU gelirse yeniden değerlendirilir). Yerine E1.2 uygulandı. |
 | 2026-10-14 | **E1.2** | **KILL** ⚠️ | Frangi vesselness ile H1 filtrelemesi (3 seed, val-only, **test kullanılmadı**): filtreleme **monoton zarar veriyor** — base 0.8697 → v90 0.8606 → v75 0.8547 → v50 **0.8358** (−0.0338). ⇒ **Damar kaynaklı H1 sınıfları gürültü değil, faydalı.** 📌 **Üç deney tutarlı bir sonuca bağlanıyor:** E4.4 (zarf arka planla doygun) + E4.7 (lokalizasyon yok) + E1.2 (arka planı kesmek zararlı) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan topolojisindedir.** "Arka planı bastırınca lokal sinyal açılır" beklentisi **çürütüldü**. |
+| 2026-10-14 | **E3.6** | **KILL** 🎯 | **Oracle-lokalize TDA testi** (ground-truth bbox ile nodül merkezine oturan yama vs **boyut-eşleştirilmiş** kontrol; train+val, **test kullanılmadı**): val yama AUC yalnızca **0.6866**. 🚨 Confound uyarısı: eşleştirilmemiş ilk koşuda kontroller sabit 60×60 iken pozitifler değişkendi → sınıflandırıcı **yama boyutunu** öğrendi ve AUC **0.994** çıktı; boyut eşleştirilince **0.687**'ye düştü. ⇒ **Nodülün tam yerini bilsek bile lokal TDA ayrımı zayıf** ⇒ **aday-bazlı mimarinin (E3.3) tavanı düşük, İPTAL.** Hasta düzeyi 0.9211 ağırlıklı olarak **global sinyalden** geliyor. **Seçenek A** (daraltılmış dürüst kapsamla yayın) benimsenir. |
 
 ---
 

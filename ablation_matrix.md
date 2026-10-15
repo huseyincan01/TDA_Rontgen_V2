@@ -157,6 +157,8 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 > **E4.7:** nodül-pozitif hastalarda modelin argmax zonu gerçek nodül zonuna **şans düzeyinde** düşüyor (isabet 0.228–0.298 vs şans 0.268; binom p = 0.21–0.90) ve **zon düzeyi AUC yalnızca 0.48–0.53** — modeller bir hastanın nodüllü zonunu nodülsüz zonlarından **ayırt edemiyor**.
 > **E3.5:** zon kimliğini yok sayan **havuzlanmış tek model**, 5-zon özel modeliyle **eşdeğer** (0.8585 vs 0.8661, fark −0.0076 < 0.015) — üstelik model başına 5× daha fazla veri görmesine rağmen daha iyi değil.
 > **E1.2:** Frangi vesselness ile damar-kaynaklı H1 sınıflarını elemek başarımı **monoton olarak düşürüyor** (base 0.8697 → v90 0.8606 → v75 0.8547 → v50 0.8358) ⇒ damar/arka plan H1 sınıfları **gürültü değil, faydalı**.
+> **E3.6 (belirleyici):** Ground-truth bbox ile **nodülün tam merkezine** oturan yama, **boyut-eşleştirilmiş** kontrol yamasından yalnızca **0.6866** AUC ile ayrılıyor. ⇒ **Nodülün yerini mükemmel bilsek bile lokal TDA sinyali zayıf** → aday-bazlı mimari (E3.3) **iptal edildi**.
+> ⚠️ **Confound uyarısı:** E3.6'nın eşleştirilmemiş ilk koşusu **0.994** vermişti; kontroller sabit 60×60, pozitifler değişken boyuttaydı ve sınıflandırıcı **nodülü değil yama boyutunu** öğrenmişti. **Ders:** "fazla iyi" sonuçlar sistematik olarak confound açısından denetlenmelidir.
 >
 > 🔗 **Üç bulgu birleşince:** E4.4 (zarf arka plan sınıflarıyla doygun) + E4.7 (lokalizasyon yok) + E1.2 (arka planı kesmek zararlı) ⇒ **ayırt edici bilgi lokal nodül topolojisinde değil, global/arka plan (damar, göğüs duvarı) topolojisindedir.** "Arka planı bastırınca lokal nodül sinyali açığa çıkar" hipotezi **çürütülmüştür**.
 >
