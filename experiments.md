@@ -334,3 +334,25 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
   4. Bu koşudaki `adams_p` değeri (0.8736) tam boru hattı referansından (0.8607) farklıdır; nedeni bu betiğin her zon için RNG'yi yeniden tohumlaması. **Karşılaştırma kendi içinde kontrollüdür** (tüm varyantlar aynı protokol).
 * **Karar:** **KILL** — mevcut Adams ağırlığı korunur.
 * **Manifest:** `artifacts/runs/E2.7_pi_weight_functions/manifest.json`
+
+### E4.1 — Etiketleme Kuralı Sağlamlık Analizi (%10 / %20 / %30 örtüşme)
+
+* **Hipotez (ön-kayıtlı):** %20 piksel-örtüşme kuralıyla elde edilen sonuçlar, %10 ve %30 kuralları altında **anlamlı değişmez** (val ROC-AUC farkı < 0.015).
+* **Tasarım:** **Hasta split'i DONDURULDU** (aynı train/val/test hastaları); yalnızca zon etiketleri ve 1:1 dengeli alt küme yeniden türetildi. **Test setine dokunulmadı** — karar validation üzerinden.
+* **Çalışma:** `python pipelines/exp/E4_1_overlap_robustness.py` · seed 42 · CPU · çalışma süresi ~3 dk.
+* **Sonuç:** ❌ **Hipotez reddedildi → KILL** (sonuçlar toleransın ötesinde değişiyor)
+
+  | Kural | Pozitif zon | Ambiguous | Dengeli train | Val hasta ROC-AUC | %20'ye fark |
+  | :--- | :---: | :---: | :---: | :---: | :---: |
+  | **%10** | 1514 | 33 | 2084 | **0.8922** | **+0.0186** |
+  | **%20 (mevcut)** | 1478 | 68 | 2040 | 0.8736 | — |
+  | **%30** | 1436 | 109 | 1980 | 0.8693 | −0.0043 |
+
+* **Yorum:**
+  1. **Monoton eğilim:** gevşek örtüşme eşiği (daha çok pozitif, daha az ambiguous) → **daha iyi** val AUC. %10 en iyi, %30 en kötü.
+  2. En büyük |fark| **0.0186 ≥ tolerans 0.015** ⇒ etiketleme kuralı modele **ölçülebilir biçimde** yansıyor; sonuç "kuraldan bağımsız sağlam" **değil**.
+  3. ⚠️ **Uyarı:** tek seed. Fark toleransın hemen üzerinde ve CNN gürültüsü ±0.01–0.02 mertebesinde olabilir ⇒ **%10'a geçiş kararı çok-seed val doğrulaması gerektirir** (yeni deney **E4.6** olarak kaydedildi). Mevcut boru hattı (%20) **değiştirilmedi**.
+  4. ✅ **Tutarlılık kontrolü (değerli):** bu koşuda %20 için elde edilen **0.8736**, E2.7'deki `adams_p` sonucuyla **birebir aynı**. E2.7'de PI rasterleştirmesini yeniden yazmıştım; bu eşleşme onun orijinal extractor ile **birebir uyumlu** olduğunu kanıtlıyor.
+  5. Referans: tam boru hattı (`05_train_cnn.py`) %20'de 0.8607 verir; fark, o betiğin RNG'yi global olarak **bir kez** tohumlamasından kaynaklanır (protokol farkı, hata değil).
+* **Karar:** **KILL** (hipotez reddedildi) — ancak **%10 kuralı güçlü bir iyileştirme adayı** olarak kaydedildi (E4.6).
+* **Manifest:** `artifacts/runs/E4.1_overlap_robustness/manifest.json`

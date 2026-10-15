@@ -86,7 +86,8 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | **KEEP** ✅ birebir |
 | **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | **BASELINE** ✅ test 0.8349 |
 | **E3.4** | W3 | CNN + SVM soft-voting tek modellerden ≥ +0.015 AUC verir | E0.2 | 0.5g | Düşük | Orta | **KEEP** ✅ test 0.8776 |
-| **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | Planlandı |
+| **E4.1** | W4 | %10/%20/%30 overlap kurallarında model sıralaması değişmez | E0.2 | 1g | Düşük | Yayın kanıtı | **KILL** ⚠️ %10 +0.0186 > tolerans |
+| **E4.6** | W4 | %10 kuralı, çok-seed val doğrulamasında %20'yi ≥ +0.015 geçer | E4.1 | 1.5g | Orta | Yüksek | Planlandı |
 | **E1.1** | W1 | Kemik bastırma H1 kemik gürültüsünü azaltır, val AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
 | **E1.2** | W1 | Frangi damar bastırma H1 damar döngülerini temizler, AUC ≥ +0.015 artar | — | 2g | Orta | **Yüksek** | Planlandı |
 | **E3.1** | W3 | Pretrainli CNN + TDA geç füzyon > her ikisi tek başına (CI ile) | E0.3 | 1.5g | Düşük | **Çok Yüksek** (ana iddia) | **KEEP** 🏆 test 0.9211 |
@@ -194,7 +195,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
 | Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
-| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 3/5 | E2.8 / E4.1 | 2 | 1 |
+| Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1 | 4/5 | E2.8 | 2 | 2 |
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
@@ -231,6 +232,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E3.1** | **KEEP** 🏆 | **Yayının ana sonucu: füzyon test ROC-AUC 0.9211** (ResNet 0.8349 + TDA 0.8776, a=0.55). Test farkı **+0.0862**, bootstrap %95 CI **[+0.0632, +0.1099]**, **p≈0.0000**. **Bağımsız doğrulama:** iki temsil arasındaki korelasyon yalnızca **r≈0.30–0.35** (neredeyse dik) → tamamlayıcılık gerçek; etiket permütasyonu AUC=0.4378 → **sızıntı yok**. GPU gerekmedi. |
 | 2026-10-14 | **E0.0** | **Ertelendi** 🔽 | Tüm Faz 0/1/2 deneyleri CPU'da başarıyla üretildi (ensemble 0.8776, füzyon 0.9211). CUDA torch artık **kritik değil**; yalnızca uçtan uca fine-tuning denenirse gerekir. |
 | 2026-10-14 | **E2.7** | **KILL** ⚠️ | Ağırlık fonksiyonu karşılaştırması (val-only, 5.710 zon, **test kullanılmadı**): **Adams `p` zaten en iyi (0.8736)**. Farklar hep negatif — arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. `p²`'nin en kötü olması **E4.4'ü bağımsız destekliyor**. Mevcut PI tasarımı **doğrulanmış** sayılır. |
+| 2026-10-14 | **E4.1** | **KILL** ⚠️ | Overlap sağlamlığı (hasta split'i dondurulmuş, **test kullanılmadı**): **%10 = 0.8922 (+0.0186)**, %20 = 0.8736, %30 = 0.8693 (−0.0043). En büyük fark **0.0186 ≥ tolerans 0.015** ⇒ sonuçlar kuraldan bağımsız sağlam **değil**; monoton eğilim var (gevşek eşik → iyi). ⚠️ Tek seed; **%10'a geçiş çok-seed doğrulaması gerektirir** → yeni deney **E4.6**. Yan kanıt: %20 sonucu E2.7 ile birebir aynı (0.8736) ⇒ PI rasterleştirmesi doğrulandı. |
 
 ---
 
