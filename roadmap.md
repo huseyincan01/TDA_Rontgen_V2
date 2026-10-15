@@ -100,7 +100,8 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E4.2** | W4 | Kalıcılık özellikleri radyolojik yapılara eşlenebilir | E0.2 | 2g | Orta | **Yüksek** (yayın) | **KILL** ⚠️ H0 ✅ / H1 ❌ |
 | **E4.5** | W4 | En kalıcılıklı H1 sınıfları düzgün (düşük-gradyanlı) bölgelerde oluşur | E4.2 | 1.5g | Orta | Orta | Planlandı |
 | **E4.3** | W4 | Hangi zonlarda sistematik hata yapıyoruz? | E0.2 | 1g | Düşük | Orta | **KILL** ⚠️ zayıf zon yok |
-| **E4.7** | W4 | Modelin maksimum olasılığı gerçek nodül zonuna şanstan sık düşer (lokalite testi) | E4.3 | 1g | Orta | **Yüksek** (geçerlilik) | Planlandı |
+| **E4.7** | W4 | Modelin maksimum olasılığı gerçek nodül zonuna şanstan sık düşer (lokalite testi) | E4.3 | 1g | Orta | **Yüksek** (geçerlilik) | **KILL** 🚨 lokalizasyon YOK |
+| **E3.5** | W3 | Tek global model, 5-zon max-pooling'e denk mi? (zon ayrıştırmasının katkısı) | E4.7 | 2g | Orta | **Yüksek** (kapsam) | Planlandı |
 | **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | Planlandı |
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | Planlandı |
 | **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
@@ -201,7 +202,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 2 | E3.1, E3.2 | 1/2 | E3.2 | 1 | 0 |
 | Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 0/6 | — | 0 | 0 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 0/4 | — | 0 | 0 |
-| Faz 5 | E4.2, E4.3, E5.1, E5.2, E5.3 | 3/5 | E4.7 / E5.1 finalize | 0 | 2 |
+| Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 4/6 | E5.1 finalize | 0 | 3 |
 
 **Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
 
@@ -238,6 +239,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E4.6** | **KILL** ⚠️ | Eşleştirilmiş 5 seed: ortalama fark **+0.0085** (std 0.0096), pozitif seed 4/5. Eşik +0.015 **aşılamadı** ⇒ E4.1'in +0.0186'sı **gürültü artefaktı**ydı (seed 42 beşin en büyüğü). **%20 kuralı korunur.** 📌 Yan bulgu: CNN seed varyansı **±0.02–0.03** (val 0.8321–0.8922) → makalede ana sonuçlar için **çok-seed ortalama** raporlanmalı; füzyon kazancı (+0.0862) bu gürültünün çok üzerinde olduğu için iddia sağlam. |
 | 2026-10-14 | **E2.8** | **KEEP** ✅ | σ/ızgara duyarlılığı (3 seed ortalaması, **test kullanılmadı**, tolerans 0.03). Kol A (σ): 0.5→0.8460 (**−0.0236**), **1.0→0.8697**, 1.5→0.8734 (+0.0038), 2.0→0.8712. Kol B (ızgara): 15→0.8545 (−0.0152), **20→0.8697**, 25→0.8469 (−0.0227). Her iki kol da **sağlam** ⇒ sonuç σ/ızgara seçimine aşırı duyarlı değil. Mevcut σ=1.0 / 20×20 korunur. **Faz 1 tamamlandı (6/6).** |
 | 2026-10-14 | **E4.3** | **KILL** ⚠️ | Zon bazlı hata analizi (val-only, yeni model eğitilmedi): **zayıf zon yok** — her zon tek başına 0.74–0.84 hasta düzeyi AUC veriyor. Karar 5 zona yayılıyor (tek-zon hakimiyeti yok); FN'ler "kıl payı" (ort 0.581 vs eşik 0.636). 📌 **Kritik çıkarım:** zon-bazlı sinyalin önemli kısmı **hasta-global** olabilir (saf lokal olsaydı nodülsüz zonlar şans düzeyinde kalırdı) → yeni **E4.7 lokalite testi** kaydedildi; makalede sınırlama olarak belirtilmeli. |
+| 2026-10-14 | **E4.7** | **KILL** 🚨 | **Lokalite testi — modeller lokalize ETMİYOR** (val, 171 nodül-pozitif hasta, **test kullanılmadı**). İsabet oranı şans düzeyinde (0.228–0.298 vs şans 0.268; binom p=0.21–0.90) ve **zon düzeyi AUC yalnızca 0.48–0.53**. ⇒ Hasta düzeyi 0.9211 sonucu **gerçek** ama mekanizma "nodülü doğru zonda bulmak" **değil**. **"5-zon lokalizasyon" yenilik iddiası DÜŞTÜ**; doğru ifade "5-zon paralel ayrıştırma + max-pooling". Geçerli kalan katkılar: füzyon (E3.1), tamamlayıcılık (r≈0.30), PL mekanizması (E4.4). Yeni aday **E3.5** (global model vs 5-zon) kaydedildi. |
 
 ---
 

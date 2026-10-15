@@ -433,3 +433,31 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** (hipotez) — bulgular korunur.
 * **Yeni deney (E4.7):** "Modelin maksimum olasılığı, gerçek nodül zonuna şanstan daha sık mı düşüyor?" (lokalite testi).
 * **Manifest:** `artifacts/runs/E4.3_zone_error_analysis/manifest.json`
+
+### E4.7 — Lokalite Testi: Model Gerçekten Nodülün Olduğu Zonu mu İşaretliyor? 🚨
+
+* **Hipotez (ön-kayıtlı):** Nodül-pozitif val hastalarında model (a) argmax zonunu **gerçek nodül zonuna** şanstan sık yerleştirir, (b) gerçek nodül zonlarına aynı hastanın nodülsüz zonlarından **daha yüksek** olasılık atar.
+* **Gerekçe:** E4.3, her zonun tek başına 0.74–0.84 AUC vermesini buldu — bu, sinyalin **lokal değil hasta-global** olabileceğini düşündürdü. Bu deney soruyu doğrudan test eder.
+* **Kapsam:** Validation, 171 nodül-pozitif hasta · test setine dokunulmadı · yeni model eğitilmedi.
+* **Sonuç:** ❌ **Hipotez reddedildi → KILL. Hiçbir model lokalize ETMİYOR.**
+
+  | Model | İsabet oranı | Şans tabanı | Fark | Eşleştirilmiş fark [%95 CI] | **Zon düzeyi AUC** |
+  | :--- | :---: | :---: | :---: | :---: | :---: |
+  | TDA CNN | 0.2281 | 0.2678 | **−0.0398** | −0.0129 [−0.0458, +0.0214] | **0.4837** |
+  | TDA ensemble | 0.2398 | 0.2678 | −0.0281 | +0.0017 [−0.0239, +0.0280] | 0.5037 |
+  | ResNet18 | 0.2982 | 0.2678 | +0.0304 | +0.0005 [−0.0175, +0.0185] | 0.5258 |
+  | Fusion | 0.2690 | 0.2678 | +0.0012 | +0.0010 [−0.0156, +0.0180] | 0.5156 |
+
+  * **İsabet oranları şans düzeyinde** (binominal p = 0.21–0.90; hiçbiri anlamlı değil).
+  * **Zon düzeyi AUC 0.48–0.53** = **lokalizasyon yok**. Modeller, bir hastanın nodüllü zonunu nodülsüz zonlarından ayırt **edemiyor**.
+  * Eşleştirilmiş fark CI'ları **sıfırı içeriyor** → gerçek pozitif zonlara daha yüksek olasılık atanmıyor.
+
+* **🚨 Yorum — bu bulgu iddianın kapsamını belirler:**
+  1. Hasta düzeyi yüksek AUC (**0.9211 füzyon**) **gerçektir**, ancak mekanizma *"nodülü doğru zonda tespit ediyoruz"* **değildir**.
+  2. Zon-bazlı modeller fiilen **5 paralel hasta-global sınıflandırıcı** gibi davranıyor; zon ayrımı **lokalizasyon sağlamıyor**.
+  3. ⚠️ Bu nedenle **"5 anatomik zon + lokalizasyon"** yenilik iddiası **zayıflatılmalı**; doğru ifade *"5-zon paralel ayrıştırma + max-pooling agregasyonu"*dur.
+  4. ✅ Yine de geçerli kalan katkılar: **füzyon sonucu** (E3.1, 0.9211), **temsil tamamlayıcılığı** (r≈0.30), **PL zarf mekanizması** (E4.4) — bunlar lokalizasyondan bağımsızdır.
+  5. 📌 **Neden olabilir:** CXR'de küçük bir nodül, zon kesitinin topolojik özetinde zayıf bir lokal sinyal bırakır; modeller bunun yerine nodül varlığıyla ilişkili **global doku örüntülerini** öğreniyor olabilir. Bu, literatürde de bilinen bir CXR zorluğudur.
+* **Karar:** **KILL** (hipotez) — bulgu **yayın için kritik bir dürüstlük ve kapsam belirleme** sonucudur.
+* **Yeni deney adayı (E3.5):** "Tek global (zon ayrımı olmayan) model, 5-zon max-pooling'e denk mi?" → zon ayrıştırmasının **katkısı olup olmadığını** ölçer.
+* **Manifest:** `artifacts/runs/E4.7_locality_test/manifest.json`
