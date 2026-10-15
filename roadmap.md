@@ -37,7 +37,7 @@ Bu 8 kural, "her fikri denemek" ile "sonuçların güvenilir olması" arasındak
 | Kaynak | Doğrulanmış durum |
 | :--- | :--- |
 | GPU | **NVIDIA RTX 4050 Laptop, 6 GB VRAM** (fiziksel olarak var, boşta: 0% kullanım, 5.921 MiB boş) |
-| ⚠️ **PyTorch** | **`torch 2.14.1+cpu`** (`cuda.device_count() = 0`). **E0.2'de ölçüldü:** küçük CNN 5 zonu **~27 s**'de CPU'da eğitiyor ⇒ TDA/özellik tabanlı deneyler GPU'suz yapılabilir. CUDA yalnızca görüntü tabanlı pretrainli omurga (E0.3/E3.1/E3.2) için gerekli → **E0.0** |
+| ✅ **PyTorch** | **`torch 2.14.1+cu126`** — `cuda.is_available() = True`, **RTX 4050 Laptop (6 GB VRAM, 20 SM)**. E0.0 **tamamlandı** (2026-10-14). CPU-only dönemde üretilen tüm sonuçlar **geçerli** (sürüm aynı, yalnızca derleme değişti) |
 | VRAM sınırı | 6 GB → pretrainli omurga için küçük batch, ~224px girdi |
 | Disk | C: üzerinde **~54 GB boş** |
 | Pretrained ağırlık | `~/.cache/torch` **yok** → ilk çalıştırmada indirme gerekir (internet şart) |
@@ -82,7 +82,7 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 
 | ID | İş Kolu | Hipotez (ön-kayıtlı) | Bağımlılık | Efor | Risk | Beklenen Etki | Durum |
 | :--- | :---: | :--- | :--- | :---: | :---: | :---: | :--- |
-| **E0.0** | W0 | CUDA PyTorch kurulunca GPU eğitimi tekrar çalışır | — | 0.5g | Düşük | Düşük (CPU yeterli çıktı) | **Ertelendi** 🔽 |
+| **E0.0** | W0 | CUDA PyTorch kurulunca GPU eğitimi tekrar çalışır | — | 0.5g | Düşük | **Kritik** | **TAMAMLANDI** ✅ cu126 |
 | **E0.1** | W0 | Deney kayıt protokolü + dizin sözleşmesi kurulabilir | — | 0.5g | Düşük | Altyapı | **KEEP** ✅ |
 | **E0.2** | W0 | PI CNN (0.8631) bit-bit yeniden üretilebilir | — | 0.5g | Düşük | Referans | **KEEP** ✅ birebir |
 | **E0.3** | W0 | Pretrainli omurga (ResNet/EfficientNet) zon kesitlerinde çalışır | — | 1g | Düşük | Altyapı | **BASELINE** ✅ test 0.8349 |
@@ -234,7 +234,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-14 | **E4.2** | **KILL** ⚠️ | Ön-kayıtlı H1 hipotezi **çürütüldü**: en kalıcılıklı H1 sınıflarının gradyan oranı medyan **1.021** (kenarlarda değil), rastgele kontrol 0.981. **Ancak H0 güçlü:** oran **6.176** (medyan 6.608), zonların **%90'ında** >1.5 → H0 PI ağırlıklı olarak **arka plan/sınır** kodluyor. Ayrıca persistence→piksel geri izleme **yeteneği** kuruldu (literatürdeki boşluk). Takip deneyi E4.5 kaydedildi. |
 | 2026-10-14 | **E0.3** | **BASELINE** ✅ | Güçlü aynı-split baseline kuruldu: **donmuş ImageNet ResNet18 + lojistik regresyon**, test ROC-AUC **0.8349** (val 0.8884 → **−0.0535 genelleme kaybı**). TDA CNN (0.8631) ve ensemble (0.8776) bu baseline'ı **test'te geçiyor**. Hakemin "neden güçlü CNN değil?" itirazı kapatıldı. CPU'da 849 s. |
 | 2026-10-14 | **E3.1** | **KEEP** 🏆 | **Yayının ana sonucu: füzyon test ROC-AUC 0.9211** (ResNet 0.8349 + TDA 0.8776, a=0.55). Test farkı **+0.0862**, bootstrap %95 CI **[+0.0632, +0.1099]**, **p≈0.0000**. **Bağımsız doğrulama:** iki temsil arasındaki korelasyon yalnızca **r≈0.30–0.35** (neredeyse dik) → tamamlayıcılık gerçek; etiket permütasyonu AUC=0.4378 → **sızıntı yok**. GPU gerekmedi. |
-| 2026-10-14 | **E0.0** | **Ertelendi** 🔽 | Tüm Faz 0/1/2 deneyleri CPU'da başarıyla üretildi (ensemble 0.8776, füzyon 0.9211). CUDA torch artık **kritik değil**; yalnızca uçtan uca fine-tuning denenirse gerekir. |
+| 2026-10-14 | **E0.0** | **TAMAMLANDI** ✅ | Kullanıcı CUDA PyTorch'u kurdu: **`torch 2.14.1+cu126`** + `torchvision 0.29.1+cu126` (CPU sürümleriyle **birebir aynı sürüm**, yalnızca derleme farkı). Doğrulandı: `cuda.is_available()=True`, **RTX 4050 Laptop (6 GB VRAM, 20 SM)**. ⇒ Ağır görüntü işleri artık CPU'yu kilitlemeyecek; E0.4 gibi ince ayar deneyleri GPU'da dakikalara inecek. |
 | 2026-10-14 | **E2.7** | **KILL** ⚠️ | Ağırlık fonksiyonu karşılaştırması (val-only, 5.710 zon, **test kullanılmadı**): **Adams `p` zaten en iyi (0.8736)**. Farklar hep negatif — arctan −0.0096, √p −0.0112, sabit −0.0145, **p² −0.0189**. `p²`'nin en kötü olması **E4.4'ü bağımsız destekliyor**. Mevcut PI tasarımı **doğrulanmış** sayılır. |
 | 2026-10-14 | **E4.1** | **KILL** ⚠️ | Overlap sağlamlığı (hasta split'i dondurulmuş, **test kullanılmadı**): **%10 = 0.8922 (+0.0186)**, %20 = 0.8736, %30 = 0.8693 (−0.0043). En büyük fark **0.0186 ≥ tolerans 0.015** ⇒ sonuçlar kuraldan bağımsız sağlam **değil**; monoton eğilim var (gevşek eşik → iyi). ⚠️ Tek seed; **%10'a geçiş çok-seed doğrulaması gerektirir** → yeni deney **E4.6**. Yan kanıt: %20 sonucu E2.7 ile birebir aynı (0.8736) ⇒ PI rasterleştirmesi doğrulandı. |
 | 2026-10-14 | **E4.6** | **KILL** ⚠️ | Eşleştirilmiş 5 seed: ortalama fark **+0.0085** (std 0.0096), pozitif seed 4/5. Eşik +0.015 **aşılamadı** ⇒ E4.1'in +0.0186'sı **gürültü artefaktı**ydı (seed 42 beşin en büyüğü). **%20 kuralı korunur.** 📌 Yan bulgu: CNN seed varyansı **±0.02–0.03** (val 0.8321–0.8922) → makalede ana sonuçlar için **çok-seed ortalama** raporlanmalı; füzyon kazancı (+0.0862) bu gürültünün çok üzerinde olduğu için iddia sağlam. |
@@ -302,7 +302,7 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 ⚠️ **Yeni protokol kuralı 10 (çok-seed raporlama):** E4.6'da CNN seed varyansı **±0.02–0.03** ölçüldü → makalede model performansları **≥3 seed ortalaması** olarak raporlanmalı.
 
 **Ortam notları:**
-* `torch 2.14.1+cpu` — **CUDA yok**; CPU yeterli çıktı (E0.0 ertelendi).
+* ✅ `torch 2.14.1+cu126` — **CUDA AKTİF** (RTX 4050, 6 GB VRAM). E0.0 **tamamlandı**; ağır görüntü işleri GPU'da, CPU serbest.
 * Pretrained ağırlıklar indirildi: `~/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth`.
 * `data/processed/features_resnet18/X_zone_features.npy` (24410, 512) — E3.1/E3.2 tarafından yeniden kullanılabilir.
 * `data/processed/features_weights/E2_7_zone_features.npy` — 5 ağırlık varyantı (test dışı zonlar).
