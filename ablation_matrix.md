@@ -153,9 +153,11 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 **Sorumlu zon dağılımı** (fusion kararı hangi zondan geliyor): Zon 5 %26.7 · Zon 1 %25.3 · Zon 3 %21.5 · Zon 4 %18.9 · Zon 2 %7.5 ⇒ **tek-zon hakimiyeti yok**.
 **Yanlış negatifler (n=12):** ortalama olasılık 0.5812, maksimum 0.6317 — eşiğin (0.6357) hemen altında **"kıl payı"** hatalar (TP ortalaması 0.7271).
 
-> 🚨 **DOĞRULANMIŞ SINIRLAMA — model lokalize ETMİYOR (E4.7).** E4.3'ün şüphesi **E4.7 ile doğrulandı**: nodül-pozitif hastalarda modelin argmax zonu gerçek nodül zonuna **şans düzeyinde** düşüyor (isabet 0.228–0.298 vs şans 0.268; binom p = 0.21–0.90) ve **zon düzeyi AUC yalnızca 0.48–0.53** — yani modeller bir hastanın nodüllü zonunu nodülsüz zonlarından **ayırt edemiyor**.
+> 🚨 **DOĞRULANMIŞ SINIRLAMA — model lokalize ETMİYOR (E4.7) ve zon-özel modelleme katkı sağlamıyor (E3.5).**
+> **E4.7:** nodül-pozitif hastalarda modelin argmax zonu gerçek nodül zonuna **şans düzeyinde** düşüyor (isabet 0.228–0.298 vs şans 0.268; binom p = 0.21–0.90) ve **zon düzeyi AUC yalnızca 0.48–0.53** — modeller bir hastanın nodüllü zonunu nodülsüz zonlarından **ayırt edemiyor**.
+> **E3.5:** zon kimliğini yok sayan **havuzlanmış tek model**, 5-zon özel modeliyle **eşdeğer** (0.8585 vs 0.8661, fark −0.0076 < 0.015) — üstelik model başına 5× daha fazla veri görmesine rağmen daha iyi değil.
 >
-> **Sonuçları geçersiz kılmaz** — hasta düzeyi sınıflandırma (füzyon 0.9211) ve PL mekanizması (E4.4) lokalizasyondan bağımsız olarak geçerlidir. Ancak **iddianın kapsamını daraltır**: *"nodülü doğru zonda tespit ediyoruz"* **denemez**; doğru ifade *"nodül varlığıyla ilişkili topolojik imzayı yakalıyoruz"*dur. "5-zon **lokalizasyon**" yenilik iddiası **kaldırılmalı**; "5-zon paralel ayrıştırma + max-pooling" olarak yazılmalı.
+> **Sonuçları geçersiz kılmaz** — hasta düzeyi sınıflandırma (füzyon 0.9211) ve PL mekanizması (E4.4) bundan bağımsız olarak geçerlidir. Ancak **iddianın kapsamını belirler**: *"nodülü doğru zonda tespit ediyoruz"* **denemez**; *"her zon ayrı uzmanlaşır"* da **denemez**. Doğru ifade: **"akciğerin 5 kırpıntısı üzerinde bir model topluluğu + hasta düzeyi max-pooling agregasyonu"**. Bölünmenin katkısı **lokalizasyon değil, topluluk çeşitliliğidir**.
 
 
 | Boyut | Test edilen | Sonuç | Deney |
@@ -190,7 +192,7 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 | 1 | **PL üst-zarf çökmesinin nicel gösterimi** | **Bulunamadı** (Vandaele 2020 "ilgisiz nesne" problemini tanıyor ama PL zarfı için test etmiyor) | E4.4 ✅ |
 | 2 | **TDA + görüntü tamamlayıcılığı (r≈0.30) ve füzyon kazancı** | TDA-Net ~+0.05 (CXR/COVID); bizimki +0.0862 | E3.1 ✅ |
 | 3 | **CXR'de H1'in bronkovasküler döngü + kaburga ile domine edilmesi** | Spesifik formülasyon yok | E4.2/E4.4 |
-| 4 | **5 anatomik zon + zon başına PH + hasta düzeyi max-pooling** | Bulunamadı (Topo-CXR global, Vandaele/Wang ROI-kısıtlı) | v2.1 — ⚠️ **lokalizasyon iddiası E4.7 ile DÜŞTÜ** (aşağıya bakınız) |
+| 4 | ~~5 anatomik zon + zon başına PH + hasta düzeyi max-pooling~~ | Bulunamadı — ancak **E4.7 + E3.5 ile ÇÜRÜTÜLDÜ** | ⛔ **İDDİA KALDIRILDI**: model lokalize etmiyor (zon AUC 0.48–0.53) ve havuzlanmış tek model eşdeğer (−0.0076) |
 | 5 | **NODE21'de kalıcı homoloji** | Bulunamadı | v2.1 + E0.2 |
 
 **Yenilik iddia EDİLMEMESİ gerekenler:** "ilgisiz yapılar diyagramı domine eder → ROI kısıtlaması" (Vandaele 2020/2022) · "PI vs PL veri setine bağlı" (Barnes 2021, Sulowska 2026) · "topoloji ≈ CNN, füzyon artırır" (TDA-Net).

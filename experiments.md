@@ -461,3 +461,25 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** (hipotez) — bulgu **yayın için kritik bir dürüstlük ve kapsam belirleme** sonucudur.
 * **Yeni deney adayı (E3.5):** "Tek global (zon ayrımı olmayan) model, 5-zon max-pooling'e denk mi?" → zon ayrıştırmasının **katkısı olup olmadığını** ölçer.
 * **Manifest:** `artifacts/runs/E4.7_locality_test/manifest.json`
+
+### E3.5 — Zon-Özel Modelleme Gerekli mi? Havuzlanmış Tek Model vs 5-Zon
+
+* **Hipotez (ön-kayıtlı, EŞDEĞERLİK):** Havuzlanmış tek modelin ortalama val ROC-AUC'si, 5-zon modelinden **0.015'ten az** sapar (yani zon-özel modelleme ölçülebilir katkı sağlamaz).
+* **Gerekçe:** E4.7, zon modellerinin **lokalize etmediğini** gösterdi. Bu durumda "her zon için ayrı model" mimarisinin katkısı sorgulanmalı.
+* **Tek değişken:** Modelleme şeması (5 ayrı zon modeli vs zon kimliğini yok sayan tek havuzlanmış model). Özellikler, split, mimari, protokol ve seed'ler sabit.
+* **Kapsam:** Validation; test setine dokunulmadı. Referans, **aynı protokol/seed'lerle** ölçülen E2.8 5-zon ortalamasıdır.
+* **Sonuç:** ✅ **Eşdeğerlik doğrulandı → KEEP** (zon-özel modelleme gereksiz)
+
+  | Şema | Seed'ler | Ortalama val hasta ROC-AUC |
+  | :--- | :--- | :---: |
+  | **5-zon özel modeli** (mevcut) | 0.8736 / 0.8546 / 0.8701 | **0.8661** |
+  | **Havuzlanmış tek model** | 0.8552 / 0.8522 / 0.8680 | **0.8585** |
+  | **Fark** | | **−0.0076** |
+
+* **Yorum:**
+  1. Fark **−0.0076**, toleransın (0.015) **altında** ve seed varyansının (±0.02–0.03) içinde ⇒ **istatistiksel olarak eşdeğer**.
+  2. **Kritik ayrıntı:** havuzlanmış model, model başına **5× daha fazla** eğitim verisi görüyor (2.040 vs ~408 örnek) ama yine de **daha iyi değil**. Bu, zon bölünmesinin bir **model topluluğu (ensemble) çeşitliliği** sağladığını, ancak **anatomik uzmanlaşma** sağlamadığını düşündürüyor.
+  3. ⚠️ **İddia daralması:** E4.7 + E3.5 birlikte, "5 anatomik zon ayrıştırması" gerekçesinin **veri tarafından desteklenmediğini** gösteriyor. Makalede mimari, *"akciğerin 5 kırpıntısı üzerinde model topluluğu + max-pooling"* olarak, **lokalizasyon veya uzmanlaşma iddiası olmadan** sunulmalı.
+  4. ✅ Geçerli kalan katkılar değişmiyor: **füzyon 0.9211** (E3.1), **tamamlayıcılık r≈0.30**, **PL zarf mekanizması** (E4.4).
+* **Karar:** **KEEP** (eşdeğerlik) — mimari basitleştirilebilir; iddia kapsamı daraltıldı.
+* **Manifest:** `artifacts/runs/E3.5_pooled_vs_zone/manifest.json`
