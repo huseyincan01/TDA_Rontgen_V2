@@ -83,7 +83,12 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 
 > **V2.4 dikkat çekici:** v3'ün en güçlü *negatif* bulgusu (E4.7 + E1.2 + E3.6: sinyal global/arka plan) aslında **v4 için bir tasarım ipucu** — madem sinyal global, **global bir temsil** kurmak mantıklı.
 
-### Faz V3 — Bileşen birleştirme + sıkıştırma
+### Faz V3 — İlişkisel temsiller (V2 sonrası eklendi)
+- §7'deki yapısal çıkarımdan doğdu: görüntü dalı zonları bağımsız işlediği için **zonlar arası** ilişki tamamlayıcı olabilir.
+- **V3.1** zon-zon topolojik mesafeler · **V3.2** PI simetrik farkı — ikisi de **KILL** (bkz. §6).
+
+### Faz V3-B — Bileşen birleştirme + sıkıştırma (⏸️ askıda)
+> Kimlik çakışmasını önlemek için ayrı adlandırıldı (V3.x kimlikleri ilişkisel deneylere verildi). **Birleştirilecek kazanan aday olmadığı için askıda.**
 - Kazanan adayları birleştir
 - **PCA sıkıştırma**: v3 bulgusu (E2.5b) PI'ın 800 boyutu **192'ye indirilebiliyor, kayıpsız** ⇒ blok başına ~200 boyut, 4 blok = 800. Bu, aşırı uyumu azaltır ve çok bloklu temsilleri mümkün kılar.
 
@@ -112,8 +117,9 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 | :--- | :--- |
 | **V0** Altyapı | ✅ tamam |
 | **V1** Kapı testi | ✅ tamam — **KILL** (v4 yönü belirlendi) |
-| **V2** Tamamlayıcılık arayışı | Planlandı — V2.1, V2.2, V2.3, V2.4 |
-| **V3** Birleştirme + PCA | Planlandı |
+| **V2** Tamamlayıcılık arayışı | ✅ tamam — V2.1/V2.2, V2.3, V2.4 hepsi **KILL** |
+| **V3** İlişkisel temsiller | ✅ tamam — V3.1, V3.2 **KILL** |
+| **V3-B** Birleştirme + PCA | ⏸️ askıda — birleştirilecek kazanan yok |
 | **V4** Harici doğrulama | Planlandı |
 
 ---
@@ -126,11 +132,10 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 | 2026-10-16 | **V1.2** | **KILL** 🎯 | **Temsil karşılaştırması (füzyon ölçütüyle).** d_fuzyon: E2.6 **+0.0072** · E2.1 diphasic **−0.0019** (*füzyona zarar*) · birleşik **+0.0082**. Hiçbiri +0.015'i geçmiyor ⇒ **TDA iyileştirmeleri ResNet ile yedekli.** |
 | 2026-10-16 | **SONUÇ** | 🔑 | **Ölçüt değişikliği:** v4, TDA-tek AUC yerine **d_fuzyon** ve **r(TDA, ResNet)** optimize eder. Aday tasarımı **tamamlayıcılık** eksenine kayar. |
 | 2026-10-16 | **V2.1 + V2.2** | **KILL** ⚠️🎯 | **Konum tabanlı filtrasyonlar (dikey `f+t·y`, yatay `f+t·x`, radyal `f+t·r`), t ∈ {0.5, 1.5}.** Val-only. TDA-tek **+0.0256 / +0.0273 / +0.0280** (hepsi kazandı) **AMA füzyon −0.0053 / −0.0022 / −0.0026** (hepsi kaybetti). **Ve kritik olan:** korelasyon **r = 0.293 → 0.392 / 0.415 / 0.393** ⇒ **konum filtrasyonları ResNet ile YEDEKLİLİĞİ ARTIRIYOR.** Kontrol (karıştırılmış): TDA-tek 0.7649, füzyon 0.9178, r=0.238. ⇒ *"Konum bilgisi ResNet'in avgpool'unda kaybolur"* hipotezim **ÇÜRÜDÜ**; ResNet konum bilgisini koruyor. 🎯 **v4'ün tezi nicel olarak doğrulandı:** d_tek ↑ ⇒ r ↑ ⇒ d_fuzyon ↓. |
-| 2026-10-16 | **V2.3** | ⏳ | Kaba/ince ölçek (ızgara 5-8 vs 20) — önbellekteki diyagramlarla ucuz test |
-| 2026-10-16 | **V2.4** | ⏳ | Hasta düzeyi global PH (birleşik akciğer maskesi üzerinde tek diyagram) |
 | 2026-10-16 | **V2.4** | **KILL** ⚠️ | **Hasta düzeyi global PH.** Birleşik akciğer maskesi üzerinde **tek** diyagram, 3414 train / 734 val hasta. ⚠️ İlk iki koşu **geçersizdi**: `sitk.Resample` spacing hatası geniş `except` tarafından **sessizce yutuldu** → 4148 boş diyagram, şüpheli 40 s çıkarım süresi ve **tam 0.5000 AUC**. Düzeltme: blok ortalaması + **%5'ten fazla boş diyagramda hata fırlatan sanity koruması**. Geçerli sonuç: tek başına **0.6998** (zon PI'ı 0.8399), füzyon **0.8940** (taban 0.9430), **r = 0.357** (taban 0.293). ⇒ *"Global temsil daha az yedekli olur"* hipotezim **çürüdü**: hem daha zayıf hem daha yedekli. |
 | 2026-10-16 | **V2.3** | **KILL** ⚠️ | **Ölçek ayrımı.** Aynı diyagramlar ızgara {6,10,15,20}. Kaba ızgaralar hem tek başına (0.7165→0.7253) hem füzyonda (0.9109→0.9134) **biraz daha kötü**; r neredeyse sabit (0.209–0.217). 🎁 **Yan gözlem:** 72 boyutlu ızgara-6, tek başına **0.7165** — 800 boyutlu ızgara-20'nin (0.7253) neredeyse aynısı ⇒ **E2.5b'nin yedeklilik bulgusu bağımsız olarak teyit edildi.** |
 | 2026-10-16 | **V3.1** | **KILL** 🔑 | **İlişkisel temsil — 5 zon arasındaki 10 ikili topolojik mesafe.** Sliced Wasserstein (gudhi'nin `wasserstein`'ı `ot` paketi olmadığı için çalışmıyor; H0 diyagramları 2444 nokta olduğundan tam LP de pratik değil), diyagram başına en kalıcı 100 sınıf. 20 özellik (10 çift × H0/H1), hasta düzeyi. **Kontrol: partner zonlar FARKLI hastalardan.** Sonuç: **B ilişkisel 0.6284** vs **E kontrol 0.5979** ⇒ fark yalnızca **+0.0305** (≈ gürültü) ⇒ **ilişkisel sinyal yok denecek kadar az.** C (PI+ilişkisel) füzyonda **0.9370**, taban **0.9430** ⇒ **−0.0060**; r yine **arttı** (0.293→0.323). **KILL.** |
+| 2026-10-16 | **V3.2** | **KILL** 🔑 | **PI simetrik farkı** — piksel hizalaması olmadan, doğrudan PI uzayında: `concat(|PI_1−PI_4|, |PI_3−PI_5|)` = 1600 özellik (projenin **dondurulmuş** PI'ı, yeniden türetim yok). Hasta düzeyi, 3414 train / 734 val, **test yok**. Sonuçlar: **B ayna 0.8118** · **D yanlış ayna (çapraz 1↔5, 3↔4) 0.8389** · **E karıştırılmış 0.6731** · **C (PI+ayna) füzyon 0.9496** (taban 0.9430) ⇒ **d_fuzyon +0.0066** · F (PI+yanlış) 0.9441. **Karar: KILL** (eşik +0.015). |
 
 ### 🔑 V3.1 neden başarısız oldu — ve bu ne söylüyor
 
@@ -142,9 +147,7 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 
 **⇒ Bu, Çözüm 2'yi (görüntü düzeyinde ayna çıkarma) işaret ediyor:** ayna işlemi **zon şemasına ihtiyaç duymaz**, tüm akciğer alanını doğrudan karşılaştırır ve simetri problemi böylece ortadan kalkar.
 
-| 2026-10-16 | **V3.2** | **KILL** 🔑 | **PI simetrik farkı** — piksel hizalaması olmadan, doğrudan PI uzayında: `concat(|PI_1−PI_4|, |PI_3−PI_5|)` = 1600 özellik (projenin **dondurulmuş** PI'ı, yeniden türetim yok). Hasta düzeyi, 3414 train / 734 val, **test yok**. Sonuçlar: **B ayna 0.8118** · **D yanlış ayna (çapraz 1↔5, 3↔4) 0.8389** · **E karıştırılmış 0.6731** · **C (PI+ayna) füzyon 0.9496** (taban 0.9430) ⇒ **d_fuzyon +0.0066** · F (PI+yanlış) 0.9441. **Karar: KILL** (eşik +0.015). |
-
-### 🔑 V3.2'den çıkan üç bulgu
+### 🔑 V3.2'den çıkan dört bulgu
 
 **1. ✅ Çapraz-zon PI farkları GERÇEKTEN bilgi taşıyor (V3.1'in aksine).**
 `B ayna 0.8118` vs `E karıştırılmış 0.6731` ⇒ **+0.139**. V3.1'in skaler mesafeleri (0.6284 vs 0.5979 = +0.03) neredeyse bilgi taşımıyordu; **eleman-eleman PI farkı çok daha güçlü.**
@@ -172,11 +175,16 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 | V2.1 dikey | +0.0256 | **−0.0053** | 0.392 |
 | V2.1 yatay | +0.0273 | **−0.0022** | 0.415 |
 | V2.1 radyal | +0.0280 | **−0.0026** | 0.393 |
+| V2.4 global PH | −0.1401 | **−0.0490** | 0.357 |
+| V3.1 ilişkisel mesafe | — | **−0.0060** | 0.323 |
+| V3.2 PI simetrik fark | — | **+0.0066** | — |
 
 **Desen:** TDA dalında başarımı artıran her müdahale, **ResNet'e benzerliği de artırıyor** ⇒ füzyon kazancı yok.
 
-**🔑 Yapısal çıkarım:** Görüntü dalımız (ResNet18) her zonu **BAĞIMSIZ** işleyip max-pool yapıyor. Dolayısıyla:
+**🔑 Yapısal çıkarım (V3 öncesi hipotez):** Görüntü dalımız (ResNet18) her zonu **BAĞIMSIZ** işleyip max-pool yapıyor. Dolayısıyla:
 * Tek-zon içi temsil iyileştirmeleri ⇒ **kaçınılmaz olarak yedekli** (ResNet de aynı zonu görüyor)
 * **Zonlar ARASI ilişki** kuran temsiller ⇒ görüntü dalının **yapısal olarak temsil EDEMEDİĞİ** bilgi
 
-⇒ **v4'ün gerçek fırsatı: İLİŞKİSEL temsiller** (zon-zon karşılaştırması, simetri/asimetri), tek-zon temsilini iyileştirmek değil.
+⇒ Bu çıkarım **Faz V3'ü doğurdu** (ilişkisel temsiller).
+
+**❌ Güncelleme (V3.1 + V3.2 sonrası):** İlişkisel hipotez de **tutmadı** — skaler zon mesafeleri bilgi taşımıyor (V3.1), PI farkları bilgi taşıyor ama simetriye özgü değil ve füzyon kazancı gürültü mertebesinde (V3.2, +0.0066). ⇒ Önceden tanımlanmış TDA eklentilerinin hiçbiri füzyon ölçütünü geçemedi. Açık yönler: **mimari** (tüm görüntü / uçtan uca öğrenilen füzyon) veya **V4 harici doğrulama**.

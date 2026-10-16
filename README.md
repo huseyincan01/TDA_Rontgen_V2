@@ -4,6 +4,7 @@ NODE21 verilerini hasta bazında hazırlama, 5 anatomik bölgeden TDA (Topologic
 
 - Mimari ve çalışma günlüğü: [progress.md](progress.md)
 - v3 araştırma programı ve deney yönetimi: [roadmap.md](roadmap.md)
+- v4 araştırma programı (aktif dal `exp/v4-directional-radial`): [v4_roadmap.md](v4_roadmap.md)
 - **Tüm sonuçlar tek yerde (makale tabloları): [ablation_matrix.md](ablation_matrix.md)**
 - **Makale taslağı: [paper_draft.md](paper_draft.md)**
 - Literatür taraması ve konumlandırma: [literature.md](literature.md)
