@@ -99,17 +99,17 @@ Durum: `Planlandı` → `Devam` → `KEEP` / `KILL` / `Parkta`
 | **E2.1** | W2 | Çift yön (sublevel+superlevel) filtrasyon tek yönden ≥ +0.015 iyi | — | 1.5g | Düşük | **Yüksek** | **KEEP** ✅ +0.0210 (boyut kontrolü ✓) |
 | **E2.2** | W2 | Çok ölçekli PI tek ölçekten ≥ +0.015 iyi | E2.1 | 2g | Orta | Orta-Yüksek | **KILL** ⚠️ +0.0053 < 0.015 |
 | **E2.3** | W2 | Sağlıklı şablon çıkarma (relative persistence) AUC artırır | E0.2 | 2.5g | Yüksek | **Yüksek** (novelty) | ⛔ **GEÇERSİZ** (no-op tasarım) |
-| **E2.4** | W2 | Aday-olasılık ağırlıklı filtrasyon H1'i nodüle odaklar | E1.2 | 2.5g | Yüksek | Orta | Planlandı |
+| **E2.4** | W2 | Aday-olasılık ağırlıklı filtrasyon H1'i nodüle odaklar | E1.2 | 2.5g | Yüksek | Orta | ⛔ **İPTAL** — bağımlılık E1.2 KILL; E3.6 yerel sinyali zayıf buldu (0.687) |
 | **E4.2** | W4 | Kalıcılık özellikleri radyolojik yapılara eşlenebilir | E0.2 | 2g | Orta | **Yüksek** (yayın) | **KILL** ⚠️ H0 ✅ / H1 ❌ |
-| **E4.5** | W4 | En kalıcılıklı H1 sınıfları düzgün (düşük-gradyanlı) bölgelerde oluşur | E4.2 | 1.5g | Orta | Orta | Planlandı |
+| **E4.5** | W4 | En kalıcılıklı H1 sınıfları düzgün (düşük-gradyanlı) bölgelerde oluşur | E4.2 | 1.5g | Orta | Orta | ✅ **E4.2 İLE KAPANDI** — H1 medyan gradyan oranı 1.021 (≈rastgele) ⇒ ne kenarda ne düzgün bölgede |
 | **E4.3** | W4 | Hangi zonlarda sistematik hata yapıyoruz? | E0.2 | 1g | Düşük | Orta | **KILL** ⚠️ zayıf zon yok |
 | **E4.7** | W4 | Modelin maksimum olasılığı gerçek nodül zonuna şanstan sık düşer (lokalite testi) | E4.3 | 1g | Orta | **Yüksek** (geçerlilik) | **KILL** 🚨 lokalizasyon YOK |
 | **E3.5** | W3 | Tek global model, 5-zon max-pooling'e denk mi? (zon ayrıştırmasının katkısı) | E4.7 | 2g | Orta | **Yüksek** (kapsam) | **KEEP** ⚠️ eşdeğer (fark −0.0076) |
 | **E3.7** | W3 | Ana sonuç (füzyon) 3 seed ortalamasında tek-seed'den <0.03 sapar | E3.1 | 1g | Düşük | **Yüksek** (Kural 10) | **KEEP** ✅ 0.9190 ± 0.0056 |
 | **E3.3** | W3 | İki aşamalı candidate-based TDA yanlış pozitifi azaltır | E1.2 | 4g | Yüksek | Yüksek | **İPTAL** ⛔ E3.6: tavan ~0.69 |
 | **E2.5** | W2 | Sliced Wasserstein / PersLay, PI'dan ≥ +0.015 iyi | E0.2 | 3g | Yüksek | Orta | **KILL** ⚠️ −0.1504 (boyut-eşit kontrolde de aynı) |
-| **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | Planlandı |
-| **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | Planlandı 🔓 |
+| **E1.4** | W1 | Atlas kaydı arka plan topolojisini tutarlılaştırır | E1.1 | 4g | Yüksek | Orta | 🚫 **ENGELLİ** — bağımlılık E1.1 uygulanamaz (~28 saat CPU, eksik paketler) |
+| **E2.6** | W2 | Çok parametreli persistence ek bilgi taşır (`multipers`/MMA olgunluğu doğrulandı) | E2.2 | 5g+ | Yüksek | Orta | ⏸️ **ERTELENDİ** — bağımlılık E2.2 yalnızca +0.0053 verdi; test bütçesi kapalı ⇒ sonuç val-only kalır |
 | **E4.4** | W4 | **PL üst-zarf (envelope) çökmesi nicel olarak gösterilebilir** | E0.2 | 1.5g | Düşük | **Çok Yüksek** | **KEEP** ✅ |
 | **E2.7** | W2 | PI ağırlık fonksiyonu (Adams `w=p` vs max-distance/linear/arctan) AUC'yi değiştirir | E0.2 | 0.5g | Düşük | Orta | **KILL** ⚠️ Adams zaten en iyi |
 | **E2.8** | W2 | σ / ızgara çözünürlüğü sonuçları anlamlı değiştirmez (sağlamlık kanıtı) | E0.2 | 1g | Düşük | Orta | **KEEP** ✅ iki kol sağlam |
@@ -250,6 +250,7 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | 2026-10-16 | **E2.1** | **KEEP** ✅ | **Çift yönlü (diphasic) filtrasyon — programın ilk gerçek temsil iyileştirmesi.** Tek polarite (projenin PI'ı) **0.8399** → çift polarite (sublevel + superlevel, 1600 boyut) **0.8609** ⇒ **+0.0210** (eşik ✓), val-only. 🚨 **İlk koşu confound'luydu (+0.0646 şişkin):** baseline'ı bu betikte yeniden türetmiştim (yüzdelik aralıklar) → 0.7198'e düştü; projenin **donmuş aralıkları** (H1 birth **[239,250]**) bilgiyi doğru banda odaklıyor. **Ders: baseline'ı yeniden türetmek kazancı şişirir.** 🎯 **Boyut kontrolü (E2.1b):** B kolunu karıştırınca (boyut aynı 1600, bilgi yok) sonuç **0.7803** — PI'ın **altında** ⇒ boyut eklemek tek başına **zarar veriyor**; kazanç **ters polaritenin bilgisinden**. ⚠️ **Test bütçesi tükendi** ⇒ 0.9516'lık ana sonuca eklenemez; **gelecek test bütçesi için öncelikli aday**. |
 | 2026-10-16 | **E2.2** | **KILL** ⚠️ | **Çok ölçekli PI** — val-only, test kullanılmadı, **özellikler E2.8 önbelleğinden** (yeniden çıkarım yok). Tek ölçek σ=1.0 **0.8399** · σ=1.5 (en iyi) **0.8457** · **çok ölçek (4 σ, 3200 boyut) 0.8510** ⇒ **+0.0053**, kriter ≥ +0.015 ✗. 🎯 **Boyut kontrolü** (diğer ölçekler karıştırılmış, 3200 boyut) **0.6598** ⇒ bilgisiz boyut eklemek **şiddetle zararlı**; +0.0053 gerçek ama yetersiz bilgi. 🔑 **E2.1 ile karşıtlık:** **polarite +0.0210 (KEEP)** vs **ölçek +0.0053 (KILL)** ⇒ **topolojik kazanç "hangi kümeleri filtrelediğinden" geliyor, "diyargramı nasıl yumuşattığından" değil.** Temsil tasarımı için yön gösterici. **Faz 3 → 4/6.** |
 | 2026-10-16 | **E2.3** | ⛔ **GEÇERSİZ** | **Sağlıklı şablon (relative persistence) — tasarım no-op çıktı, hipotez test EDİLEMEDİ.** Üç kol birebir aynı: mutlak **0.8399**, `X − T(doğru zon)` **0.8400**, `X − T(yanlış zon)` **0.8399**. Sebep matematiksel: scaler **zon başına** uygulanıyor ve sabit vektör çıkarmak yutuluyor — `(X−T) − mean(X−T) = X − mean(X)`. ⇒ **Per-feature afin dönüşümler StandardScaler tarafından absorbe edilir.** 📌 **Ders:** bir ön-işleme adımını ölçmeden önce, sonraki adımın onu **matematiksel olarak** yutup yutmadığı kontrol edilmeli. ✅ **Düzeltilmiş tasarımlar:** (1) doğrusal olmayan sapma `(X−T)_+`, (2) diyagram düzleminde relativasyon, (3) havuzlanmış sınıflandırıcı (protokolü değiştirir). **KILL olarak kaydedilmedi; hipotez açık.** |
+| 2026-10-16 | **KAPANIŞ** | ✅ | **Program kapanışı — kalan 4 maddenin tümü gerekçeli karara bağlandı.** **E2.4** ⛔ İPTAL (bağımlılık E1.2 KILL; E3.6 yerel sinyali zayıf buldu) · **E4.5** ✅ E4.2 ile KAPANDI (H1 medyan gradyan oranı 1.021 ≈ rastgele) · **E1.4** 🚫 ENGELLİ (bağımlılık E1.1 uygulanamaz) · **E2.6** ⏸️ ERTELENDİ (E2.2 yalnızca +0.0053; test bütçesi kapalı ⇒ val-only). ⇒ **Artık hiçbir backlog maddesi "Planlandı" durumunda değildir.** Test bütçesi 6/6 tükenmiş, dondurulmuş test seti kapalıdır; ana sonuç **füzyon test ROC-AUC 0.9516 / %89.4 doğruluk**, val düzeyinde doğrulanmış tek iyileştirme adayı **E2.1 çift yönlü filtrasyon (+0.0210)**. |
 | 2026-10-16 | **E2.5b** | **KILL** 🎯 | **Boyut confound kontrolü.** İlk karşılaştırmada PI **800**, SW gömlemesi **192** boyuttu (E3.6'daki boyut confound'unun aynısı). **PI, PCA ile 192 boyuta indirildi: val AUC birebir aynı (0.8399 → 0.8399)** ve boyut-eşit fark **yine −0.1504**. ⇒ **Boyut confound'u YOKTUR; fark gerçekten temsilden gelir.** 🎁 **Bonus:** PI'ın 800 boyutu **fazlasıyla yedekli** — 192'ye indirmek hiç kayıp vermiyor (hesaplama/depolama notu). Kontrol raporda `dimensionality_control` alanı olarak kayıtlıdır. |
 | 2026-10-15 | **E5.3b** | **KEEP** ⚠️🎯 | **Kaynak-dışı genellemede eşit-boyut kontrolü.** Katların dengeli train boyutları farklıydı (1034/1876/2222 zon) ⇒ önceki 0.8468 **iyimserdi**. Tüm katlar **1034 zona** eşitlendi: chestxray14 0.7821 (değişmedi) · padchest 0.8499 → **0.7625** (−0.0874) · jsrt 0.9085 → **0.8847** (−0.0238) ⇒ **ortalama 0.8098**, domain-shift bedeli **−0.109** (önceki tahmin −0.072). ✅ Genelleme yine de gerçek (eşiğin üstünde), ancak **makalede raporlanacak sayı 0.8098'dir.** 📌 **Metodolojik ders:** kaynak-dışı genelleme çalışmalarında eğitim verisi miktarı mutlaka eşitlenmelidir. |
 | 2026-10-14 | **E3.1** | **KEEP** 🏆 | **Yayının ana sonucu: füzyon test ROC-AUC 0.9211** (ResNet 0.8349 + TDA 0.8776, a=0.55). Test farkı **+0.0862**, bootstrap %95 CI **[+0.0632, +0.1099]**, **p≈0.0000**. **Bağımsız doğrulama:** iki temsil arasındaki korelasyon yalnızca **r≈0.30–0.35** (neredeyse dik) → tamamlayıcılık gerçek; etiket permütasyonu AUC=0.4378 → **sızıntı yok**. GPU gerekmedi. |
@@ -328,3 +329,69 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 * Tüm deney betikleri: `pipelines/exp/`.
 
 **Devam komutu:** §9 (durum tablosu) + §10 (karar günlüğü) oku → yukarıdaki tablonun 1. maddesinden (E2.8) başla.
+
+---
+
+## 13. Program Kapanışı (2026-10-16)
+
+### 13.1 Nihai sayım — **hiçbir madde "Planlandı" değil**
+
+| Kategori | Sayı |
+| :--- | :---: |
+| **Backlog maddesi (toplam)** | **34** |
+| KEEP / BASELINE | 13 |
+| TAMAM (E0.0, E5.1) | 2 |
+| TASLAK (E5.2) | 1 |
+| KILL | 12 |
+| İPTAL / ENGELLİ (E3.3, E1.4) | 2 |
+| GEÇERSİZ tasarım (E2.3) | 1 |
+| ERTELENDİ / KAPANDI (E2.6, E4.5) | 2 |
+| İPTAL — bağımlılık geçersiz (E2.4) | 1 |
+
+`experiments.md`'de **24 ayrı deney kimliği** belgelenmiştir.
+
+### 13.2 Faz durumu
+
+| Faz | Durum |
+| :--- | :--- |
+| **Faz 0 — Altyapı** | ✅ **4/4** (+ E0.4/E0.5/E0.6 ince ayar & belirleyici test) |
+| **Faz 1 — Ön-işleme** | ✅ **6/6** |
+| **Faz 2 — Füzyon** | ✅ **3/3** |
+| **Faz 3 — Topoloji** | 4/6 (E2.4 iptal · E2.3 geçersiz tasarım) |
+| **Faz 4 — Yüksek risk** | 2/4 (E3.3 iptal · E1.4 engelli · E2.6 ertelendi) |
+| **Faz 5 — Yayın** | ✅ **6/6** (ablasyon matrisi + makale taslağı) |
+
+### 13.3 Teslim edilebilirler — hepsi tamam
+
+| Teslim | Durum |
+| :--- | :--- |
+| Her deneyin val/test sonucu kayıtlı (`experiments.md` + durum tablosu) | ✅ |
+| Tek-değişken ve ön-kayıt protokolü uygulandı | ✅ |
+| Öldürme kriterleri uygulandı (12 KILL + 1 iptal + 1 geçersiz) | ✅ |
+| **Yayınlanabilir ablasyon matrisi** (`ablation_matrix.md`, 335 satır) | ✅ |
+| Makale taslağı (`paper_draft.md`, 297 satır) | ✅ |
+
+### 13.4 Makalenin taşıyıcı iddiaları
+
+1. 🏆 **Füzyon: test ROC-AUC 0.9516, doğruluk %89.4** — TDA, **ince ayarlı** güçlü baseline'a bile **+0.0232** [0.0132, 0.0338] katıyor ⇒ füzyon kazancı zayıf baseline artefaktı **değil**
+2. **PL zarf mekanizması** — H1 zarfının %98–99.6'sı arka plan; sınıf sinyali %1–2
+3. **Tamamlayıcılık r ≈ 0.30** — sızıntı kontrolü şans (0.4378)
+
+### 13.5 Val düzeyinde doğrulanmış gelecek iş
+
+**E2.1 çift yönlü (diphasic) filtrasyon: +0.0210** (0.8399 → 0.8609), boyut kontrolü geçti. Test bütçesi tükendiği için ana sonuca eklenemedi; **yeni bir test bütçesinin ilk adayıdır**. Yön gösterici karşıtlık: **polarite +0.0210 (KEEP)** vs **ölçek +0.0053 (KILL)** ⇒ topolojik kazanç *hangi kümelerin filtrelendiğinden* gelir.
+
+### 13.6 Kapanışta kaydedilen rigor dersleri
+
+| # | Ders | Deney |
+| :-: | :--- | :--- |
+| 1 | Tek-seed parlak bulgu gürültü olabilir → **çok-seed eşleştirilmiş** test şart | E4.1 → E4.6 |
+| 2 | "Fazla iyi" sonuçları **confound** açısından denetle (boyut eşleştirmesi) | E3.6 (0.994 → 0.687) |
+| 3 | Önbellek satır sayısı eşleşmezse **görüntü/etiket kayar** (şans düzeyi AUC) | E0.5 |
+| 4 | **Baseline'ı yeniden türetmek kazancı şişirir** | E2.1 (+0.0646 → +0.0210) |
+| 5 | **Per-feature afin dönüşümler StandardScaler tarafından yutulur** | E2.3 (no-op) |
+| 6 | Kaynak-dışı genellemede **eğitim verisi miktarı eşitlenmeli** | E5.3b (0.8468 → 0.8098) |
+
+### 13.7 Durum
+
+**Test bütçesi 6/6 tükendi** — dondurulmuş test seti **kapalıdır**. Yeni deneyler yalnızca **validation** veya **yeni veri** ile yapılabilir. Program **yayına hazırdır**.
