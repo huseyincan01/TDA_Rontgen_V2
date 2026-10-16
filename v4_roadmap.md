@@ -128,6 +128,19 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 | 2026-10-16 | **V2.1 + V2.2** | **KILL** ⚠️🎯 | **Konum tabanlı filtrasyonlar (dikey `f+t·y`, yatay `f+t·x`, radyal `f+t·r`), t ∈ {0.5, 1.5}.** Val-only. TDA-tek **+0.0256 / +0.0273 / +0.0280** (hepsi kazandı) **AMA füzyon −0.0053 / −0.0022 / −0.0026** (hepsi kaybetti). **Ve kritik olan:** korelasyon **r = 0.293 → 0.392 / 0.415 / 0.393** ⇒ **konum filtrasyonları ResNet ile YEDEKLİLİĞİ ARTIRIYOR.** Kontrol (karıştırılmış): TDA-tek 0.7649, füzyon 0.9178, r=0.238. ⇒ *"Konum bilgisi ResNet'in avgpool'unda kaybolur"* hipotezim **ÇÜRÜDÜ**; ResNet konum bilgisini koruyor. 🎯 **v4'ün tezi nicel olarak doğrulandı:** d_tek ↑ ⇒ r ↑ ⇒ d_fuzyon ↓. |
 | 2026-10-16 | **V2.3** | ⏳ | Kaba/ince ölçek (ızgara 5-8 vs 20) — önbellekteki diyagramlarla ucuz test |
 | 2026-10-16 | **V2.4** | ⏳ | Hasta düzeyi global PH (birleşik akciğer maskesi üzerinde tek diyagram) |
+| 2026-10-16 | **V2.4** | **KILL** ⚠️ | **Hasta düzeyi global PH.** Birleşik akciğer maskesi üzerinde **tek** diyagram, 3414 train / 734 val hasta. ⚠️ İlk iki koşu **geçersizdi**: `sitk.Resample` spacing hatası geniş `except` tarafından **sessizce yutuldu** → 4148 boş diyagram, şüpheli 40 s çıkarım süresi ve **tam 0.5000 AUC**. Düzeltme: blok ortalaması + **%5'ten fazla boş diyagramda hata fırlatan sanity koruması**. Geçerli sonuç: tek başına **0.6998** (zon PI'ı 0.8399), füzyon **0.8940** (taban 0.9430), **r = 0.357** (taban 0.293). ⇒ *"Global temsil daha az yedekli olur"* hipotezim **çürüdü**: hem daha zayıf hem daha yedekli. |
+| 2026-10-16 | **V2.3** | **KILL** ⚠️ | **Ölçek ayrımı.** Aynı diyagramlar ızgara {6,10,15,20}. Kaba ızgaralar hem tek başına (0.7165→0.7253) hem füzyonda (0.9109→0.9134) **biraz daha kötü**; r neredeyse sabit (0.209–0.217). 🎁 **Yan gözlem:** 72 boyutlu ızgara-6, tek başına **0.7165** — 800 boyutlu ızgara-20'nin (0.7253) neredeyse aynısı ⇒ **E2.5b'nin yedeklilik bulgusu bağımsız olarak teyit edildi.** |
+| 2026-10-16 | **V3.1** | **KILL** 🔑 | **İlişkisel temsil — 5 zon arasındaki 10 ikili topolojik mesafe.** Sliced Wasserstein (gudhi'nin `wasserstein`'ı `ot` paketi olmadığı için çalışmıyor; H0 diyagramları 2444 nokta olduğundan tam LP de pratik değil), diyagram başına en kalıcı 100 sınıf. 20 özellik (10 çift × H0/H1), hasta düzeyi. **Kontrol: partner zonlar FARKLI hastalardan.** Sonuç: **B ilişkisel 0.6284** vs **E kontrol 0.5979** ⇒ fark yalnızca **+0.0305** (≈ gürültü) ⇒ **ilişkisel sinyal yok denecek kadar az.** C (PI+ilişkisel) füzyonda **0.9370**, taban **0.9430** ⇒ **−0.0060**; r yine **arttı** (0.293→0.323). **KILL.** |
+
+### 🔑 V3.1 neden başarısız oldu — ve bu ne söylüyor
+
+**Zon şemamız SİMETRİK DEĞİL:** sağ akciğer **3 zon** (üst/orta/alt), sol akciğer **2 zon** (üst/alt) — çünkü kalp yer kaplıyor.
+
+⇒ 10 çiftten yalnızca **~2'si anatomik olarak karşılaştırılabilir** (1↔4 üst, 3↔5 alt); kalan 8 çift **farklı anatomik bölgeleri** karşılaştırıyor.
+
+⇒ Ölçülen mesafeler ağırlıklı olarak **zon TİPLERİ arasındaki sabit anatomik farkı** kodluyor (her hastada aynı) — **hastaya özgü asimetriyi değil.** Kontrol kolunun neredeyse aynı sonucu vermesi bunu doğruluyor.
+
+**⇒ Bu, Çözüm 2'yi (görüntü düzeyinde ayna çıkarma) işaret ediyor:** ayna işlemi **zon şemasına ihtiyaç duymaz**, tüm akciğer alanını doğrudan karşılaştırır ve simetri problemi böylece ortadan kalkar.
 
 ---
 
