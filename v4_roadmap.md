@@ -107,7 +107,8 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 | **Boyut kontrolü** | Her aday için karıştırılmış kol (v3 pratiği) |
 | **Baseline bütünlüğü** | Baseline **yeniden türetilmez**; projenin dondurulmuş özellikleri kullanılır (E2.1/E2.6 dersi) |
 | **Kural 10** | ≥3 seed / deterministik yöntemde tekrar koşu |
-| **v3 kayıtları** | **Değiştirilmez** — v4 kayıtları bu belgeye ve `experiments.md`'nin v4 bölümüne yazılır |
+| **v3 kayıtları** | **Değiştirilmez** — v4 kayıtlarının **tek kaynağı bu belgedir** (§6 karar günlüğü). `experiments.md` / `ablation_matrix.md` v3'e aittir ve v4 bölümü **yoktur**. Deney betikleri: `pipelines/exp/V*.py`; çalıştırma manifestleri `artifacts/runs/V*/` (git'e girmez, `.gitignore`) |
+| **Doğrulama seti** | Tüm v4 kararları **yalnızca validation**'da verilir; test seti **kullanılmadı**. Füzyon ağırlığı `a` (21 değer, 0.05 adım) **her kolda aynı val kümesinde seçilip aynı kümede ölçülür** ⇒ mutlak AUC'ler hafif **iyimserdir**; ayrıca başarı ölçütü d_fuzyon baseline'a göre fark olduğundan ve baseline da aynı şekilde ayarlandığından yanlılık büyük ölçüde birbirini götürür. Bu iyimserlik yalnızca **yanlış KEEP** riskini artırır; **tüm v4 kararları KILL** olduğu için sonuçlar etkilenmez. **Bir v4 adayı KEEP olursa** `a` train içinden ayrılmış ayrı bir kümede (veya v3'teki gibi sabit 0.55) seçilmeden test'e **taşınmaz** |
 
 ---
 
