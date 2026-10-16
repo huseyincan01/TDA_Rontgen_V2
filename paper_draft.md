@@ -116,7 +116,7 @@ ResNet18 (ImageNet pretrain) → zon kırpıntısı başına **512 boyutlu** öz
 | **Kural 9** | Split her tabloda açıkça beyan edilir |
 | **Kural 10** | Performanslar **≥3 seed ortalaması** olarak raporlanır |
 
-**Ölçek:** 28 deney · 15 KEEP · 13 KILL · 1 uygulanamaz. **Karar günlüğü** [roadmap.md](roadmap.md) §10.
+**Ölçek:** **28 deney** · **14 KEEP** · **13 KILL** · **1 uygulanamaz**. (Roadmap §13'teki "34 backlog maddesi" **farklı bir sayımdır**: iptal/geçersiz/ertelenen maddeler ve alt-varyantlar ayrı satır sayıldığı için; deney kimliği sayısı 28'dir.) **Karar günlüğü** [roadmap.md](roadmap.md) §10.
 
 ---
 
@@ -243,7 +243,7 @@ E4.2 (GUDHI `cofaces_of_persistence_pairs()`, 30 pozitif + 30 negatif zon, top-K
 5. **Veri = NODE21 halka açık training seti** — leaderboard karşılaştırması **geçersiz**.
 6. **Domain-shift bedeli −0,109** (E5.3b) ve kaynak-dışı genellemede **veri miktarı eşitlenmelidir**.
 7. **Test bütçesi tükendi (6/6)** — sonraki iyileştirmeler yalnızca validation'da gösterilebilir.
-8. **TDA ensemble küçük yeniden üretilebilirlik farkı:** 0,8776 (E3.4) vs 0,8699 (E3.2) / 0,8629 (zon düzeyi varyantı), bundle yüklemesinden kaynaklanabilir — açık iş.
+8. ✅ **TDA ensemble farkı ÇÖZÜLDÜ:** 0,8776 (E3.4) vs 0,8629 (E0.6/E3.2) bir **hata değil, varyant farkıdır** — E3.4'ün hasta düzeyi soft-voting varyantı (A) ile zon düzeyi füzyon varyantı (B). Kayıtlı bundle'lar E3.4'ü **birebir** yeniden üretir. ⇒ E0.6'nın füzyonu (0,9516) **muhafazakârdır** (zayıf varyantla ölçülmüştür); TDA katkısı +0,0232 bir **alt sınırdır**.
 9. **Tek bir ince ayar tarifi** kullanıldı (E0.5 taraması 3 varyant); daha geniş bir arama yapılmadı.
 10. **Nodül boyutu/yerleşimi alt grup analizi yapılmadı.**
 
@@ -286,12 +286,16 @@ PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sı
 | :-: | :--- |
 | 1 | §1 Giriş ve §2 İlgili Çalışmalar metnini yaz (literature.md'den) |
 | 2 | §5 Tartışma iskeletini genişlet |
-| 3 | F1–F8 figürlerini üret (`pipelines/figures/`) |
+| 3 | ~~F1–F8 figürlerini üret~~ ✅ **TAMAM** — `artifacts/figures/F1..F8_*.png` |
 | 4 | Referans listesini literature.md'den biçimlendir |
 | 5 | İngilizce çeviri + hedef dergi formatı |
-| 6 | TDA bundle yeniden üretilebilirlik farkını kapat (§6.8) |
-| 7 | E2.1/E2.2 (çift yön / çok ölçek) — E2.1 val'de **+0.0210** verdi; E2.2 açık |
+| 6 | ~~TDA bundle yeniden üretilebilirlik farkını kapat~~ ✅ **ÇÖZÜLDÜ** (§6.8) |
 
-### Gelecek çalışma — val düzeyinde doğrulanmış iyileştirme
+### Gelecek çalışma — val düzeyinde doğrulanmış iki iyileştirme
 
-**Çift yönlü (diphasic) filtrasyon (E2.1):** Mevcut hat kübik kompleksi **tek polaritede** kurar (H0 karanlık kümeler, H1 döngüler). **Ters polariteyi** (`f_max − f`, yani superlevel kümeler) eklemek, val hasta AUC'sini **0.8399 → 0.8609** çıkarır (**+0.0210**, ön-kayıtlı eşik +0.015 ✓). Boyut kontrolü (B kolu karıştırılmış → **0.7803**, yani PI'ın **altında**) kazancın **boyut değil bilgi** kaynaklı olduğunu doğrular: boyut eklemek tek başına gürültü seyreltmesiyle **zarar verir**. ⚠️ **Test bütçesi tükendiği için 0.9516'lık ana sonuca eklenememiştir**; gelecek bir test değerlendirmesi için **öncelikli adaydır**.
+| # | İyileştirme | Val AUC | Kazanç | Boyut kontrolü |
+| :-: | :--- | :---: | :---: | :--- |
+| 🥇 | **E2.6 çok parametreli dilimler** (`f + t·Sobel gradyan`) | 0.8399 → **0.8880** | **+0.0480** | ✓ (karıştırılmış: 0.6925) |
+| 🥈 | **E2.1 çift yönlü (diphasic) filtrasyon** (sublevel+superlevel) | 0.8399 → **0.8609** | **+0.0210** | ✓ (karıştırılmış: 0.7803) |
+
+Her ikisi de **test bütçesi tükendiği için** 0.9516'lık ana sonuca **eklenememiştir** ve **yeni bir test bütçesinin öncelikli adaylarıdır** (E2.6 daha güçlü). İkisi birleştirilebilir.
