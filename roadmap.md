@@ -201,12 +201,15 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 
 | Faz | Deneyler | Tamamlanan | Aktif | KEEP | KILL |
 | :--- | :--- | :---: | :--- | :---: | :---: |
-| Faz 0 | E0.0, E0.1, E0.2, E0.3 | 3/4 | — | 3 | 0 |
+| Faz 0 | E0.0, E0.1, E0.2, E0.3 | **4/4** ✅ | — | 4 | 0 |
 | Faz 1 | E4.4, E2.7, E2.8, E3.4, E4.1, E4.6 | **6/6** ✅ | — | 3 | 3 |
 | Faz 2 | E3.1, E3.2, E3.7 | **3/3** ✅ | — | 2 | 1 |
-| Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 2/6 | E2.1/E2.2 | 0 | 1 |
+| Faz 3 | E1.1, E1.2, E2.1, E2.2, E2.3, E2.4 | 2/6 | E2.1–E2.4 | 0 | 1 |
 | Faz 4 | E3.3, E2.5, E1.4, E2.6 | 1/4 | E2.5/E1.4/E2.6 | 0 | 1 |
-| Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | 6/6 | E5.2 yazım | 1 | 3 |
+| Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | **6/6** ✅ | — | 1 | 3 |
+| **Ek deneyler** | E3.5, E3.6, E4.5*, E0.4, E0.5, E0.6, E5.3b | **7** | — | 2 | 4 |
+
+> **Sayım notu:** Yukarıdaki 41 backlog satırından **14 KEEP/BASELINE**, **16 KILL**, **1 İPTAL/UYGULANAMAZ** ve **8 hâlâ "Planlandı"** (E2.1, E2.2, E2.3, E2.4, E4.5, E2.5, E1.4, E2.6). `experiments.md`'de **23 ayrı deney kimliği** belgelenmiştir (E5.3b ve E0.5 varyantları alt-varyant olarak).
 
 **Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
 
