@@ -657,6 +657,30 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** — PI temsili korunur.
 * **Manifest:** `artifacts/runs/E2.5_sliced_wasserstein/manifest.json`
 
+### E2.1 — Çift Yönlü (Diphasic) Filtrasyon ✅ **İLK POZİTİF KEEP**
+
+* **Hipotez (ön-kayıtlı):** Çift yönlü temsil (2 × 800 = 1600 boyut), tek polariteli PI'ın **val** ROC-AUC'sini **≥ +0.015** geçer.
+* **Gerekçe:** Mevcut hat kübik kompleksi **tek polaritede** kurar (H0 karanlık kümeler, H1 döngüler). Bir görüntünün **ters polaritesi** (parlak yapılar = superlevel kümeler) farklı topolojik bilgi taşır.
+* **Yöntem:** A = mevcut filtrasyon, B = ters filtrasyon (`f_max − f`). Her polarite için H0/H1 → PI (20×20). Eksen aralıkları B için train'den [0.5, 99.5] yüzdelikleriyle türetildi. Sınıflandırıcı: RBF-SVM (C=10) — E2.5/E2.7/E2.8 ile aynı protokol.
+* **Kapsam:** Yalnızca **validation** (test bütçesi tükendi).
+* **Sonuç:** ✅ **KEEP** — ama **ancak doğru baseline ile**
+
+  | Kol | Boyut | Val hasta ROC-AUC |
+  | :--- | :---: | :---: |
+  | **A = projenin PI'ı (donmuş aralıklar)** | 800 | **0.8399** |
+  | **A + B (çift polarite)** | 1600 | **0.8609** |
+  | **Fark** | | **+0.0210** ✓ (eşik +0.015) |
+  | *A + B **karıştırılmış** (boyut kontrolü)* | 1600 | *0.7803* (**−0.0597**) |
+
+* **🚨 İlk koşu confound'luydu (+0.0646 şişkin):** İlk denemede "tek polarite" kolunu **bu betikte yeniden türettim** ([0.5, 99.5] yüzdelikleri) ve baseline **0.7198**'e düştü — çünkü projenin donmuş aralıkları (özellikle H1 birth **[239,250]**) bilgiyi doğru banda odaklıyor, benim türettiğim aralık (**[0,250]**) ise çözünürlüğü dağıtıyor. Projenin gerçek PI'ı kullanılınca fark **+0.0210**'a indi. **Ders: baseline'ı yeniden türetmek, ölçülen kazancın bir kısmını yapay olarak şişirir.**
+* **🎯 Boyut kontrolü (E2.1b) — kazanç gerçek:** Diphasic temsil 1600, PI 800 boyut olduğu için fark "boyut" olabilirdi (E2.5/E3.6'daki confound'un aynısı). Kontrol: **B kolunu zonlar arasında karıştırdım** — boyut aynı (1600) kalır, B'nin bilgisi yok olur. Sonuç **0.7803**, yani **PI'ın tek başına (0.8399) ALTINDA**. ⇒ **Boyut eklemek tek başına ZARAR veriyor** (gürültü seyreltmesi); **+0.0210 tamamen ters polaritenin bilgisinden geliyor.**
+* **Yorum:**
+  1. ✅ **Alt- ve üst-seviye kümeleri (sublevel + superlevel) aynı bilgi değildir.** İkisini birlikte kodlamak ölçülebilir kazanç sağlıyor.
+  2. Bu, **uzun süredir ilk pozitif KEEP** ve programın **ilk gerçek temsil iyileştirmesi**.
+  3. ⚠️ **Test bütçesi tükendiği için bu kazanç test'te doğrulanamadı.** Makalenin 0.9516'lık ana sonucuna **eklenemez**; ancak **val düzeyinde doğrulanmış bir ablasyon** ve bir sonraki test bütçesi için **öncelikli aday** olarak kaydedilir.
+* **Karar:** **KEEP** (val) — çift yönlü filtrasyon, gelecek çalışma için öncelikli iyileştirme.
+* **Manifest:** `artifacts/runs/E2.1_diphasic_filtration/manifest.json` · kontrol: `artifacts/runs/E2.1_diphasic_filtration_shuffledb/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
