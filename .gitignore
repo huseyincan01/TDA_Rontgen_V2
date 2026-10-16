@@ -88,3 +88,7 @@ artifacts/scalers/*
 !artifacts/scalers/.gitkeep
 artifacts/thresholds/*
 !artifacts/thresholds/.gitkeep
+
+# Makale figürleri: küçük (~1 MB) ve yayın teslim edilebiliri → TAKİP EDİLİR
+!artifacts/figures/
+!artifacts/figures/*.png
