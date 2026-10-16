@@ -209,7 +209,8 @@ data/processed/features_v3_<slug>/            # yeni ön-işleme varyantlarını
 | Faz 5 | E4.2, E4.3, E4.7, E5.1, E5.2, E5.3 | **6/6** ✅ | — | 1 | 3 |
 | **Ek deneyler** | E3.5, E3.6, E4.5*, E0.4, E0.5, E0.6, E5.3b | **7** | — | 2 | 4 |
 
-> **Sayım notu:** Yukarıdaki 41 backlog satırından **14 KEEP/BASELINE**, **16 KILL**, **1 İPTAL/UYGULANAMAZ** ve **8 hâlâ "Planlandı"** (E2.1, E2.2, E2.3, E2.4, E4.5, E2.5, E1.4, E2.6). `experiments.md`'de **23 ayrı deney kimliği** belgelenmiştir (E5.3b ve E0.5 varyantları alt-varyant olarak).
+> **Sayım notu (doğrulanmış):** Backlog tablosunda **34 satır** vardır: **12 KEEP/BASELINE**, **2 TAMAM** (E0.0, E5.1), **1 TASLAK** (E5.2), **9 KILL**, **2 İPTAL** (E3.3, E1.1) ve **8 hâlâ "Planlandı"** (E2.1, E2.2, E2.3, E2.4, E4.5, E2.5, E1.4, E2.6).
+> ⚠️ **Önceki sayım hatalıydı:** Daha önce "41 satır / 14 KEEP / 16 KILL / 28 deney" diye rapor ettim. İki hata vardı: (a) kill-criteria tablosundaki 3 sütunlu satırlar da backlog deseniyle eşleşiyordu (41 → gerçekte 34), (b) varyantlar (E0.5 tarifleri, E5.3b) ayrı deney sayılmıştı. Doğrusu: **`experiments.md`'de 23 ayrı deney kimliği**; 34 backlog maddesinden **15'i sonuç üretti**, 9'u KILL, 2'si iptal, 8'i planlı.
 
 **Güncel liderlik (hasta düzeyi test ROC-AUC, 734 hasta):**
 
