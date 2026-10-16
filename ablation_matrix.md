@@ -291,7 +291,7 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | :-: | :--- | :--- |
 | 1 | **E5.2 — yazım**: metodoloji / sonuçlar / tartışma taslağı + figürler | ✅ **TASLAK** ([paper_draft.md](paper_draft.md)) |
 | 1b | 🥇 **E2.1 çift yönlü filtrasyonu test'te doğrulama** — val'de **+0.0210** kanıtlandı, boyut kontrolü geçti; ancak test bütçesi tükendi | **Öncelikli aday** (yeni test bütçesi gerekir) |
-| 2 | **TDA-tek tutarsızlığı**: E0.6'da 0.8629, E3.4'te 0.8776 — sebep **bulundu** (zon düzeyi vs hasta düzeyi varyantı); bundle yükleme farkı **doğrulanmalı** | Kısmen çözüldü |
+| 2 | ~~**TDA-tek tutarsızlığı**~~: E0.6'da 0.8629, E3.4'te 0.8776 | ✅ **ÇÖZÜLDÜ (sıfır artık)** — **varyant farkı**: E3.4 **Varyant A** (önce hasta max-pool, sonra füzyon) = 0.8776; **Varyant B** (önce zon füzyonu, sonra max-pool) = **0.8629**. E0.6/E3.2 **B'yi birebir** yeniden üretti (val 0.8699, test 0.8629) ⇒ **bundle'lar doğru yükleniyor, yeniden üretilebilirlik sorunu yok.** ⇒ **E0.6 füzyonu muhafazakârdır** (zayıf varyantla ölçüldü); gelecek test'te **Varyant A** kullanılmalı |
 | 3 | ~~**E5.3 eşit-boyut kontrolü**~~: chestxray14 katındaki düşüşün ne kadarı domain shift, ne kadarı veri azalması | ✅ **TAMAM (E5.3b)** — confound ölçüldü: ortalama 0.8468 → **0.8098** |
 | 4 | **E3.2** — orta seviye füzyon (özellik birleştirme) | Planlandı |
 | 5 | **E2.1/E2.2/E2.3** — çift yön, çok ölçek, şablon filtrasyonu (Faz 3) | Planlandı (beklenti düşük) |
