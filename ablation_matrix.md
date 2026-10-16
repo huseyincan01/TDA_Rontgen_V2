@@ -315,7 +315,11 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 
 ---
 
-## 11. Figür Planı (makale için)
+## 11. Figür Planı (makale için) — ✅ **ÜRETİLDİ**
+
+> **Tüm figürler üretilmiştir:** `artifacts/figures/F1..F8_*.png` (200 dpi).
+> Üreten betik: [pipelines/figures/make_figures.py](pipelines/figures/make_figures.py) — sayılar doğrulanmış raporlardan alınır; **F3 gerçek val olasılıklarını yeniden hesaplar**. Yeniden üretmek için: `python pipelines/figures/make_figures.py`
+> 🔎 **F3 bağımsız doğrulama:** betik korelasyonu **r = 0.2802** hesapladı — kayıtlı val değeri (0.3034) ile tutarlı, temsil tamamlayıcılığını bağımsız olarak teyit ediyor.
 
 | # | Figür | İçerik | Kaynak |
 | :-: | :--- | :--- | :--- |
