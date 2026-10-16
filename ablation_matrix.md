@@ -151,6 +151,12 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 | | Tek ölçek σ=1.5 | 0.8457 | | E2.2 |
 | | Çok ölçek (4 σ, 3200 boyut) | 0.8510 (**+0.0053**) | ✗ < 0.015 | **E2.2** |
 | | *Kontrol: diğer ölçekler karıştırılmış* | *0.6598* | boyut tek başına şiddetle zararlı | **E2.2** |
+| **Şablon-göreli (E2.3b)** | **Mutlak PI** | **0.8399** | **KEEP** | E2.5 |
+| | `(X − T_doğru)₊` ReLU sapma | 0.7530 (−0.0869) | | **E2.3b** |
+| | `\|X − T_doğru\|` mutlak sapma | 0.6365 (−0.2034) | | **E2.3b** |
+| | `(X − T_yanlış)₊` **kontrol** | 0.8276 (−0.0124) | yanlış şablon **daha iyi** ⇒ şablon faydalı bilgi taşır | **E2.3b** |
+
+> 🔗 **"Arka planı bastır, lokal sinyali açığa çıkar" öncülü iki bağımsız yoldan çürütüldü:** **E1.2** (damar/arka plan H1 sınıflarını elemek **zarar veriyor**, 0.8697 → 0.8358) + **E2.3b** (sağlıklı şablonu çıkarmak **zarar veriyor**; üstelik **yanlış** şablonu çıkarmak **daha iyi**, 0.8276 vs 0.7530) ⇒ **arka plan/şablon yapısı gürültü değil, ayırt edici bilginin taşıyıcısı.**
 
 > 🔑 **Temsil tasarımı dersi (E2.1 vs E2.2):** **polariteyi** değiştirmek (sublevel → sublevel+superlevel) **+0.0210 KEEP**; **ölçeği** değiştirmek (tek σ → 4 σ) yalnızca **+0.0053 KILL**. ⇒ Topolojik bilgi kazancı **"hangi kümeler filtreleniyor"** sorusundan gelir, **"diyagram nasıl yumuşatılıyor"** sorusundan değil.
 | **Etiketleme eşiği** | %10 | 0.8922 (tek seed) → **0.8587** (5 seed) | | E4.1 → E4.6 |

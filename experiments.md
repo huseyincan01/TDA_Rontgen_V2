@@ -736,6 +736,26 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** ⛔ **GEÇERSİZ** — KILL olarak kaydedilmez; hipotez açık kalır.
 * **Manifest:** `artifacts/runs/E2.3_healthy_template/manifest.json` (sonuçlar no-op olduğu için **bilimsel kanıt sayılmaz**)
 
+#### E2.3b — Sağlıklı Şablon, **DÜZELTİLMİŞ TASARIM** → geçerli sonuç: **KILL**
+
+* **Düzeltme:** Sapmayı **doğrusal olmayan** hâle getirdim — ReLU `(X−T)₊` ve mutlak `|X−T|` dönüşümleri **per-feature afin değildir**, dolayısıyla StandardScaler bunları yutamaz. Böylece hipotez ilk kez **gerçekten** test edildi.
+* **Sonuç:** ❌ **KILL** (geçerli test)
+
+  | Kol | Boyut | Val hasta ROC-AUC | Fark |
+  | :--- | :---: | :---: | :---: |
+  | **A — mutlak PI** | 800 | **0.8399** | — |
+  | B — `(X − T_doğru)₊` (ReLU sapma) | 800 | 0.7530 | **−0.0869** |
+  | C — `|X − T_doğru|` (mutlak sapma) | 800 | 0.6365 | **−0.2034** |
+  | D — `(X − T_yanlış)₊` (kontrol) | 800 | 0.8276 | −0.0124 |
+
+* **Yorum:**
+  1. **Şablon-göreli sapma bilgi KATMIYOR, aksine yok ediyor.** Mutlak PI en iyi; ReLU sapma −0.087, mutlak sapma −0.203 kaybettiriyor.
+  2. 🔑 **Kontrol kolu asıl bulguyu veriyor:** **yanlış zonun** şablonunu çıkarmak (0.8276), **doğru zonun** şablonunu çıkarmaktan (0.7530) **daha iyi**. Yani doğru şablonu çıkarmak **daha çok** zarar veriyor ⇒ **şablon zon-özel FAYDALI bilgi taşıyor**, ortak arka plan gürültüsü değil.
+  3. 🔗 **Program geneliyle tutarlı:** E1.2 (damar/arka plan H1 sınıflarını elemek **zarar veriyor**) + E2.3b (sağlıklı şablonu çıkarmak **zarar veriyor**) ⇒ **"arka planı bastır, lokal sinyali açığa çıkar" öncülü iki bağımsız yoldan çürütülmüştür.**
+  4. Bu, E2.3'ün **geçersiz** sonucunun yerini alan **geçerli** sonuçtur; hipotez artık **kapalıdır**.
+* **Karar:** **KILL** — mutlak PI korunur; şablon-göreli temsil kullanılmaz.
+* **Manifest:** `artifacts/runs/E2.3b_healthy_template_nonlinear/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
