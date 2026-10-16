@@ -630,6 +630,28 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** — geç füzyon korunur.
 * **Manifest:** `artifacts/runs/E3.2_midlevel_fusion/manifest.json`
 
+### E2.5 — Sliced Wasserstein Gömlemesi vs Kalıcılık İmgesi (PI)
+
+* **Hipotez (ön-kayıtlı):** SW gömlemesi + SVM, PI + SVM'in **val** ROC-AUC'sini **≥ +0.015** geçer.
+* **Gerekçe:** E2.8, PI'ın **ızgara çözünürlüğüne duyarlı** olduğunu gösterdi (15/20/25 → 0.8545/0.8697/0.8469): ızgara hem bilgi kaybettiriyor hem yapay duyarlılık getiriyor. Sliced Wasserstein, diyagramları **ızgarasız** temsil eder.
+* **Yöntem:** H0/H1 diyagramları yeniden hesaplandı (önbellekte diyagram yoktu). N_θ=24 yön boyunca 1B Wasserstein; her diyagram için **K=96 çapa diyagramına** olan SW mesafeleri özellik vektörü (H0+H1 = **192 boyut**). Aynı protokolde RBF-SVM (C=10); PI (800 boyut) + aynı SVM ile karşılaştırıldı.
+* **Tek değişken:** Diyagram temsili. Sınıflandırıcı, split, zon yapısı ve hasta max-pooling **sabit**.
+* **Kapsam:** Yalnızca **validation** (test bütçesi tükendi).
+* **Sonuç:** ❌ **KILL — fark çok büyük**
+
+  | Temsil | Val hasta ROC-AUC |
+  | :--- | :---: |
+  | **PI + RBF-SVM** | **0.8399** |
+  | SW gömlemesi + RBF-SVM | **0.6896** |
+  | **Fark** | **−0.1504** (kriter ≥ +0.015 ✗) |
+
+* **Yorum:**
+  1. **Izgara kuantalaması PI'ın darboğazı değilmiş.** E2.8'in gösterdiği ızgara duyarlılığı, "ızgara bilgi kaybettiriyor" anlamına gelmiyor — aksine PI, ızgaraya rağmen SW gömlemesinden **çok daha güçlü**.
+  2. Muhtemel sebep: **PI tam 2B `(birth, persistence)` yoğunluğunu korurken**, çapa-mesafesi gömlemesi diyagramı yalnızca **192 skaler** ile özetliyor (800 boyutun dörtte biri). Ayrıca çapalar train'den rastgele seçildiği için diyagram uzayını iyi germiyor olabilir.
+  3. ⚠️ **Kapsam sınırı (dürüstlük):** Bu deney **"çapa-mesafesi SW gömlemesi"** ailesini test eder, *saf* bir SW çekirdeği SVM'i değil. Sonuç bu aile için kesindir; saf SW çekirdeği denenmemiştir.
+* **Karar:** **KILL** — PI temsili korunur.
+* **Manifest:** `artifacts/runs/E2.5_sliced_wasserstein/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
