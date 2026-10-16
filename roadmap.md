@@ -380,9 +380,19 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 2. **PL zarf mekanizması** — H1 zarfının %98–99.6'sı arka plan; sınıf sinyali %1–2
 3. **Tamamlayıcılık r ≈ 0.30** — sızıntı kontrolü şans (0.4378)
 
-### 13.5 Val düzeyinde doğrulanmış gelecek iş
+### 13.5 Val düzeyinde doğrulanmış gelecek iş — **iki güçlü aday**
 
-**E2.1 çift yönlü (diphasic) filtrasyon: +0.0210** (0.8399 → 0.8609), boyut kontrolü geçti. Test bütçesi tükendiği için ana sonuca eklenemedi; **yeni bir test bütçesinin ilk adayıdır**. Yön gösterici karşıtlık: **polarite +0.0210 (KEEP)** vs **ölçek +0.0053 (KILL)** ⇒ topolojik kazanç *hangi kümelerin filtrelendiğinden* gelir.
+| # | İyileştirme | Val AUC | Kazanç | Boyut kontrolü |
+| :-: | :--- | :---: | :---: | :--- |
+| 🥇 | **E2.6 çok parametreli dilimler** (`f + t·Sobel gradyan`) | 0.8399 → **0.8880** | **+0.0480** | ✓ (karıştırılmış: 0.6925) |
+| 🥈 | **E2.1 çift yönlü (diphasic) filtrasyon** (sublevel+superlevel) | 0.8399 → **0.8609** | **+0.0210** | ✓ (karıştırılmış: 0.7803) |
+
+Her ikisi de **test bütçesi tükendiği için** 0.9516'lık ana sonuca **eklenememiştir** ve **yeni bir test bütçesinin öncelikli adaylarıdır** (E2.6 daha güçlü). İkisi birleştirilebilir.
+
+🔑 **Yön gösterici içgörüler:**
+* **Polarite +0.0210 (KEEP) vs ölçek +0.0053 (KILL)** ⇒ kazanç *hangi kümelerin filtrelendiğinden* gelir, diyagramın yumuşatılmasından değil.
+* **`f + t·gradyan` (katmanlaştırma) işe yarıyor; gradyanla sınıf elemek (E1.2) zarar veriyor** ⇒ **elemek değil, katmanlaştırmak**.
+* **Şablon-göreli sapma zarar veriyor** ve yanlış şablon doğrudan daha iyi (E2.3b) ⇒ arka plan/şablon yapısı **gürültü değil, bilgi taşıyıcısı**. "Arka planı bastır" öncülü **E1.2 + E2.3b ile iki yoldan çürütüldü**.
 
 ### 13.6 Kapanışta kaydedilen rigor dersleri
 
