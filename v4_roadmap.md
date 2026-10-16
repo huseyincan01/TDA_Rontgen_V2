@@ -142,6 +142,24 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 
 **⇒ Bu, Çözüm 2'yi (görüntü düzeyinde ayna çıkarma) işaret ediyor:** ayna işlemi **zon şemasına ihtiyaç duymaz**, tüm akciğer alanını doğrudan karşılaştırır ve simetri problemi böylece ortadan kalkar.
 
+| 2026-10-16 | **V3.2** | **KILL** 🔑 | **PI simetrik farkı** — piksel hizalaması olmadan, doğrudan PI uzayında: `concat(|PI_1−PI_4|, |PI_3−PI_5|)` = 1600 özellik (projenin **dondurulmuş** PI'ı, yeniden türetim yok). Hasta düzeyi, 3414 train / 734 val, **test yok**. Sonuçlar: **B ayna 0.8118** · **D yanlış ayna (çapraz 1↔5, 3↔4) 0.8389** · **E karıştırılmış 0.6731** · **C (PI+ayna) füzyon 0.9496** (taban 0.9430) ⇒ **d_fuzyon +0.0066** · F (PI+yanlış) 0.9441. **Karar: KILL** (eşik +0.015). |
+
+### 🔑 V3.2'den çıkan üç bulgu
+
+**1. ✅ Çapraz-zon PI farkları GERÇEKTEN bilgi taşıyor (V3.1'in aksine).**
+`B ayna 0.8118` vs `E karıştırılmış 0.6731` ⇒ **+0.139**. V3.1'in skaler mesafeleri (0.6284 vs 0.5979 = +0.03) neredeyse bilgi taşımıyordu; **eleman-eleman PI farkı çok daha güçlü.**
+
+**2. ❌ AMA sinyal SİMETRİYE ÖZGÜ DEĞİL — hipotez çürüdü.**
+`D yanlış ayna (0.8389)` > `B doğru ayna (0.8118)` ⇒ **−0.0271**. Yani "sağ üst ↔ sol üst" karşılaştırması, "sağ üst ↔ sol alt" karşılaştırmasından **daha iyi değil, daha kötü.**
+⇒ Bilgilendirici olan **ayna simetrisi değil**, sadece **"iki farklı bölgenin farkı"**. Muhtemelen dikey topolojik gradyanı yakalıyor.
+
+**3. 📚 Bu, literatürle BİREBİR örtüşüyor.**
+[Evans ve ark. 2016](https://pmc.ncbi.nlm.nih.gov/articles/PMC9684389/): global gist **"görüntünün yoğunluğundan veya ASİMETRİSİNDEN değil"**, global yapıdan geliyor. ⇒ **Bağımsız olarak aynı sonucu bulduk.**
+
+**4. ⚠️ Füzyon kazancı (+0.0066) gürültü mertebesinde.** 734 val hastası için AUC standart hatası ~0.012–0.015 ⇒ +0.0066 **anlamlı değil**. (Bootstrap CI hesaplanmadı; hesaplanmalı.)
+
+**⇒ Simetri/aşırılık ekseni kapandı.** Sıradaki anlamlı yön, V3.1 ve V3.2'nin ortak dersini kullanan **farklı bir ilişkisellik türü** ya da doğrudan **mimari** (tüm görüntü + skip connection).
+
 ---
 
 ## 7. 🔬 Kritik gözlem: neden hepsi yedekli çıkıyor?
