@@ -53,6 +53,8 @@ Bu projenin temel hipotezi; göğüs röntgenlerindeki akciğer nodüllerinin, g
                            +-----------------------------------------------+
 ```
 
+> ⚠️ **Not:** Yukarıdaki şema **v2'nin** zon başına bağımsız sınıflandırma akışıdır. v3'ün **nihai** mimarisi buna bir **görüntü dalı** (ResNet18, zon başına → hasta max-pool) ekler ve iki dalı **geç füzyonla** birleştirir: `hasta_skor = a·görüntü + (1−a)·TDA`. Güncel şema: [ablation_matrix.md §1](ablation_matrix.md) ve [paper_draft.md §3](paper_draft.md).
+
 ### Temel Tasarım İlkeleri:
 1. **Anatomik Bölütleme:** Akciğerler derin öğrenme segmentasyonu ile 5 bağımsız anatomik zona ayrılır (Sağ Üst, Sağ Orta, Sağ Alt, Sol Üst, Sol Alt).
 2. **Kübik Kalıcı Homoloji:** Her zon kesitinin doku yoğunluk filtrasyonundan sonlu H0 (yoğun lezyon çekirdekleri / radyoopak odaklar) ve H1 (1-boyutlu döngüler / damarsal ve trabeküler çevre yapıları) kalıcılık diyagramları çıkarılır.
@@ -256,7 +258,7 @@ Harici `persim.PersistenceImager` kütüphanesi, izotropik eksen aralıkları va
 - [x] **$N=2.000$ Bootstrap %95 Güven Aralıkları:** 6 modelin tamamı için hesaplandı; PI CNN'in hem Ham CNN'den hem PL CNN'den istatistiksel olarak anlamlı şekilde ($p < 0.001$) ayrıştığı kanıtlandı.
 - [x] Deney çıktıları (`artifacts/models/` ve `artifacts/runs/`) başarıyla kaydedildi; `experiments.md` ve `progress.md` senkronize edildi.
 - [x] **Seçenek A (Hibrit / Ensemble):** v3 programında **E3.4** olarak tamamlandı → TDA ensemble test ROC-AUC **0.8776**; ardından **E3.1 füzyonu** ile **0.9211**'e ulaşıldı.
-- [ ] **Seçenek B (Eşik Hassasiyet Analizi):** v3 programında **E4.1** olarak planlandı (%10/%20/%30 overlap robustness).
+- [x] **Seçenek B (Eşik Hassasiyet Analizi):** v3 programında **E4.1 + E4.6** olarak tamamlandı → %10/%20/%30 kuralı 5-seed'de **anlamlı fark yaratmadı** (KILL); **%20 kuralı korundu**.
 
 ---
 
@@ -270,7 +272,7 @@ v2.1 benchmark'ının ardından, **yayınlanabilir bir katkı** üretmek için v
 
 - **E0.1 (KEEP):** Deney kayıt altyapısı — [experiment.py](src/node21_tda/experiment.py) her çalıştırma için manifest üretir (git commit + dal + kirli ağaç, config/girdi SHA-256, seed, metrikler, karar). [configs/experiments/](configs/experiments/) sözleşmesi (şablon + README) kuruldu.
 - **E0.2 (KEEP):** v2.1 PI küçük CNN referansı **bit-bit yeniden üretildi** — 16/16 metrik (val 0.8607, test **0.8631**, eşik 0.6949, TP/FP/TN/FN 137/114/448/35). Pipeline **deterministik**; 5 zonun eğitimi CPU'da ~27 s.
-- **E0.0 (ertelendi):** venv'de `torch 2.14.1+cpu` (CUDA yok) ancak **tüm v3 deneyleri CPU'da üretildi** → GPU kritik değil. RTX 4050 yalnızca uçtan uca fine-tuning için gerekir.
+- **E0.0 (TAMAMLANDI):** venv'de `torch 2.14.1+cu126` (**CUDA aktif**, RTX 4050 6 GB) kuruldu; E0.4–E0.6 GPU'da koştu (ince ayar ~2,5 dk). CPU-only dönemde üretilen tüm v3 sonuçları **geçerlidir** (sürüm aynı, yalnızca derleme farklı).
 
 ### 7.2 Literatür taraması
 
@@ -321,22 +323,24 @@ v2.1 benchmark'ının ardından, **yayınlanabilir bir katkı** üretmek için v
 
 | Sıra | Model | Test ROC-AUC |
 | :-: | :--- | :---: |
-| 🥇 | **E3.1 Füzyon (ResNet18 + TDA ensemble)** | **0.9211** |
-| 🥈 | E3.4 TDA ensemble (CNN + SVM) | 0.8776 |
-| 🥉 | TDA PI küçük CNN (v2.1) | 0.8631 |
-| 4 | E0.3 ResNet18 (donmuş) + LR | 0.8349 |
-| 5 | RBF-SVM (PI) | 0.8289 |
-| 6 | k-NN (PI) | 0.7162 |
-| 7 | Ham görüntü küçük CNN | 0.7043 |
-| 8 | PL küçük CNN | 0.5450 |
-| 9 | PL RBF-SVM | 0.5217 |
+| 🥇 | **Füzyon: ince ayarlı ResNet18 + TDA ensemble** | **0.9516** (doğruluk %89.4) |
+| 🥈 | İnce ayarlı ResNet18 (son blok) | 0.9284 |
+| 🥉 | Füzyon: donmuş ResNet18 + TDA ensemble | 0.9190 ± 0.0056 (3 seed) |
+| 4 | TDA ensemble (CNN + SVM) | 0.8776 |
+| 5 | TDA PI küçük CNN (v2.1) | 0.8631 |
+| 6 | E0.3 ResNet18 (donmuş) + LR | 0.8349 |
+| 7 | RBF-SVM (PI) | 0.8289 |
+| 8 | k-NN (PI) | 0.7162 |
+| 9 | Ham görüntü küçük CNN | 0.7043 |
+| 10 | PL küçük CNN | 0.5450 |
+| 11 | PL RBF-SVM | 0.5217 |
 
-> NODE21 referansları: rank-1 = **0.868**, ensemble = **0.877** → **geçildi**.
+> NODE21 leaderboard değerleri (D1 0.868 · ensemble 0.877) yalnızca **bağlam** olarak verilir; verimiz NODE21'in halka açık **eğitim** seti olduğundan resmî test setiyle **karşılaştırılamaz** (Kural 9).
 
 ### 7.5 Sıradaki adımlar
 
 📄 **Tüm sonuçlar tek belgede:** **[ablation_matrix.md](ablation_matrix.md)** — makale tablolarının taslağı (liderlik, 5 ablasyon, sağlamlık, istatistik, yenilik konumlandırması). E5.1 olarak taslak hâlinde hazır.
 
-⚠️ **Test seti bütçesi: 4/6 kullanıldı** (E0.2, E3.4, E0.3, E3.1). Kalan 2 değerlendirme → **final ablasyon matrisi** + **harici doğrulama**. Ara deneyler **yalnızca validation**'da karar verir.
+⚠️ **Test seti bütçesi: 6/6 TÜKENDİ** (E0.2, E3.4, E0.3, E3.1, E3.7, E0.6). Dondurulmuş test seti **kapalıdır**; son değerlendirme hakem itirazını (zayıf baseline) çürütmeye ayrıldı ve **başarılı oldu** (E0.6). Ara deneyler **yalnızca validation**'da karar verir.
 
 Devam noktası ve öncelik sırası: **[roadmap.md §12](roadmap.md)** (Handoff).

@@ -331,7 +331,7 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 * `data/processed/features_weights/E2_7_zone_features.npy` — 5 ağırlık varyantı (test dışı zonlar).
 * Tüm deney betikleri: `pipelines/exp/`.
 
-**Devam komutu:** §9 (durum tablosu) + §10 (karar günlüğü) oku → yukarıdaki tablonun 1. maddesinden (E2.8) başla.
+**Devam komutu:** Program **kapandı** (bkz. **§13 Program Kapanışı**). Yeni çalışma yalnızca **validation** veya **yeni veri** ile yapılabilir; dondurulmuş test seti kapalıdır.
 
 ---
 
@@ -342,16 +342,16 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 | Kategori | Sayı |
 | :--- | :---: |
 | **Backlog maddesi (toplam)** | **34** |
-| KEEP / BASELINE | 13 |
+| KEEP / BASELINE | 14 |
 | TAMAM (E0.0, E5.1) | 2 |
 | TASLAK (E5.2) | 1 |
 | KILL | 12 |
 | İPTAL / ENGELLİ (E3.3, E1.4) | 2 |
 | GEÇERSİZ tasarım (E2.3) | 1 |
-| ERTELENDİ / KAPANDI (E2.6, E4.5) | 2 |
+| KAPANDI (E4.5 — E4.2 ile) | 1 |
 | İPTAL — bağımlılık geçersiz (E2.4) | 1 |
 
-`experiments.md`'de **24 ayrı deney kimliği** belgelenmiştir.
+`experiments.md`'de **28 ayrı deney kimliği** belgelenmiştir (14 KEEP · 13 KILL · 1 uygulanamaz). Not: "34 backlog maddesi" ile "28 deney kimliği" **farklı sayımlardır** — backlog iptal/geçersiz/ertelenen maddeleri ve alt-varyantları ayrı satır sayar.
 
 ### 13.2 Faz durumu
 
@@ -361,7 +361,7 @@ Dört kolda yapılan literatür taraması ([literature.md](literature.md)) plan�
 | **Faz 1 — Ön-işleme** | ✅ **6/6** |
 | **Faz 2 — Füzyon** | ✅ **3/3** |
 | **Faz 3 — Topoloji** | 4/6 (E2.4 iptal · E2.3 geçersiz tasarım) |
-| **Faz 4 — Yüksek risk** | 2/4 (E3.3 iptal · E1.4 engelli · E2.6 ertelendi) |
+| **Faz 4 — Yüksek risk** | 2/4 koşuldu (E2.5 KILL · **E2.6 KEEP**) · E3.3 iptal · E1.4 engelli |
 | **Faz 5 — Yayın** | ✅ **6/6** (ablasyon matrisi + makale taslağı) |
 
 ### 13.3 Teslim edilebilirler — hepsi tamam
