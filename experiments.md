@@ -756,6 +756,30 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** — mutlak PI korunur; şablon-göreli temsil kullanılmaz.
 * **Manifest:** `artifacts/runs/E2.3b_healthy_template_nonlinear/manifest.json`
 
+### E2.6 — Çok Parametreli Persistence (dilim yaklaşımı) 🎉 **EN BÜYÜK KAZANÇ**
+
+* **Hipotez (ön-kayıtlı):** Çok dilimli temsil (3 dilim, 2400 boyut), tek dilimli PI'ı (t=0, 800 boyut) **val** ROC-AUC'sinde **≥ +0.015** geçer.
+* **Gerekçe:** E2.6 roadmap'te "ertelendi" idi (multiparameter ağır/olgun değil). Ancak **modülün dilimleri** pratikte uygulanabilir: iki fonksiyonlu filtrasyon `f_t = f + t·g` için her `t`'de **tek parametreli** PH hesaplanır ve dilimler birleştirilir. İkinci fonksiyon **Sobel gradyan büyüklüğü** seçildi: E4.2 kalıcılık sınıflarının gradyanla ilişkisini ölçmüştü; gradyanı **ikinci parametre** yapmak sınıfları *elemek* yerine **katmanlaştırır** — E1.2'nin "elemek zarar veriyor" bulgusundan sonra mantıklı yön.
+* **Tasarım:** Dilimler `t ∈ {0.0, 0.5, 1.5}`, `f_norm + t·g_norm`. **A** = t=0 · **B** = concat(3 dilim) · **C** = **boyut kontrolü** (t=0 + diğer dilimlerin karıştırılmış hâli). RBF-SVM C=10; split/zon/max-pooling sabit.
+* **Kapsam:** Yalnızca **validation** (test bütçesi tükendi).
+* **Sonuç:** ✅ **KEEP — kaydedilen en büyük val iyileştirmesi**
+
+  | Kol | Boyut | Val hasta ROC-AUC |
+  | :--- | :---: | :---: |
+  | A — projenin PI'ı (tek dilim, t=0) | 800 | 0.8399 |
+  | **B — proje PI + 2 gradyan dilimi** | 2400 | **0.8880** |
+  | *C — boyut kontrolü (karıştırılmış)* | 2400 | *0.6925* |
+  | **B − A** | | **+0.0480** ✓ |
+
+* **Yorum:**
+  1. 🎉 **+0.0480** — E2.1'in (+0.0210) iki katından fazla; **programın en büyük gerçek kazanımı**.
+  2. 🎯 **Boyut kontrolü kritik:** karıştırılmış kol **0.6925**, A'nın (0.8399) çok altında ⇒ bilgisiz boyut eklemek şiddetle zararlı; **+0.0480 tamamen yeni bilgiden**.
+  3. **Gradyanı ikinci parametre yapmak işe yarıyor**, oysa gradyanı **kullanıp sınıf elemek** (E1.2) zarar veriyordu ⇒ **elemek değil, katmanlaştırmak** doğru strateji.
+  4. ⚠️ **İlk koşu yine şişkindi (+0.0883):** t=0 kolunu bu betikte türettiğim aralıklarla kurmuştum → baseline 0.7253'e düştü. **Projenin PI'ı** kullanılınca fark **+0.0480**'a indi. **Ders tekrarlandı: baseline'ı yeniden türetmek kazancı şişirir** (E2.1'de de aynısı olmuştu).
+  5. ⚠️ **Test bütçesi kapalı** ⇒ 0.9516'lık ana sonuca **eklenemez**; **E2.1 ile birlikte gelecek test değerlendirmesinin öncelikli iki adayından biri** (hatta daha güçlüsü).
+* **Karar:** **KEEP** (val) — çok parametreli dilimler, gelecek çalışma için **en güçlü iyileştirme adayı**.
+* **Manifest:** `artifacts/runs/E2.6_multiparameter_slices/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.

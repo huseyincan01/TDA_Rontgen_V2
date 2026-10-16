@@ -155,6 +155,9 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 | | `(X − T_doğru)₊` ReLU sapma | 0.7530 (−0.0869) | | **E2.3b** |
 | | `\|X − T_doğru\|` mutlak sapma | 0.6365 (−0.2034) | | **E2.3b** |
 | | `(X − T_yanlış)₊` **kontrol** | 0.8276 (−0.0124) | yanlış şablon **daha iyi** ⇒ şablon faydalı bilgi taşır | **E2.3b** |
+| **Çok parametreli (E2.6)** | Tek dilim (t=0, proje PI'ı) | 0.8399 | | E2.5 |
+| | **+ 2 gradyan dilimi (2400 boyut)** | **0.8880** (**+0.0480**) | **KEEP** 🎉 val-only · **en büyük kazanç** | **E2.6** |
+| | *Kontrol: dilimler karıştırılmış* | *0.6925* | boyut tek başına şiddetle zararlı | **E2.6** |
 
 > 🔗 **"Arka planı bastır, lokal sinyali açığa çıkar" öncülü iki bağımsız yoldan çürütüldü:** **E1.2** (damar/arka plan H1 sınıflarını elemek **zarar veriyor**, 0.8697 → 0.8358) + **E2.3b** (sağlıklı şablonu çıkarmak **zarar veriyor**; üstelik **yanlış** şablonu çıkarmak **daha iyi**, 0.8276 vs 0.7530) ⇒ **arka plan/şablon yapısı gürültü değil, ayırt edici bilginin taşıyıcısı.**
 
