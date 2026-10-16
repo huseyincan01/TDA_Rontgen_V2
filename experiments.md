@@ -639,16 +639,21 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Kapsam:** Yalnızca **validation** (test bütçesi tükendi).
 * **Sonuç:** ❌ **KILL — fark çok büyük**
 
-  | Temsil | Val hasta ROC-AUC |
-  | :--- | :---: |
-  | **PI + RBF-SVM** | **0.8399** |
-  | SW gömlemesi + RBF-SVM | **0.6896** |
-  | **Fark** | **−0.1504** (kriter ≥ +0.015 ✗) |
+  | Temsil | Boyut | Val hasta ROC-AUC |
+  | :--- | :---: | :---: |
+  | PI | 800 | 0.8399 |
+  | **PI (PCA → 192)** *(boyut kontrolü)* | **192** | **0.8399** |
+  | SW gömlemesi | 192 | **0.6896** |
+  | **SW − PI** | | **−0.1504** |
+  | **SW − PI(PCA 192)** *(boyut-eşit)* | | **−0.1504** |
 
+* **🎯 Boyut confound kontrolü (E2.5b):** İlk karşılaştırmada **PI 800, SW 192 boyuttu** — yani fark "temsil" kadar "boyut" da olabilirdi (E3.6'daki boyut confound'unun aynısı). **PI, PCA ile 192 boyuta indirildiğinde val AUC birebir aynı kaldı (0.8399 → 0.8399)** ve boyut-eşit fark **yine −0.1504** çıktı. ⇒ **Boyut confound'u YOKTUR; fark gerçekten temsilden gelir.**
+  * **Bonus bulgu:** PI'ın **800 boyutu fazlasıyla yedeklidir** — 192 boyuta indirgemek **hiç kayıp vermiyor** (hesaplama/ depolama için faydalı bir not).
 * **Yorum:**
-  1. **Izgara kuantalaması PI'ın darboğazı değilmiş.** E2.8'in gösterdiği ızgara duyarlılığı, "ızgara bilgi kaybettiriyor" anlamına gelmiyor — aksine PI, ızgaraya rağmen SW gömlemesinden **çok daha güçlü**.
-  2. Muhtemel sebep: **PI tam 2B `(birth, persistence)` yoğunluğunu korurken**, çapa-mesafesi gömlemesi diyagramı yalnızca **192 skaler** ile özetliyor (800 boyutun dörtte biri). Ayrıca çapalar train'den rastgele seçildiği için diyagram uzayını iyi germiyor olabilir.
-  3. ⚠️ **Kapsam sınırı (dürüstlük):** Bu deney **"çapa-mesafesi SW gömlemesi"** ailesini test eder, *saf* bir SW çekirdeği SVM'i değil. Sonuç bu aile için kesindir; saf SW çekirdeği denenmemiştir.
+  1. **Izgara kuantalaması PI'ın darboğazı değilmiş.** E2.8'in gösterdiği ızgara duyarlılığı, "ızgara bilgi kaybettiriyor" anlamına gelmiyor — aksine PI, ızgarasız bir alternatiften **çok daha güçlü**.
+  2. Muhtemel sebep: **PI tam 2B `(birth, persistence)` yoğunluğunu korurken**, çapa-mesafesi gömlemesi diyagramı yalnızca **192 skaler** ile özetliyor; PCA kontrolü bu açıklamayı **zayıflatıyor** (boyut eşitken de fark aynı). Geriye kalan açıklama: **çapa seçimi** (rastgele, train'den) diyagram uzayını iyi germiyor.
+  3. ⚠️ **Kapsam sınırı (dürüstlük):** Bu deney **"çapa-mesafesi SW gömlemesi"** ailesini test eder, *saf* bir SW çekirdeği SVM'i değil.
+  4. ⚠️ **Hesaplama notu:** Bu deney **GPU'dan faydalanamaz** — GUDHI (kalıcı homoloji) ve sklearn (SVM) **CPU-only**'dir; GPU kullanımı koşu boyunca **%3**'te kaldı.
 * **Karar:** **KILL** — PI temsili korunur.
 * **Manifest:** `artifacts/runs/E2.5_sliced_wasserstein/manifest.json`
 

@@ -40,6 +40,7 @@ import gudhi
 import numpy as np
 import pandas as pd
 import SimpleITK as sitk
+from sklearn.decomposition import PCA
 from sklearn.metrics import roc_auc_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -78,6 +79,9 @@ def parse_args() -> argparse.Namespace:
                    default=PROJECT_ROOT / "data/processed/features_v2/X_zone_features.npy")
     p.add_argument("--workers", type=int, default=10)
     p.add_argument("--reuse-cache", action="store_true")
+    p.add_argument("--pi-pca-dim", type=int, default=0,
+                   help="PI'i PCA ile bu boyuta indir (boyut confound kontrolu). 0 = kapali.")
+    p.add_argument("--tag", type=str, default="")
     return p.parse_args()
 
 
@@ -158,15 +162,20 @@ def sw_features(prof: np.ndarray, anchors: np.ndarray) -> np.ndarray:
     return (d * d).mean(axis=(2, 3)).astype(np.float32)
 
 
-def svm_val_patient_auc(X: np.ndarray, zs: pd.DataFrame, meta: pd.DataFrame) -> float:
+def svm_val_patient_auc(X: np.ndarray, zs: pd.DataFrame, meta: pd.DataFrame,
+                        pca_dim: int = 0) -> float:
     y = zs["zone_label"].values
     rows = []
     for z in range(1, 6):
         zm = (zs["zone_id"] == z).values
         tr = zm & zs["is_train_balanced_sample"].values.astype(bool)
         va = zm & (zs["split"] == "val").values
-        clf = make_pipeline(StandardScaler(),
-                            SVC(C=10.0, gamma="scale", probability=True, random_state=SEED))
+        steps = [StandardScaler()]
+        if pca_dim > 0:
+            # Boyut confound kontrolu: PCA ZON BASINA, yalnizca train'de egitilir
+            steps.append(PCA(n_components=pca_dim, random_state=SEED))
+        steps.append(SVC(C=10.0, gamma="scale", probability=True, random_state=SEED))
+        clf = make_pipeline(*steps)
         clf.fit(X[tr], y[tr])
         rows.append(pd.DataFrame({"patient_id": zs.loc[va, "patient_id"].values,
                                   "p": clf.predict_proba(X[va])[:, 1]}))
@@ -211,6 +220,11 @@ def main() -> None:
     print("\n  SVM egitimi (PI)...", flush=True)
     auc_pi = svm_val_patient_auc(X_pi, sub, meta)
     print(f"    PI + RBF-SVM val hasta AUC = {auc_pi:.4f}", flush=True)
+    auc_pi_pca = None
+    if args.pi_pca_dim > 0:
+        print(f"  SVM egitimi (PI -> PCA {args.pi_pca_dim}) [boyut kontrolu]...", flush=True)
+        auc_pi_pca = svm_val_patient_auc(X_pi, sub, meta, pca_dim=args.pi_pca_dim)
+        print(f"    PI(PCA {args.pi_pca_dim}) + RBF-SVM val hasta AUC = {auc_pi_pca:.4f}", flush=True)
     print("  SVM egitimi (SW)...", flush=True)
     auc_sw = svm_val_patient_auc(X_sw, sub, meta)
     print(f"    SW + RBF-SVM val hasta AUC = {auc_sw:.4f}", flush=True)
@@ -218,8 +232,13 @@ def main() -> None:
     delta = auc_sw - auc_pi
     passed = delta >= MIN_DELTA
     print(f"\n--- SONUC ---")
-    print(f"  PI + SVM : {auc_pi:.4f}")
-    print(f"  SW + SVM : {auc_sw:.4f}   (fark {delta:+.4f})")
+    print(f"  PI + SVM          : {auc_pi:.4f}  ({X_pi.shape[1]} boyut)")
+    if auc_pi_pca is not None:
+        print(f"  PI(PCA) + SVM     : {auc_pi_pca:.4f}  ({args.pi_pca_dim} boyut)  [BOYUT KONTROLU]")
+    print(f"  SW + SVM          : {auc_sw:.4f}  ({X_sw.shape[1]} boyut)")
+    print(f"  SW - PI fark      : {delta:+.4f}")
+    if auc_pi_pca is not None:
+        print(f"  SW - PI(PCA) fark : {auc_sw - auc_pi_pca:+.4f}  <- BOYUT-ESIT karsilastirma")
     print(f"  Kriter: >= +{MIN_DELTA} -> {passed}")
     print(f"  KARAR: {'KEEP' if passed else 'KILL'}")
 
@@ -232,6 +251,15 @@ def main() -> None:
         "pi_svm_val_patient_auc": auc_pi,
         "sw_svm_val_patient_auc": auc_sw,
         "delta": delta,
+        "dimensionality_control": {
+            "pi_pca_dim": args.pi_pca_dim,
+            "pi_pca_val_patient_auc": auc_pi_pca,
+            "dimension_matched_delta_sw_minus_pi_pca":
+                (auc_sw - auc_pi_pca) if auc_pi_pca is not None else None,
+            "note": "PI, PCA ile SW gomlemesiyle AYNI boyuta indirildiginde de fark korunuyorsa "
+                    "boyut confound'u yoktur.",
+        },
+        "feature_dims": {"pi": int(X_pi.shape[1]), "sw": int(X_sw.shape[1])},
         "criteria": {"delta_ge_0.015": bool(passed)},
         "decision": "KEEP" if passed else "KILL",
     }
