@@ -711,6 +711,31 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KILL** — tek ölçek (σ=1.5) tercih edilir; çok ölçek kullanılmaz.
 * **Manifest:** `artifacts/runs/E2.2_multiscale_pi/manifest.json`
 
+### E2.3 — Sağlıklı Şablon (relative persistence) ⛔ **GEÇERSİZ TASARIM (no-op)**
+
+* **Hipotez (ön-kayıtlı):** Şablon-göreli temsil (`X − T_zon`, T = zonun temiz-negatif train PI ortalaması), mutlak PI'ı val ROC-AUC'sinde **≥ +0.015** geçer.
+* **Gerekçe:** E4.4/E4.2, zarfın büyük kısmının **ortak arka plan** olduğunu gösterdi (bronkovasküler döngüler, göğüs duvarı). O halde bilgi **şablondan sapma**da olabilir.
+* **Sonuç:** ⛔ **HİPOTEZ TEST EDİLEMEDİ** — tasarım matematiksel olarak **no-op**
+
+  | Kol | Boyut | Val hasta ROC-AUC |
+  | :--- | :---: | :---: |
+  | A — mutlak PI | 800 | 0.8399 |
+  | B — `X − T(doğru zon)` | 800 | 0.8400 |
+  | C — `X − T(yanlış zon)` | 800 | 0.8399 |
+
+* **🚨 Neden geçersiz (kanıt):** Üç kol **birebir aynı** çıktı. Sebep matematiksel: `make_pipeline(StandardScaler(), SVC())` scaler'ı **zon başına** uygular, ve sabit bir vektör çıkarmak tamamen yutulur:
+  ```
+  (X − T) − mean(X − T) = (X − T) − (mean(X) − T) = X − mean(X)
+  ```
+  Std de sabit kaymadan etkilenmez. ⇒ Mutlak ve göreli temsiller **özdeştir**; farklar yalnızca SVM numeriğidir.
+* **📌 Metodolojik ders (kayda değer):** **Per-feature afin dönüşümler, sonrasında gelen StandardScaler tarafından yutulur.** Bir ön-işleme adımının etkisini ölçmeden önce, sonraki adımın onu absorbe edip etmediği **matematiksel olarak** kontrol edilmelidir. (Bu, E0.5'teki önbellek kayması ve E3.6'daki boyut confound'u ile aynı sınıftan bir rigor hatasıdır — ama bu kez **koşmadan önce değil, sonuç birebir aynı çıkınca** yakalandı.)
+* **✅ Düzeltilmiş tasarım önerileri (gelecek iş):**
+  1. **Doğrusal olmayan sapma:** `(X − T)_+` eşikleme veya `|X − T|` — StandardScaler bunları yutamaz.
+  2. **Diyagram düzleminde relativasyon:** yalnızca şablonun noktalarından **uzak** kalıcılık sınıflarını tut (PI'da değil, diyagramda).
+  3. **Havuzlanmış sınıflandırıcı:** zon başına yerine tek model kullanılırsa T_zon sabit değildir (ancak bu, E3.5'te eşdeğer bulunan protokolü değiştirir).
+* **Karar:** ⛔ **GEÇERSİZ** — KILL olarak kaydedilmez; hipotez açık kalır.
+* **Manifest:** `artifacts/runs/E2.3_healthy_template/manifest.json` (sonuçlar no-op olduğu için **bilimsel kanıt sayılmaz**)
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.
