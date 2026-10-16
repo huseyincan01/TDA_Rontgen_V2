@@ -681,6 +681,36 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 * **Karar:** **KEEP** (val) — çift yönlü filtrasyon, gelecek çalışma için öncelikli iyileştirme.
 * **Manifest:** `artifacts/runs/E2.1_diphasic_filtration/manifest.json` · kontrol: `artifacts/runs/E2.1_diphasic_filtration_shuffledb/manifest.json`
 
+### E2.2 — Çok Ölçekli Kalıcılık İmgesi (multi-scale PI)
+
+* **Hipotez (ön-kayıtlı):** Çok ölçekli temsil (σ = 0.5/1.0/1.5/2.0, 3200 boyut), **en iyi** tek ölçekli PI'ı (σ=1.5, 800 boyut) **val** ROC-AUC'sinde **≥ +0.015** geçer.
+* **Gerekçe:** E2.8, PI'ın σ'ya duyarlı olduğunu gösterdi (0.5→0.8460, 1.0→0.8697, **1.5→0.8734**, 2.0→0.8712). Tek σ seçmek zorunda değiliz; birden çok ölçeği birleştirmek farklı ölçeklerdeki yapıyı kodlayabilir.
+* **Tasarım (E2.1'in dersleri uygulandı):** A = σ1.0 (proje varsayılanı) · A' = σ1.5 (en iyi tek) · B = concat(4 σ) · **C = boyut kontrolü** (σ1.0 + diğer üç ölçeğin **karıştırılmış** hâli; boyut aynı, ek ölçeklerin bilgisi yok). Sınıflandırıcı/split/zon/max-pooling sabit. **Özellikler E2.8 önbelleğinden okundu — yeniden çıkarım yok.**
+* **Kapsam:** Yalnızca **validation**.
+* **Sonuç:** ❌ **KILL**
+
+  | Kol | Boyut | Val hasta ROC-AUC |
+  | :--- | :---: | :---: |
+  | A — tek ölçek σ=1.0 | 800 | 0.8399 |
+  | A' — tek ölçek σ=1.5 (en iyi) | 800 | 0.8457 |
+  | **B — çok ölçek (4 σ)** | 3200 | **0.8510** |
+  | *C — boyut kontrolü (karıştırılmış)* | 3200 | *0.6598* |
+  | **B − en iyi tek ölçek** | | **+0.0053** ✗ (eşik +0.015) |
+
+* **Yorum:**
+  1. Çok ölçek **gerçek ama küçük** bir kazanç veriyor (+0.0053) — eşiğin altında, 4× özellik maliyetini haklı çıkarmıyor.
+  2. **Boyut kontrolü yine kritik:** karıştırılmış kol **0.6598**, yani PI'ın çok altında ⇒ **bilgisiz boyut eklemek şiddetle zararlı.** +0.0053 gerçek bilgidir, boyut artefaktı değil.
+  3. 🔑 **E2.1 ile anlamlı karşıtlık:**
+
+     | Eksen | Değişiklik | Val kazanç | Karar |
+     | :--- | :--- | :---: | :--- |
+     | **Polarite** (hangi kümeler filtreleniyor) | sublevel → **sublevel + superlevel** | **+0.0210** | ✅ **KEEP** |
+     | **Ölçek** (diyagram nasıl yumuşatılıyor) | tek σ → 4 σ | +0.0053 | ❌ KILL |
+
+     ⇒ **Topolojik bilgi kazancı "hangi kümeleri filtrelediğinden" geliyor, "diyagramı nasıl yumuşattığından" değil.** Bu, temsil tasarımı için **yön gösterici bir sonuç** ve E2.1'in neden işe yaradığını da açıklıyor.
+* **Karar:** **KILL** — tek ölçek (σ=1.5) tercih edilir; çok ölçek kullanılmaz.
+* **Manifest:** `artifacts/runs/E2.2_multiscale_pi/manifest.json`
+
 ### E0.4 — ResNet18 Son-Blok İnce Ayarı ("hazır model" eleştirisine cevap) ⚠️
 
 * **Hipotez (ön-kayıtlı):** Son-blok (`layer4` + `fc`) ince ayarı, dondurulmuş versiyonun **val** hasta ROC-AUC'sini (0.8884) **≥ +0.015** artırır.

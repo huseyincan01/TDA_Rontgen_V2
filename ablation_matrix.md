@@ -147,6 +147,12 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 | **Filtrasyon polaritesi** | Tek polarite (projenin PI'ı, 800 boyut) | 0.8399 | | E2.5 |
 | | **Çift polarite (sublevel+superlevel, 1600)** | **0.8609** (**+0.0210**) | **KEEP** ✅ val-only | **E2.1** |
 | | *Kontrol: B kolu karıştırılmış (boyut aynı)* | *0.7803* (**−0.0597**) | boyut tek başına zarar verir | **E2.1b** |
+| **Ölçek (σ)** | Tek ölçek σ=1.0 | 0.8399 | | E2.5 |
+| | Tek ölçek σ=1.5 | 0.8457 | | E2.2 |
+| | Çok ölçek (4 σ, 3200 boyut) | 0.8510 (**+0.0053**) | ✗ < 0.015 | **E2.2** |
+| | *Kontrol: diğer ölçekler karıştırılmış* | *0.6598* | boyut tek başına şiddetle zararlı | **E2.2** |
+
+> 🔑 **Temsil tasarımı dersi (E2.1 vs E2.2):** **polariteyi** değiştirmek (sublevel → sublevel+superlevel) **+0.0210 KEEP**; **ölçeği** değiştirmek (tek σ → 4 σ) yalnızca **+0.0053 KILL**. ⇒ Topolojik bilgi kazancı **"hangi kümeler filtreleniyor"** sorusundan gelir, **"diyagram nasıl yumuşatılıyor"** sorusundan değil.
 | **Etiketleme eşiği** | %10 | 0.8922 (tek seed) → **0.8587** (5 seed) | | E4.1 → E4.6 |
 | | **%20** | **0.8736** → **0.8501** | **KEEP** | E4.1 → E4.6 |
 | | %30 | 0.8693 | | E4.1 |
