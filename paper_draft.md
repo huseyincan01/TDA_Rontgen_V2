@@ -290,4 +290,8 @@ PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sı
 | 4 | Referans listesini literature.md'den biçimlendir |
 | 5 | İngilizce çeviri + hedef dergi formatı |
 | 6 | TDA bundle yeniden üretilebilirlik farkını kapat (§6.8) |
-| 7 | E2.1/E2.2 (çift yön / çok ölçek) — yeni topolojik katkı arayışı (val-only) |
+| 7 | E2.1/E2.2 (çift yön / çok ölçek) — E2.1 val'de **+0.0210** verdi; E2.2 açık |
+
+### Gelecek çalışma — val düzeyinde doğrulanmış iyileştirme
+
+**Çift yönlü (diphasic) filtrasyon (E2.1):** Mevcut hat kübik kompleksi **tek polaritede** kurar (H0 karanlık kümeler, H1 döngüler). **Ters polariteyi** (`f_max − f`, yani superlevel kümeler) eklemek, val hasta AUC'sini **0.8399 → 0.8609** çıkarır (**+0.0210**, ön-kayıtlı eşik +0.015 ✓). Boyut kontrolü (B kolu karıştırılmış → **0.7803**, yani PI'ın **altında**) kazancın **boyut değil bilgi** kaynaklı olduğunu doğrular: boyut eklemek tek başına gürültü seyreltmesiyle **zarar verir**. ⚠️ **Test bütçesi tükendiği için 0.9516'lık ana sonuca eklenememiştir**; gelecek bir test değerlendirmesi için **öncelikli adaydır**.

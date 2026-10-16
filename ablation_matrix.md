@@ -144,6 +144,9 @@ Dengeli train alt kümesi (n=2.040 zon). **E4.4** · [betik](pipelines/exp/E4_4_
 | | Zon düzeyi füzyon | 0.8699 / test 0.8629 | | E3.4 |
 | **Füzyon seviyesi** | **Geç (karar) füzyon** | **0.9538** | **KEEP** | E3.1/E3.2 |
 | | Orta seviye (PI ⊕ ResNet → LR) | 0.9482 (**−0.0056**) | | **E3.2** |
+| **Filtrasyon polaritesi** | Tek polarite (projenin PI'ı, 800 boyut) | 0.8399 | | E2.5 |
+| | **Çift polarite (sublevel+superlevel, 1600)** | **0.8609** (**+0.0210**) | **KEEP** ✅ val-only | **E2.1** |
+| | *Kontrol: B kolu karıştırılmış (boyut aynı)* | *0.7803* (**−0.0597**) | boyut tek başına zarar verir | **E2.1b** |
 | **Etiketleme eşiği** | %10 | 0.8922 (tek seed) → **0.8587** (5 seed) | | E4.1 → E4.6 |
 | | **%20** | **0.8736** → **0.8501** | **KEEP** | E4.1 → E4.6 |
 | | %30 | 0.8693 | | E4.1 |
@@ -280,7 +283,8 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 ### 10.2 Kalan işler (test harcamaz)
 | Öncelik | İş | Durum |
 | :-: | :--- | :--- |
-| 1 | **E5.2 — yazım**: metodoloji / sonuçlar / tartışma taslağı + figürler | Bekliyor |
+| 1 | **E5.2 — yazım**: metodoloji / sonuçlar / tartışma taslağı + figürler | ✅ **TASLAK** ([paper_draft.md](paper_draft.md)) |
+| 1b | 🥇 **E2.1 çift yönlü filtrasyonu test'te doğrulama** — val'de **+0.0210** kanıtlandı, boyut kontrolü geçti; ancak test bütçesi tükendi | **Öncelikli aday** (yeni test bütçesi gerekir) |
 | 2 | **TDA-tek tutarsızlığı**: E0.6'da 0.8629, E3.4'te 0.8776 — sebep **bulundu** (zon düzeyi vs hasta düzeyi varyantı); bundle yükleme farkı **doğrulanmalı** | Kısmen çözüldü |
 | 3 | ~~**E5.3 eşit-boyut kontrolü**~~: chestxray14 katındaki düşüşün ne kadarı domain shift, ne kadarı veri azalması | ✅ **TAMAM (E5.3b)** — confound ölçüldü: ortalama 0.8468 → **0.8098** |
 | 4 | **E3.2** — orta seviye füzyon (özellik birleştirme) | Planlandı |
