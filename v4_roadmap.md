@@ -125,3 +125,27 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 | 2026-10-16 | **V1.1** | **KILL** ⚠️ | **Füzyon kapısı.** E2.6'nın TDA-tek kazancı (+0.0480) füzyonda **+0.0072**'ye düşüyor. Kontrol (dilimler karıştırılmış) füzyonda 0.9090, taban 0.9430 ⇒ TDA kalitesi füzyonu etkiliyor, ama E2.6'nın katkısı **ResNet ile yedekli**. |
 | 2026-10-16 | **V1.2** | **KILL** 🎯 | **Temsil karşılaştırması (füzyon ölçütüyle).** d_fuzyon: E2.6 **+0.0072** · E2.1 diphasic **−0.0019** (*füzyona zarar*) · birleşik **+0.0082**. Hiçbiri +0.015'i geçmiyor ⇒ **TDA iyileştirmeleri ResNet ile yedekli.** |
 | 2026-10-16 | **SONUÇ** | 🔑 | **Ölçüt değişikliği:** v4, TDA-tek AUC yerine **d_fuzyon** ve **r(TDA, ResNet)** optimize eder. Aday tasarımı **tamamlayıcılık** eksenine kayar. |
+| 2026-10-16 | **V2.1 + V2.2** | **KILL** ⚠️🎯 | **Konum tabanlı filtrasyonlar (dikey `f+t·y`, yatay `f+t·x`, radyal `f+t·r`), t ∈ {0.5, 1.5}.** Val-only. TDA-tek **+0.0256 / +0.0273 / +0.0280** (hepsi kazandı) **AMA füzyon −0.0053 / −0.0022 / −0.0026** (hepsi kaybetti). **Ve kritik olan:** korelasyon **r = 0.293 → 0.392 / 0.415 / 0.393** ⇒ **konum filtrasyonları ResNet ile YEDEKLİLİĞİ ARTIRIYOR.** Kontrol (karıştırılmış): TDA-tek 0.7649, füzyon 0.9178, r=0.238. ⇒ *"Konum bilgisi ResNet'in avgpool'unda kaybolur"* hipotezim **ÇÜRÜDÜ**; ResNet konum bilgisini koruyor. 🎯 **v4'ün tezi nicel olarak doğrulandı:** d_tek ↑ ⇒ r ↑ ⇒ d_fuzyon ↓. |
+| 2026-10-16 | **V2.3** | ⏳ | Kaba/ince ölçek (ızgara 5-8 vs 20) — önbellekteki diyagramlarla ucuz test |
+| 2026-10-16 | **V2.4** | ⏳ | Hasta düzeyi global PH (birleşik akciğer maskesi üzerinde tek diyagram) |
+
+---
+
+## 7. 🔬 Kritik gözlem: neden hepsi yedekli çıkıyor?
+
+| Temsil | d_tek | d_fuzyon | r |
+| :--- | :---: | :---: | :---: |
+| (PI tabanı) | — | — | **0.293** |
+| E2.1 diphasic | +0.0210 | **−0.0019** | — |
+| E2.6 gradyan | +0.0480 | **+0.0072** | — |
+| V2.1 dikey | +0.0256 | **−0.0053** | 0.392 |
+| V2.1 yatay | +0.0273 | **−0.0022** | 0.415 |
+| V2.1 radyal | +0.0280 | **−0.0026** | 0.393 |
+
+**Desen:** TDA dalında başarımı artıran her müdahale, **ResNet'e benzerliği de artırıyor** ⇒ füzyon kazancı yok.
+
+**🔑 Yapısal çıkarım:** Görüntü dalımız (ResNet18) her zonu **BAĞIMSIZ** işleyip max-pool yapıyor. Dolayısıyla:
+* Tek-zon içi temsil iyileştirmeleri ⇒ **kaçınılmaz olarak yedekli** (ResNet de aynı zonu görüyor)
+* **Zonlar ARASI ilişki** kuran temsiller ⇒ görüntü dalının **yapısal olarak temsil EDEMEDİĞİ** bilgi
+
+⇒ **v4'ün gerçek fırsatı: İLİŞKİSEL temsiller** (zon-zon karşılaştırması, simetri/asimetri), tek-zon temsilini iyileştirmek değil.
