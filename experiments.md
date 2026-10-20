@@ -948,6 +948,28 @@ Eksik olduğu haklı olarak belirtilen **kaynak-içi AUC** hesaplandı; ancak ta
 
 * **Betik:** [`A3_source_confound_audit.py`](pipelines/exp/A3_source_confound_audit.py) · **Kayıt:** `artifacts/runs/A3_source_confound_audit/report.json`.
 
+### 7.1c Persistence Landscape Zarf Mekanizma Otopsisi — Maske Sınırı Artefaktı (A4)
+
+E4.4 raporunda Persistence Landscape'in (PL) çöküşü (test ROC-AUC 0,5450), *"akciğerdeki bronkovasküler damar döngülerinin λ1..λ5 üst zarflarını doyurması (ortalama tepe ~90–110, H1 kalıcılığı ~180–220)"* hipoteziyle açıklanmıştı. Ancak V5.1'de projenin baseline filtrasyonunun ~4-bit (doku pikselleri yalnızca 239–252 aralığında) olduğu bulunmuştu. GUDHI `cofaces_of_persistence_pairs` aracıyla 100 dengeli train zonu (50 pozitif, 50 negatif) üzerinde hücre-piksel geri izleme otopsisi yapıldı.
+
+| Metrik / Sınıf Tipi | H0 (Top-10) | H1 (Top-10) | Kalıcılık $\ge 50$ (H1) | Kalıcılık $\ge 100$ (H0) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Sınır geçişli (boundary crossing)** | **%98,6** (n=986) | **%59,9** (n=599) | **%100,0** (599/599) | **%100,0** (986/986) |
+| Saf doku içi (pure tissue) | %1,4 (n=14) | %40,1 (n=401) | **%0,0** (0/599) | **%0,0** (0/986) |
+| Sınır sınıfları ort. kalıcılık | **247,6** (max 250,0) | **248,3** (max 255,0) | — | — |
+| Saf doku içi ort. kalıcılık | 3,6 (max 7,0) | 4,2 (max 7,0) | — | — |
+
+**Etiket kırılımı (Sınır sınıfı oranı):**
+* H0 sınır oranı: Pozitif zonlar **%97,8** vs Negatif zonlar **%99,4**
+* H1 sınır oranı: Pozitif zonlar **%60,2** vs Negatif zonlar **%59,6**
+
+**Temel Bulgular:**
+1. **Doku içi dinamik aralık yalnızca ~12 seviyedir (240–252);** bu nedenle saf doku içinde kalıcılığı $\ge 15$ olan hiçbir topolojik özellik **fiziksel ve matematiksel olarak var olamaz** (saf doku içi max kalıcılık H0'da 7,0, H1'de 7,0; ortalama ~3,6–4,2).
+2. **PL üst zarfını doyuran devasa tepeler (%100) maske sınırıdır:** E4.4'te ölçülen ve tepe değeri $\sim 110$ ($\text{kalıcılık} \approx 220$) olan H1 döngülerinin ve H0 bileşenlerinin **%100'ü** akciğer segmentasyon maskesi sınırı ile siyah arka plan (0) arasındaki yapay basamaktan (0 vs 240+) kaynaklanır.
+3. **Mekanizmanın düzeltilmesi:** PL çöküşü biyolojik damar ağacından değil, **akciğer segmentasyon maskesinin geometrik basamak artefaktından** kaynaklanmaktadır. Bu artefakt hem pozitif hem negatif zonlarda özdeş oranda (%60) mevcuttur. Persistence Image (PI), $(b, p)$ 2B koordinat düzleminde bu artefaktı köşeye izole edip doku içi sinyali korurken, Persistence Landscape (PL) fonksiyonel üst zarf projeksiyonunda bu 250 kalıcılıklı dev artefakt tarafından tamamen körleştirilir.
+
+* **Betik:** [`A4_mask_boundary_audit.py`](pipelines/exp/A4_mask_boundary_audit.py) · **Kayıt:** `artifacts/runs/A4_mask_boundary_audit/report.json` · `boundary_audit_records.csv`.
+
 ---
 
 ## 8. Fiziksel Kanonikleştirme (V5.1)
