@@ -352,6 +352,7 @@ Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyord
 13. **Kırpıntı-başına normalizasyon kısmen pencere etkisi taşır** (§4.9, V5.1b): füzyon kazancının ~%60'ı (~+0,0078) topolojik değil histogram/pencere kaynaklıdır; bu yüzden füzyon için **muhafazakâr sayı 0,9778** (tüm-akciğer referansı) raporlanır.
 14. **VinDr few-shot kalibrasyonu N≥40 ister** (§4.8): N=10'da 1604-boyutlu LR aşırı uyuyor (0,628 < zero-shot 0,659). Hedef merkezde ~160 etiketli görüntü (80 poz/80 neg) ile AUC 0,724'e çıkar; bu, in-domain 0,9876'nın belirgin altındadır.
 15. **AUC–FROC ödünleşimi dış merkezde çözülemedi** (§4.8): görüntü etiketli kalibrasyon AUC'yi, bbox etiketli kalibrasyon FROC'u iyileştiriyor; çift-kafa ikisini aynı anda sağlayamıyor. FROC değerleri ayrıca aday-etiket proxy'sine (görüntü etiketi) duyarlıdır.
+16. **Kaynak/etiket confound'u yapısal (A3):** NODE21'de tüm pozitifler dört dış kaynaktan (chestxray14, padchest, jsrt, openi), tüm negatifler `node21_control` havuzundan gelir ⇒ **kaynak-içi AUC tanımsızdır**. Kaynak-pozitifleri vs ortak kontrol AUC'si dört kaynakta da **0,82–0,94** (makro **0,892**; TDA, ham CNN'in 0,664'ünü geçiyor) ⇒ etki tek kaynağa indirgenemez; ancak aynı kaynaktan kontrol olmadığı için confound **tamamen** dışlanamaz. Bu nedenle birincil genelleme kanıtı **kaynak-dışı (0,81)** ve **VinDr**'dir (0,63–0,66). Ayrıca kontrol ortalama skoru 0,555 ve özgüllük@0,5 = 0,358 ⇒ işletim noktası kaymıştır.
 
 ---
 

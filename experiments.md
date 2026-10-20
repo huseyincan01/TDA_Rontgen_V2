@@ -915,6 +915,39 @@ Alan kaymasının **kaynağını** VinDr'e dokunmadan ölçtük. NODE21'in kendi
 * **Betikler:** [`V4_external_validation_vindr.py`](pipelines/exp/V4_external_validation_vindr.py) · [`V4_build_vindr_cohort.py`](pipelines/exp/V4_build_vindr_cohort.py) · [`V4_build_ref_histograms.py`](pipelines/exp/V4_build_ref_histograms.py) · sözleşme: [`configs/experiments/V4_vindr_external_validation.yaml`](configs/experiments/V4_vindr_external_validation.yaml).
 * **Karar:** **EXTERNAL 🌐** — harici veride TDA taşınmıyor; v3 ana iddiası (kurum içi füzyon 0,9516) **geçerlidir** ama **kapsamı kurum içi ile sınırlıdır**.
 
+### 7.1b Kaynak-içi AUC denetimi — etiket ile kaynak tamamen iç içe (A3)
+
+Eksik olduğu haklı olarak belirtilen **kaynak-içi AUC** hesaplandı; ancak tanımsız olduğu görüldü: NODE21 test setinde **tüm pozitifler dört dış kaynaktan, tüm negatifler tek bir kontrol havuzundan** gelir.
+
+| Kaynak | n | pozitif | negatif |
+| :--- | ---: | ---: | ---: |
+| chestxray14 | 89 | 89 | 0 |
+| padchest | 58 | 58 | 0 |
+| jsrt | 19 | 19 | 0 |
+| openi | 6 | 6 | 0 |
+| node21_control | 562 | 0 | 562 |
+
+⇒ Her kaynak **tek sınıflı**; klasik kaynak-içi AUC **tanımsızdır**. Yerine geçen metrik: **kaynak pozitifleri vs ortak kontrol havuzu** AUC'si + kaynakların ağırlıksız ortalaması (makro AUC).
+
+| Model | Genel AUC | Makro AUC | Fark |
+| :--- | ---: | ---: | ---: |
+| **TDA PI CNN (başlık tek model)** | 0,8631 | **0,8920** | −0,0289 |
+| TDA PI RBF-SVM | 0,8289 | 0,8672 | −0,0383 |
+| TDA PI k-NN | 0,7162 | 0,7017 | +0,0145 |
+| Ham görüntü CNN | 0,7043 | 0,6638 | +0,0405 |
+| PL CNN | 0,5451 | 0,5433 | +0,0018 |
+| PL SVM | 0,5216 | 0,5051 | +0,0165 |
+
+**Kaynak bazında (TDA PI CNN):** chestxray14 **0,816** [0,768; 0,862] · padchest **0,905** [0,872; 0,936] · jsrt **0,943** [0,914; 0,968] · openi **0,904** [0,859; 0,949] · kontrol ort. p = **0,555**, özgüllük@0,5 = **0,358**.
+
+**Okuma:**
+1. Model **dört kaynağın dördünde de** ayrım yapıyor (0,82–0,94) ⇒ etki tek bir kaynağın artefaktı değil. Makro AUC genel AUC'den **yüksek**; en zor kaynak en büyük olan chestxray14.
+2. TDA (makro **0,892**) ham CNN'i (makro **0,664**) belirgin geçiyor ⇒ TDA kazancı yalnızca kaynak kimliği değil.
+3. ⚠️ **Confound yapısal olarak sürüyor:** kontrollerin tamamı `node21_control`'den; edinim kaynağı ile etiket ayrıştırılamıyor. Kaynak-başına AUC bunu *çürütemez*, yalnızca "tek kaynak etkisi değil" der. Gerçek sınav, **kontrollerin de aynı kaynaktan geldiği** bir tasarımdır — NODE21'de yok. Bu yüzden birincil genelleme kanıtı **E5.3b (0,81)** ve **VinDr (0,63–0,66)** olarak kalır.
+4. **Kalibrasyon uyarısı:** kontrol ortalama p = 0,555 ve özgüllük@0,5 = 0,358 ⇒ AUC iyi olsa da **işletim noktası kaymış**; eşik transportu ayrıca kalibre edilmelidir.
+
+* **Betik:** [`A3_source_confound_audit.py`](pipelines/exp/A3_source_confound_audit.py) · **Kayıt:** `artifacts/runs/A3_source_confound_audit/report.json`.
+
 ---
 
 ## 8. Fiziksel Kanonikleştirme (V5.1)
