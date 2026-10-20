@@ -531,7 +531,8 @@ NODE21'in **kendi içindeki 4 kaynağı** (chestxray14 0,143 mm/px · padchest 0
 | 2 | few-shot N=10 | 0,6280 < 0,6593 | KILL (aşırı uyum) |
 | 2b | kompakt özellik (PCA-128) + görüntü etiketi | N=160: 0,6796 (V6.5: 0,7243) | KILL (boyut sorun değil) |
 | 2c | bbox-türevli aday etiketi | N=160: AUC 0,6273 · **FROC@2 0,184** (V6.5: 0,162) | FROC için KEEP, AUC için KILL |
+| 2d | Çift-kafa (sabit hasta kapısı + 1:5 kutu sıralayıcı + NODE21 çapası) | AUC **0,7249 sabit** · FROC@2 0,221 (N=10) → **0,059** (N=160) | **KILL (FROC monoton çöküyor)** |
 
-**AUC–FROC ödünleşimi:** görüntü etiketi görüntü sıralamasını (AUC), bbox etiketi lezyon sıralamasını (FROC) optimize ediyor; ikisi aynı anda iyileşmiyor.
+**AUC–FROC ödünleşimi:** görüntü etiketi görüntü sıralamasını (AUC), bbox etiketi lezyon sıralamasını (FROC) optimize ediyor; ikisi aynı anda iyileşmiyor. Çift-kafa (V6.5c) bu ödünleşimi **kaldıramadı**: sabit hasta kapısı AUC'yi 0,7249'da tutuyor ama kutu sıralayıcı α ile FROC'u monoton bozuyor (0,221 → 0,059) ⇒ kutu-içi TDA sıralaması VinDr'ye taşınmıyor.
 
 **Özet:** Eğitimsiz fiziksel hizalama **+0,018**, 160 etiketli hedef görüntüyle few-shot kalibrasyon **+0,065** kazandırıyor; ikisi de VinDr'yi 0,66–0,72 bandına taşıyor ama in-domain 0,9876'nın altında. N≥80'de lokal model kalibre edilince V5.3 global kanalı gereksizleşiyor. Domain farkı **kapatılamıyor, yönetilebiliyor**.

@@ -1154,3 +1154,18 @@ Temsil: aday merkezli **32×32 (çekirdek) + 64×64 (çevre)** H0/H1 PI (1600 bo
 
 ⇒ **İki zayıflık da beklenen yönde kapanmadı, ama nedeni netleşti:** (i) PCA-128 boyut indirgemesi N=10 çökmesini **düzeltmiyor** (0,6305 ≈ V6.5'in 0,6280'i) ⇒ sorun boyut değil, **10 görüntüdeki ~500 adayın azlığı**. (ii) bbox etiketleri **FROC'u iyileştiriyor** (N=160: 0,184 vs 0,162) ama **görüntü AUC'sini düşürüyor** (0,627 vs 0,724) ⇒ gerçek bir **AUC–FROC ödünleşimi**: görüntü etiketi görüntü sıralamasını, bbox etiketi lezyon sıralamasını optimize ediyor. Bu yüzden V6.5'in görüntü-etiketli eğrisi **AUC için**, V6.5b'nin bbox'lı eğrisi **FROC için** raporlanmalı.
 * **Kayıt:** `artifacts/v6_two_stage/v6_5b_fewshot_compact.json`.
+
+**V6.5c — Ayrıştırılmış çift-kafa + NODE21 öncül çapası.** Kafa-1 (hasta kapısı) V6.5'in görüntü-etiketli kalibrasyonu olarak **sabitlendi** (tam hedef eğitim seti; AUC 0,7249). Kafa-2 yalnız pozitif görüntülerde gerçek kutu vs en yüksek skorlu 5 sahte kutu (1:5) üzerinde PCA-128 LR; `P_box = (1−α_N)·P_zero-shot + α_N·P_bbox`, `α_N = N/(N+40)`; nihai `S = P_patient^γ·P_box` (γ=1).
+
+| N | P_patient (sabit) | FROC@1 | FROC@2 | FROC@4 |
+| ---: | :---: | :---: | :---: | :---: |
+| 0 | 0,6593 ± 0,044 | 0,167 | 0,212 | 0,240 |
+| 10 | 0,7249 ± 0,041 | 0,164 | **0,221** | 0,255 |
+| 20 | 0,7249 ± 0,041 | 0,152 | 0,211 | 0,260 |
+| 40 | 0,7249 ± 0,041 | 0,118 | 0,173 | 0,235 |
+| 80 | 0,7249 ± 0,041 | 0,058 | 0,096 | 0,132 |
+| 160 | 0,7249 ± 0,041 | 0,029 | 0,059 | 0,071 |
+
+⇒ **Kriter biçimsel olarak N=10'da sağlanıyor (AUC 0,7249 ≥ 0,724; FROC@2 0,2208 ≥ 0,22) ama mekanizma çalışmıyor:** kazanç yalnız **+0,009** ve N arttıkça FROC **monoton çöküyor** (0,221 → 0,059). α büyüdükçe hedef kutu sıralayıcısı sıfır-eğitim öncülünü **bozuyor**. Teşhis: VinDr'de kutu-içi TDA sıralaması taşınmıyor (V6.3'ün "lokalizasyon taşınıyor, güven taşınmıyor" bulgusunun aday düzeyindeki karşılığı); 1:5 hard-negative kurgusu bunu düzeltmiyor. **Karar: KILL** — AUC–FROC ödünleşimi kaldırılmadı, yalnızca FROC eksenine taşındı.
+* **Metodolojik not:** Kafa-1 sabit olduğu için N yalnız Kafa-2'yi kontrol eder; N≥10'daki 0,7249 **sabit hedef-modelin** AUC'sidir, N=10'un kalibrasyon başarısı değildir. FROC@2'nin N ile düşmesi bu yüzden doğrudan Kafa-2'nin kalitesini ölçer.
+* **Kayıt:** `artifacts/v6_two_stage/v6_5c_decoupled_calibration.json`.
