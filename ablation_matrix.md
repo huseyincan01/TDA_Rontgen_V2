@@ -437,8 +437,9 @@ NODE21'in **kendi içindeki 4 kaynağı** (chestxray14 0,143 mm/px · padchest 0
 
 ## 11. Figür Planı (makale için) — ✅ **ÜRETİLDİ**
 
-> **Figürler:** `artifacts/figures/F1..F9_*.png` (200 dpi) **üretilmiştir**; **F9 (harici doğrulama)** V4 kayıtlarından üretilir: `pipelines/figures/make_figure_f9_external.py`.
-> Üreten betik: [pipelines/figures/make_figures.py](pipelines/figures/make_figures.py) — sayılar doğrulanmış raporlardan alınır; **F3 gerçek val olasılıklarını yeniden hesaplar**. Yeniden üretmek için: `python pipelines/figures/make_figures.py`
+> **Figürler:** `artifacts/figures/F1..F10_*.png` + `F10b_external_components.png` (200 dpi) **üretilmiştir**.
+> Üreten betikler: [make_figures.py](pipelines/figures/make_figures.py) (F1–F8) · [make_figure_f9_explainability.py](pipelines/figures/make_figure_f9_explainability.py) (F9) · [make_figure_f10_froc_ladder.py](pipelines/figures/make_figure_f10_froc_ladder.py) (F10) · [make_figure_f10b_external_components.py](pipelines/figures/make_figure_f10b_external_components.py) (F10B, ek).
+> Sayılar doğrulanmış raporlardan alınır; **F3 gerçek val olasılıklarını yeniden hesaplar**.
 > 🔎 **F3 bağımsız doğrulama:** betik korelasyonu **r = 0.2802** hesapladı — kayıtlı val değeri (0.3034) ile tutarlı, temsil tamamlayıcılığını bağımsız olarak teyit ediyor.
 
 | # | Figür | İçerik | Kaynak |
@@ -451,7 +452,9 @@ NODE21'in **kendi içindeki 4 kaynağı** (chestxray14 0,143 mm/px · padchest 0
 | **F6** | **Sağlamlık panelleri** | σ, ızgara, ağırlık, eşik, seed varyansı | E2.7/E2.8/E4.1/E4.6 |
 | **F7** | **Kaynak-dışı genelleme** | 3 kaynak için füzyon AUC + rastgele split referansı | E5.3 |
 | **F8** | **Sınırlama paneli** | Zon düzeyi AUC ≈ 0.5 (lokalizasyon yok) + oracle-yama AUC 0.687 | E4.7/E3.6 |
-| **F9** | **Harici doğrulama (VinDr-CXR)** | (A) kol başına TDA/ResNet/Füzyon AUC + %95 CI · (B) füzyon a-eğrisi (optimum a = 1,00) | V4 (§7.2) — ✅ **üretildi** |
+| **F9** | **Görsel açıklanabilirlik** | (A) 5-zon kanonik görüntü + GT kutusu + adaylar · (B) TP/FP 64×64 kırpıntıları · (C) TP kalıcılık diyagramı (H0/H1) · (D) skor ayrışımı (aşama-1 → TDA-HGB → birleşik) | V6.1/V6.2 — ✅ **üretildi** |
+| **F10** | **FROC + VinDr merdiveni** | (A) NODE21 val FROC + test mührü · (B) VinDr transfer merdiveni (V4→V6.5) · (C) FROC@2 vs N (AUC–FROC ödünleşimi) | V6.4/V6.5/V6.5b/V6.5c — ✅ **üretildi** |
+| **F10B** | *Ek:* Harici bileşenler | Kol başına TDA/ResNet/Füzyon AUC + CI · füzyon a-eğrisi (optimum a = 1,00) | V4 (§7.2) — ✅ **üretildi** |
 
 ---
 

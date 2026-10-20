@@ -1,4 +1,4 @@
-"""F9 — Harici doğrulama (VinDr-CXR) figürü.
+"""F10B — Harici doğrulama bileşenleri (VinDr-CXR, ek malzeme).
 
 Kaynak: `data/external_vindr/vindr_report_{linear,matched,matched_scalenorm}.json`
         + `vindr_summary_report.json`  (V4 koşusu, sıfır eğitim)
@@ -8,7 +8,7 @@ Paneller:
     (B) Füzyon a-taraması (VinDr'de optimal a = 1,00 ⇒ TDA katkısı ~0)
 
 Kullanım:
-    python pipelines/figures/make_figure_f9_external.py
+    python pipelines/figures/make_figure_f10b_external_components.py
 """
 
 from __future__ import annotations
@@ -102,9 +102,9 @@ def main() -> None:
     ax2.set_title("B) Füzyon ağırlığı taraması — dış veride TDA katkısı yok", fontsize=11)
     ax2.legend(fontsize=8.5, loc="upper left")
 
-    fig.suptitle("F9 — Harici doğrulama: alan kayması altında TDA taşınmıyor",
+    fig.suptitle("F10B — Harici doğrulama bileşenleri: alan kayması altında TDA taşınmıyor (ek)",
                  fontsize=12.5, weight="bold", y=1.02)
-    p = OUT / "F9_external_validation.png"
+    p = OUT / "F10b_external_components.png"
     fig.savefig(p)
     plt.close(fig)
     print(f"  yazıldı: {p.relative_to(PROJECT_ROOT)}")
