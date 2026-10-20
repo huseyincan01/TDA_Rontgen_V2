@@ -74,6 +74,11 @@ data/processed/*
 !data/processed/.gitkeep
 !data/processed/**/.gitkeep
 
+# Harici doğrulama (VinDr-CXR): 400 JPEG (~80 MB) takip EDİLMEZ.
+# Kohort CSV'leri, raporlar ve yeniden üretim betikleri takip edilir.
+data/external_vindr/images/
+data/external_vindr/*.log
+
 # Artifacts & model checkpoints (yalnızca .gitkeep dosyaları takip edilir)
 artifacts/*
 !artifacts/models/
@@ -92,3 +97,7 @@ artifacts/thresholds/*
 # Makale figürleri: küçük (~1 MB) ve yayın teslim edilebiliri → TAKİP EDİLİR
 !artifacts/figures/
 !artifacts/figures/*.png
+
+# V6 raporları (hafif JSON, ~40 KB) → TAKİP EDİLİR; checkpoint'ler (~11 MB) edilmez
+!artifacts/v6_two_stage/
+artifacts/v6_two_stage/checkpoints/
