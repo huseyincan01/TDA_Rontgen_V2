@@ -17,7 +17,7 @@ NODE21 verilerini hasta bazında hazırlama, 5 anatomik bölgeden TDA (Topologic
 | Dal / etiket | Anlamı |
 | :--- | :--- |
 | `main` | **v3 — kapandı, yayına hazır.** Güncel gerçek kaynak. Etiket: `v3-publication-ready` (yalnızca belge düzeltmeleri sonradan eklendi) |
-| `exp/v4-directional-radial` | **v4 — aktif.** Yalnızca [v4_roadmap.md](v4_roadmap.md) ve `pipelines/exp/V*.py` ekler; v3 belgelerine dokunmaz. Şu ana dek tüm adaylar KILL |
+| `exp/v4-directional-radial` | **v4 — aktif.** [v4_roadmap.md](v4_roadmap.md) ve `pipelines/exp/V*.py` ekler; v3 belgelerine **tek istisna dışında** dokunmaz: harici doğrulama (V4, VinDr-CXR) v3'ün "kurum dışı transfer" iddiasını doğrudan sınadığı için `experiments.md §7`, `paper_draft.md §4.8` ve `roadmap.md` karar günlüğüne de yazılır. Tüm v4 *temsil* adayları KILL |
 | `exp/*` | Deneysel programlar; kendi roadmap belgeleri vardır |
 
 **Okuma sırası:** [progress.md](progress.md) (mimari, v1→v3 özeti) → [roadmap.md](roadmap.md) (protokol kuralları 1–10, karar günlüğü, §13 kapanış) → [ablation_matrix.md](ablation_matrix.md) (nihai sayılar) → [experiments.md](experiments.md) (deney ayrıntıları).

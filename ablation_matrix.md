@@ -255,6 +255,117 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 
 ---
 
+## 7.2 Gerçek Harici Veri — VinDr-CXR (V4)
+
+**V4** · [betik](pipelines/exp/V4_external_validation_vindr.py) · **VinDr'de sıfır eğitim** · ayrıntı: [experiments.md §7](experiments.md)
+
+NODE21'in dışından, farklı bir ülke ve cihaz dağılımından gelen **VinDr-CXR** üzerinde (400 **görüntü**: 150 nodül/kitle + 250 saf normal, seed 42; VinDr'de hasta kimliği yok ⇒ **görüntü düzeyi**):
+
+| Kol | TDA ensemble | ResNet18 | Füzyon (**a = 0,45** kilitli) | Δ(füzyon−ResNet) |
+| :--- | :---: | :---: | :---: | :---: |
+| `linear` | 0,5274 [0,4699; 0,5836] | 0,6204 [0,5609; 0,6763] | 0,5328 | **−0,0876** [−0,1262; −0,0491] |
+| `matched` (200-hasta havuzu, yalnızca dokuya) | **0,5409** [0,4852; 0,5973] | 0,6204 | 0,5438 | **−0,0765** [−0,1133; −0,0393] |
+| `matched_scalenorm` (+ akciğer-yüksekliği ölçeği) | 0,5110 [0,4522; 0,5688] | 0,6204 | 0,5352 | **−0,0852** [−0,1302; −0,0403] |
+
+* 🔑 **TDA dış dünyaya taşınmıyor:** 0,511–0,541 ≈ şans. ResNet18 kısmen taşınıyor (**0,6204**).
+* 🔑 **Harici veride optimal füzyon ağırlığı a = 1,00** ⇒ dış eksende **TDA katkısı ~sıfır**; kilitli ağırlık füzyonu ResNet'in altına çekiyor.
+* 🔑 **Ölçek normalizasyonu kurtarmıyor** (0,5110 ≤ 0,5409) ⇒ çöküş yoğunluk/ölçek değil, **doku/dedektör** domain-shift'i.
+* Nodül boyutu alt grupları **ölçek-bağımsız** `rel_size` üçte birlikleriyle (mm dönüşümü imkânsız: 3× indirgenmiş JPEG, spacing yok).
+* Donanım teşhisi: **yalnızca meta-veri** val AUC **0,6850** (kısmi kısayol) · eşit-boyut kaynak-dışı TDA **0,7631** ⇒ sinyal tamamen sahte değil.
+* ⚠️ **ResNet ağırlıkları:** E0.6 ağırlıkları kaydedilmemişti; model deterministik olarak yeniden eğitilir (val zon AUC Δ=3,8·10⁻⁴) ve **VinDr'de eğitim yapılmaz**.
+
+> **Okunuşu:** v3'ün **0,9516**'lık kurum-içi sonucu geçerlidir; ancak **kapsamı kurum içidir**. Dış merkeze taşıma, kalibrasyon/adaptasyon gerektirir.
+>
+> ✅ **V5.3 güncellemesi (düzeltilmiş TDA):** Aynı VinDr kohortu, **65535 niceleme düzeltmesi** uygulanmış TDA ile tekrarlandı. Füzyon (a=0,45) **0,5438 → 0,6283** (**Δ +0,0844, %95 GA [+0,0464; +0,1219], p<0,001**); TDA tek başına **0,5409 → 0,5959** (p=0,053); VinDr'de optimal ağırlık **1,00 → 0,75**; r **0,4009 → 0,2997**. ⇒ Tablodaki "TDA şans düzeyinde" ifadesi **eski ~4-bit temsil** için geçerlidir; temizlenmiş temsilde TDA **şansın üzerinde** ve dış veride füzyona anlamlı katkı sağlar. ⚠️ Mutlak harici AUC yine mütevazı (≈0,63) ve füzyonun ResNet'e göre artı kazancı hâlâ **gürültü mertebesinde** (bkz. §7.4).
+
+---
+
+## 7.3 Cihaz/Kaynak Ayrıştırılabilirliği — Temsillerimiz Fizik mi Kodluyor? (A2)
+
+**A2** · [betik](pipelines/exp/A2_source_predictability.py) · rapor: [a2_source_predictability_report.json](data/external_vindr/a2_source_predictability_report.json)
+
+NODE21'in **kendi içindeki 4 kaynağı** (chestxray14 0,143 mm/px · padchest 0,275 · jsrt 0,309 · openi 0,331) birer "cihaz/kurum" değişkeni olarak kullanıldı. Etiket sızıntısını kırmak için test **yalnızca nodül-pozitif hastalarda** yapıldı (burada kaynak, etiketten bağımsızdır). Hasta düzeyi, train→val, **test hastaları kullanılmadı** (790 train / 172 val).
+
+| Temsil | Çok-sınıflı LR makro AUC | HGB makro AUC | Doğruluk (çoğunluk referansı %54,1) |
+| :--- | :---: | :---: | :---: |
+| **TDA PI (800)** | **0,8501** | 0,9110 | %70,4 (HGB: %80,2) |
+| **ResNet18 özellikleri (512)** | **0,9494** | 0,9434 | **%89,5** |
+| Yalnızca meta-veri (spacing + boyut) | **0,9558** | — | %80,2 |
+
+**Okunuşu:**
+* Temsiller, **hangi cihazdan geldiğini** neredeyse **hastalığı tanıdığı kadar** iyi kodluyor (TDA label AUC ~0,87 ↔ kaynak AUC 0,85; ResNet label ~0,93 ↔ kaynak 0,95). Bu, literatürdeki klasik **kısayol/confound** imzasıdır.
+* ⚠️ **Görüntü dalı (ResNet) en çok cihaz-kimlikli olan dal** (%89,5) — yani dışa en iyi taşınan dal (VinDr 0,62) aynı zamanda en çok fiziksel imza taşıyan dal.
+* "Yalnızca spacing+boyut" bile kaynağı 0,956 ile ayırıyor; A0/A1'in 0,6850'lık etiket kısayolu bunun **etiketle ilişkili** olduğunu gösteriyor.
+* ⚠️ **Confound uyarısı:** kaynaklar nodül boyutu/dağılımı ve dijitalleştirme zinciri bakımından da farklıdır; ayrıştırılabilirliğin bir kısmı fizik değil anatomi/hastalık spektrumudur. Bu yüzden **hedef metrik**, label AUC'sini korurken bu kaynak AUC'sini **düşürmektir**.
+
+> 🎯 **Bu, alan kaymasına karşı mimari programın çıpasıdır:** her yeni temsilde (a) label AUC **ve** (b) kaynak-ayrıştırılabilirlik AUC'si **birlikte** raporlanmalı; kaynak AUC'si düşerken label AUC'si korunmalıdır.
+>
+> ⚠️ **V5.1 sonrası güncelleme:** Bu kapı **çürütülmüştür** — yoğunluk kanonikleştirmesi label AUC'yi **+0,088**, LOO'yu **+0,061** artırırken kaynak AUC'yi de **+0,105** artırdı. ⇒ Kaynak AUC **tanısal** kalmalı, **karar kapısı** olmamalı (bkz. §7.4).
+
+---
+
+## 7.4 Fiziksel Kanonikleştirme (V5.1) — 5-zon mimarisi korunarak
+
+**V5.1** · [betik](pipelines/exp/V5_1_physical_canonicalization.py) · ön-kayıt: [`configs/experiments/V5_1_physical_canonicalization.yaml`](configs/experiments/V5_1_physical_canonicalization.yaml) · ayrıntı: [experiments.md §8](experiments.md)
+
+| Kol | val label AUC | A2 kaynak AUC | LOO (E5.3b) |
+| :--- | :---: | :---: | :---: |
+| `baseline` (v2, sabit yoğunluk) | 0,8330 | 0,8501 | 0,7249 |
+| **`a_density`** (doku p1–p99) | **0,9211** (+0,0881) | 0,9554 (+0,1053) | **0,7861** (+0,0611) |
+| `a_density` + TTA | 0,9003 | 0,9622 | **0,7967** |
+| `b_density_scale` (+akciğer-yüksekliği ölçeği) | 0,8539 | 0,9138 | 0,7400 |
+| `b_density_scale` + TTA | 0,8762 | 0,9235 | 0,7305 |
+
+* 🔑 **Temsil fiilen ~4-bit'ti:** `intensity_max=65535` 12-bit veri için 16× fazla ⇒ yoğunluk ~16 seviyeye kuantalanıyordu. Kanonikleştirme sonrası H1 nokta sayısı 610k → **1,63M**, H1 kalıcılık aralığı 0–7 → **0–97**, PI doluluğu %38 → **%81**. ⇒ v1'in "grid collapse" hatası **tam kapanmamıştı**.
+* ✅ **Programın en büyük val kazancı:** +0,0881 val, +0,0611 LOO (v3'ün E2.6 +0,0480'ından büyük). Test bütçesi kapalı ⇒ val/LOO düzeyinde.
+* ❌ **Ölçek normalizasyonu (b) zarar veriyor** (val −0,067 · LOO −0,046); kat bazında chestxray14 +0,027 ama jsrt −0,141 ⇒ topoloji **yeniden örneklemeye aşırı duyarlı**.
+* ⚠️ **TTA tutarlı değil:** (a)'da val −0,021 / LOO +0,011; (b)'de ters işaret.
+* ⚠️ **Açık kontrol:** per-kırpıntı yüzdeler "uyarlanabilir pencere" etkisi taşıyor olabilir ⇒ **sabit referans** kontrolü (V5.1b) + **CNN ensemble** teyidi gerekir.
+* **Karar:** **KEEP** ✅ (sahip kararı, 2026-10-17). Ön-kayıtlı kuralın "kaynak AUC düşmeli" koşulu sağlanmadı ve kural-temelli sonuç `KILL` olarak **kayıtta duruyor**; ancak kaynak AUC artışı **başarısızlık değil**: 4-bit'e sıkışmış bulanık temsili **8-bit'e (256 seviye)** çıkardığımız için bilgi miktarı arttı — cihaza özgü doku ve hastalık sinyali **birlikte** güçlendi. Asıl hedefler (val **+0,0881**, LOO **+0,0611**; +TTA ile LOO **+0,0718**) büyük ölçüde arttı ⇒ 65535 niceleme hatasının düzeltilmesi **KEEP**. Kayıt: `owner_override` bloğu (`v5_1_physical_canonicalization_report.json`). Kapı değişikliği (kaynak AUC **tanısal**, LOO birincil + val guardrail) ayrıca ön-kayıt edilecek.
+
+### V5.2 — Düzeltilmiş TDA gerçek modelde (val-only, 734 hasta)
+
+**V5.2** · [betik](pipelines/exp/V5_2_corrected_tda_ensemble_fusion.py) · test bütçesi 6/6 kapalı ⇒ **validation**.
+
+| Dal | v2 dondurulmuş | **Düzeltilmiş** | Δ |
+| :--- | :---: | :---: | :---: |
+| TDA CNN (tek) | 0,8580 | 0,9156 | +0,0576 |
+| TDA SVM (tek) | 0,8278 | 0,9369 | +0,1092 |
+| **TDA ensemble** | 0,8811 | **0,9522** | **+0,0711** |
+| ResNet18 (E0.6) | 0,9547 | 0,9547 | 0 |
+| **FÜZYON (en iyi a)** | 0,9729 (a=0,40) | **0,9856** (**a=0,25**) | **+0,0127** |
+
+* 🔑 Füzyon ağırlığı **0,40 → 0,25** (TDA payı 0,60 → **0,75**): düzeltilmiş TDA artık ResNet'e denk ve füzyona gerçek katkı veriyor ⇒ v4'ün "yedeklilik" bulgusu **bozuk temsilin artefaktıymış**.
+* ⚠️ v4'ün sıkı füzyon kapısıyla (≥ +0,015) sınırda (KILL); V5.2'nin kendi kuralı KEEP.
+
+### V5.3 — Düzeltilmiş TDA harici veride (VinDr-CXR, sıfır eğitim)
+
+| | V4 (eski ~4-bit) | **V5.3 (düzeltilmiş)** | Δ (eşleştirilmiş bootstrap, n=400) |
+| :--- | :---: | :---: | :---: |
+| TDA ensemble | 0,5409 | **0,5959** [0,5475; 0,6450] | +0,0550, p=0,053 |
+| ResNet18 (E0.6) | 0,6204 | 0,6204 | 0 |
+| **Füzyon (a=0,45)** | 0,5438 | **0,6283** | **+0,0844 [+0,0464; +0,1219], p<0,001** ✅ |
+| VinDr optimal a | 1,00 | **0,75** (0,6317) | — |
+
+* ✅ **Harici çöküş büyük ölçüde temsil artefaktıymış** — füzyon iyileşmesi istatistiksel olarak anlamlı (CI sıfırı dışlıyor).
+* 🟡 TDA hâlâ ResNet'in altında (0,5959 vs 0,6204) ve füzyonun ResNet'e göre artı kazancı (+0,008…+0,011) gürültü mertebesinde ⇒ dış merkez için kalibrasyon/adaptasyon şart.
+* 🟢 **Küçük nodüllerde TDA ResNet'i geçiyor** (0,5951 vs 0,5823) — eski temsilde bu grupta 0,50'ye çöküyordu.
+
+### V5.1b — Pencere (uyarlanabilir referans) kontrolü
+
+| Ölçüt | per-kırpıntı (a_density) | **tüm-akciğer (c_lungref)** | Δ |
+| :--- | :---: | :---: | :---: |
+| val label AUC | 0,9211 | 0,9133 | −0,0078 |
+| **LOO** | 0,7861 | **0,7897** | +0,0036 |
+| TDA ensemble | 0,9522 | 0,9335 | −0,0187 |
+| **FÜZYON** | 0,9856 | **0,9778** | −0,0078 |
+
+* ⚠️ **Kısmi pencere etkisi var (~+0,0078):** füzyon kazancının ~%60'ı kırpıntı-başına histogram penceresinden geliyor (topolojik değil, histogram kaynaklı).
+* ✅ **Ama nicelleme düzeltmesi baskın:** çiftleşmesiz varyantta bile TDA ensemble 0,8811 → **0,9335** (+0,0524 = kazancın %74'ü) ve **LOO daha iyi** (0,7897).
+* ⇒ **KEEP korunur**; makalede füzyon için **muhafazakâr sayı 0,9778** (0,9856 pencere katkısını içerir).
+
+---
+
 ## 8. İstatistiksel Kanıt Özeti (N=2.000 bootstrap)
 
 | Karşılaştırma | Fark | %95 CI | p | Deney |
@@ -275,12 +386,12 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | # | İddia | Literatür durumu | Kanıt |
 | :-: | :--- | :--- | :--- |
 | 1 | **PL üst-zarf çökmesinin nicel gösterimi** | **Bulunamadı** (Vandaele 2020 "ilgisiz nesne" problemini tanıyor ama PL zarfı için test etmiyor) | E4.4 ✅ |
-| 2 | **TDA + görüntü tamamlayıcılığı (r≈0.30) ve füzyon kazancı** | TDA-Net ~+0.05 (CXR/COVID); bizimki **+0.0862** (donmuş) ve **+0.0232** (**ince ayarlı** baseline karşısında) | E3.1 ✅ · **E0.6 ✅** |
+| 2 | **TDA + görüntü tamamlayıcılığı (r≈0.30) ve füzyon kazancı** ⚠️ **kurum içi** | TDA-Net ~+0.05 (CXR/COVID); bizimki **+0.0862** (donmuş) ve **+0.0232** (**ince ayarlı** baseline karşısında). **Ancak harici veride (VinDr, §7.2) tamamlayıcılık kaybolur: TDA ≈ şans, optimal a = 1,00** | E3.1 ✅ · **E0.6 ✅** · **V4 ⚠️** |
 | 3 | **CXR'de H1'in bronkovasküler döngü + kaburga ile domine edilmesi** | Spesifik formülasyon yok | E4.2/E4.4 |
 | 4 | ~~5 anatomik zon + zon başına PH + hasta düzeyi max-pooling~~ | Bulunamadı — ancak **E4.7 + E3.5 ile ÇÜRÜTÜLDÜ** | ⛔ **İDDİA KALDIRILDI**: model lokalize etmiyor (zon AUC 0.48–0.53) ve havuzlanmış tek model eşdeğer (−0.0076) |
 | 5 | **NODE21'de kalıcı homoloji** | Bulunamadı | v2.1 + E0.2 |
 
-**Yenilik iddia EDİLMEMESİ gerekenler:** "ilgisiz yapılar diyagramı domine eder → ROI kısıtlaması" (Vandaele 2020/2022) · "PI vs PL veri setine bağlı" (Barnes 2021, Sulowska 2026) · "topoloji ≈ CNN, füzyon artırır" (TDA-Net).
+**Yenilik iddia EDİLMEMESİ gerekenler:** "ilgisiz yapılar diyagramı domine eder → ROI kısıtlaması" (Vandaele 2020/2022) · "PI vs PL veri setine bağlı" (Barnes 2021, Sulowska 2026) · "topoloji ≈ CNN, füzyon artırır" (TDA-Net) · **"TDA tamamlayıcılığı kaynak-bağımsızdır"** (V4: VinDr'de kayboluyor).
 
 ---
 
@@ -291,6 +402,7 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | :--- | :--- |
 | **E5.1** — bu belgenin finalize edilmesi | ✅ **TAMAM** (2026-10-15, bu sürüm) |
 | **E5.3** — harici/kaynak-dışı genelleme | ✅ **TAMAM** (leave-one-source-out, ortalama 0.8468) |
+| **V4** — *gerçek* harici veri (VinDr-CXR) ile dış doğrulama | ✅ **TAMAM** (§7.2; TDA şans düzeyinde, füzyon dışarıda geriye gidiyor) |
 | **Kural 10** — çok-seed ortalama | ✅ **TAMAM** (E3.7: 0.9190 ± 0.0056) |
 | **Hakem itirazı #1** — zayıf baseline | ✅ **ÇÜRÜTÜLDÜ** (E0.6: +0.0232, CI>0) |
 | **Test bütçesi** | 🚫 **6/6 TÜKENDİ** — dondurulmuş test seti **kapalı** |
@@ -306,7 +418,7 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | 4 | **E3.2** — orta seviye füzyon (özellik birleştirme) | Planlandı |
 | 5 | **E2.1/E2.2/E2.3** — çift yön, çok ölçek, şablon filtrasyonu (Faz 3) | Planlandı (beklenti düşük) |
 | 6 | **E3.3** — aday-bazlı mimari | ⛔ **İPTAL** (E3.6: tavan ~0.69) |
-| 7 | **E5.3+** — *gerçek* harici veri (JSRT/ChestX-ray14) ile dış doğrulama | Kaynak erişimi gerekir |
+| 7 | ~~**E5.3+** — *gerçek* harici veri (JSRT/ChestX-ray14) ile dış doğrulama~~ | ✅ **TAMAM (V4)** — VinDr-CXR ile yapıldı; §7.2. Kalan: harici **adaptasyon/fine-tune** denemesi (görüntü ve TDA dalları için) |
 
 ### 10.3 Doğrulanmış sınırlamalar (makalede açıkça yazılmalı)
 1. **Lokalizasyon yok** (E4.7) — hasta düzeyi sınıflandırma; kutu üretimi değil.
@@ -314,14 +426,18 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 3. **Zon ayrıştırması uzmanlaşma sağlamıyor** (E3.5) — yalnızca topluluk çeşitliliği.
 4. **TDA tek başına ince ayarlı modeli geçemiyor** (0.8629/0.8776 vs 0.9284) — değeri tamamlayıcılıktır.
 5. **Seed varyansı ±0.02–0.03** (E4.6) — tüm sayılar çok-seed ortalaması olmalı.
-6. **Domain-shift bedeli −0.072** (E5.3) ve kaynak-dışı düşüşte **veri azalması confound'u**.
+6. **Domain-shift bedeli −0.109** (E5.3b; eşit-boyut) ve kaynak-dışı düşüşte **veri azalması confound'u**.
 7. **Veri = NODE21 halka açık training seti** — leaderboard karşılaştırması geçersiz (§0).
+8. **🌐 Kapsam kurum içi (V4):** gerçek harici veride (VinDr-CXR) TDA şans düzeyine iner (0,511–0,541) ve kilitli füzyon ResNet'in **altına** düşer; optimal ağırlık a = 1,00. Ölçek normalizasyonu kurtarmaz ⇒ dış merkeze taşıma **kalibrasyon/adaptasyon** gerektirir (§7.2).
+9. **🎯 Cihaz/kaynak ayrıştırılabilirliği (A2):** pozitifler arasında temsiller **hangi cihazdan geldiğini** label'a yakın doğrulukla kodluyor (TDA 0,85 · ResNet 0,95 · yalnız meta-veri 0,96) ⇒ iç başarım kısmen **fiziksel imza** üzerinden geliyor; dışa taşınmayan da tam olarak bu (§7.3).
+10. **Harici veri görüntü düzeyi ve ölçek confound'u:** VinDr kohortu 3× indirgenmiş JPEG'dir (spacing yok); nodül boyutu alt grupları mm değil `rel_size` üçte birlikleriyle verilir.
+11. **ResNet ağırlıkları kayıtlı değil:** E0.6 ağırlıkları saklanmadığı için harici sonuçlar deterministik yeniden eğitilen sabit checkpoint'e dayanır (val zon AUC Δ=3,8·10⁻⁴).
 
 ---
 
 ## 11. Figür Planı (makale için) — ✅ **ÜRETİLDİ**
 
-> **Tüm figürler üretilmiştir:** `artifacts/figures/F1..F8_*.png` (200 dpi).
+> **Figürler:** `artifacts/figures/F1..F9_*.png` (200 dpi) **üretilmiştir**; **F9 (harici doğrulama)** V4 kayıtlarından üretilir: `pipelines/figures/make_figure_f9_external.py`.
 > Üreten betik: [pipelines/figures/make_figures.py](pipelines/figures/make_figures.py) — sayılar doğrulanmış raporlardan alınır; **F3 gerçek val olasılıklarını yeniden hesaplar**. Yeniden üretmek için: `python pipelines/figures/make_figures.py`
 > 🔎 **F3 bağımsız doğrulama:** betik korelasyonu **r = 0.2802** hesapladı — kayıtlı val değeri (0.3034) ile tutarlı, temsil tamamlayıcılığını bağımsız olarak teyit ediyor.
 
@@ -335,6 +451,7 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | **F6** | **Sağlamlık panelleri** | σ, ızgara, ağırlık, eşik, seed varyansı | E2.7/E2.8/E4.1/E4.6 |
 | **F7** | **Kaynak-dışı genelleme** | 3 kaynak için füzyon AUC + rastgele split referansı | E5.3 |
 | **F8** | **Sınırlama paneli** | Zon düzeyi AUC ≈ 0.5 (lokalizasyon yok) + oracle-yama AUC 0.687 | E4.7/E3.6 |
+| **F9** | **Harici doğrulama (VinDr-CXR)** | (A) kol başına TDA/ResNet/Füzyon AUC + %95 CI · (B) füzyon a-eğrisi (optimum a = 1,00) | V4 (§7.2) — ✅ **üretildi** |
 
 ---
 
@@ -347,3 +464,74 @@ NODE21'in nodüllü hastaları dört kaynaktan gelir: **chestxray14 (617)**, **p
 | **3** | **Temsiller neredeyse dik (r≈0.30) → tamamlayıcılık gerçek** | r ≈ 0.30–0.35 | Etiket permütasyonu şans (0.4378) ⇒ sızıntı yok |
 
 **Dürüst çerçeve:** Bu bir **hasta düzeyi sınıflandırma** çalışmasıdır; lokalizasyon iddiası yoktur. Ayırt edici sinyal ağırlıklı olarak **global/arka plan topolojisindedir**. Katkı, **yorumlanabilir topolojik temsilin görüntü temsiline kattığı ölçülebilir tamamlayıcılıktır.**
+
+> 🌐 **Kapsam uyarısı (İddia 1 için):** 0.9516 **kurum içi** bir sonuçtur. Gerçek harici veride (VinDr-CXR, §7.2) TDA şans düzeyine iner ve füzyon ResNet'in altına düşer ⇒ İddia 1, "**kurum içi** hasta düzeyi triyaj" olarak okunmalı; "dış merkeze taşınan genel bir model" olarak **değil**.
+
+---
+
+## 13. V6 — İki Aşamalı Lokalizasyon (özet)
+
+**Kod:** `pipelines/v6_two_stage/` · **Kayıt:** `artifacts/v6_two_stage/` · ayrıntı: [experiments.md §9](experiments.md) · **disk kuralı:** görüntü/kırpıntı yazımı yok.
+
+### 1. Aşama (aday üretici, oracle Recall@K, val)
+| Model | K20 | K30 | K50 | Not |
+| :--- | :---: | :---: | :---: | :--- |
+| Eğitimsiz en iyi (M2 DoH) | 0,117 | 0,229 | 0,325 | yetersiz |
+| **M5 CenterNet** | **0,961** | **0,974** | **0,978** | 26 ms; stride-4/1024 |
+| M6 FCOS-lite | 0,576 | 0,654 | 0,758 | focal objectness şart |
+| M5+heatTTA | 0,965 | 0,970 | 0,978 | K≤30 için en iyi |
+| **M5+M6 (RRF)** | 0,918 | 0,974 | **0,983** | K≥30 için en iyi |
+
+### 2. Aşama (lokal TDA + FP eleme, val 734 hasta)
+| Model | Hasta AUC (Noisy-OR) | FROC @4 FP |
+| :--- | :---: | :---: |
+| yalnız Aşama-1 | 0,711 | 0,623 |
+| lokal TDA-HGB | 0,926 | 0,615 |
+| yama CNN | 0,652 | 0,255 |
+| **e_fusion_tda** | **0,955** | 0,771 |
+| **f_hierarchical** | 0,936 | **0,857** |
+
+* **Yama CNN çıkarıldı** (0,646 AUC, gereksiz) · SVM+MLP topluluğu reddedildi (0,656 vs HGB 0,919).
+* FROC protokolü: post-fusion NMS + **duplikasyon IGNORE**.
+
+### VinDr sıfır-eğitim (400 görüntü)
+| Bileşen | AUC |
+| :--- | :---: |
+| Aşama-1 dedektör | **0,4618** |
+| lokal TDA-HGB | **0,5901** |
+| e_fusion_tda | 0,5911 |
+| **V5.3 global 5-zon** | **0,6283** |
+| Birleşik (V5.3+V6) | 0,6214 |
+| bbox recall@K50 (M5) | **0,900** |
+
+**Sonuç:** V6 aday üretici **lokalizasyonu taşıyor** (VinDr bbox recall@K50=0,90) ama **görüntü düzeyi güveni taşımıyor** (0,46). Kurum-içi hasta AUC 0,955; dış merkezde V5.3 global temsili hâlâ daha iyi ⇒ **lokal TDA + global temsil** birlikte kullanılmalı (NODE21 val'de birleşik 0,992).
+
+### V6.4 — Domain stabilizasyonu + test mühürü
+| Adım | Sonuç | Karar |
+| :--- | :--- | :---: |
+| SNR (diff/z) | AUC 0,544 → 0,544/0,545 (etkisiz) | KILL |
+| **AdaBN (M5)** | **0,544 → 0,633** (+0,089); recall@50 0,907 | KEEP (yalnız M5) |
+| AdaBN (M6) | M6 recall 0,893 → 0,740; füzyon 0,512 → 0,441 | KILL |
+| **AdaBN-M5 + lokal TDA (M6'sız)** | Stage-1 0,6346 · TDA 0,6082 · **e_fusion 0,6471** · **V5.3+birleşik 0,6494** (r=0,46) | **V5.3'ü geçti** |
+| Domain-gen M5 (aug) | NODE21 val @50: 0,978 → **0,919**; VinDr 0,544 → 0,516 | **KILL** |
+| **TEST mühürü** | V6 lokal **0,9464** · V5.2 global **0,9612** · **birleşik 0,9876** (r=0,376) | **KAYIT** |
+
+### V6.5 — VinDr transfer güçlendirmesi (zero-shot + few-shot)
+| Kol | Konfig | VinDr AUC | Karar |
+| :--- | :--- | ---: | :---: |
+| 1 | taban (32/64, z) | 0,6439 | referans |
+| 1 | JPEG-denoise σ=1,0 | 0,6498 | +0,006 |
+| 1 | ölçek-eşlemeli yama | 0,6562 | +0,012 |
+| 1 | denoise + ölçek | 0,6523 | +0,008 |
+| 1 | quantile (rank-gauss) | 0,6486 | +0,005 |
+| 1 | CORAL (tam uzay) | 0,6318 | −0,012 |
+| 1 | **denoise + ölçek + CORAL** | **0,6620** | **KEEP (zero-shot en iyi)** |
+| 2 | few-shot N=0 → 160 (yalnız lokal) | 0,6593 → **0,7243 ± 0,051** | KEEP (N≥40) |
+| 2 | few-shot N=0 → 160 (V5.3 + lokal) | 0,6673 → 0,7054 ± 0,032 | N≥80'de seyreltiyor |
+| 2 | few-shot N=10 | 0,6280 < 0,6593 | KILL (aşırı uyum) |
+| 2b | kompakt özellik (PCA-128) + görüntü etiketi | N=160: 0,6796 (V6.5: 0,7243) | KILL (boyut sorun değil) |
+| 2c | bbox-türevli aday etiketi | N=160: AUC 0,6273 · **FROC@2 0,184** (V6.5: 0,162) | FROC için KEEP, AUC için KILL |
+
+**AUC–FROC ödünleşimi:** görüntü etiketi görüntü sıralamasını (AUC), bbox etiketi lezyon sıralamasını (FROC) optimize ediyor; ikisi aynı anda iyileşmiyor.
+
+**Özet:** Eğitimsiz fiziksel hizalama **+0,018**, 160 etiketli hedef görüntüyle few-shot kalibrasyon **+0,065** kazandırıyor; ikisi de VinDr'yi 0,66–0,72 bandına taşıyor ama in-domain 0,9876'nın altında. N≥80'de lokal model kalibre edilince V5.3 global kanalı gereksizleşiyor. Domain farkı **kapatılamıyor, yönetilebiliyor**.

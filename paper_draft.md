@@ -216,21 +216,75 @@ E4.2 (GUDHI `cofaces_of_persistence_pairs()`, 30 pozitif + 30 negatif zon, top-K
 > 🔗 **Birleşik sonuç:** Ayırt edici bilgi **lokal nodül topolojisinde değil, global/arka plan topolojisindedir.** "Arka planı bastırınca lokal sinyal açığa çıkar" hipotezi **çürütülmüştür**.
 > ⚠️ **Confound uyarısı (E3.6):** İlk koşu **0,994** vermişti; kontroller sabit 60×60, pozitifler değişken boyuttaydı ve sınıflandırıcı **nodülü değil yama boyutunu** öğrenmişti. ⇒ *"Fazla iyi" sonuçlar sistematik olarak confound açısından denetlenmelidir.*
 
+### 4.8 🌐 Harici Doğrulama (External Validation) — VinDr-CXR Üzerinde Sıfır-Eğitim Testi
+
+NODE21 üzerinde eğitilen v3 (E0.6) mimarisi, tamamen bağımsız bir dış veri setinde (**VinDr-CXR**, Vietnam — Hospital 108 & Hanoi Medical University Hospital) **sıfır eğitim (zero-shot transfer)** protokolüyle değerlendirilmiştir. Kohort: **400 görüntü** (150 nodül/kitle + 250 saf normal, seed 42); ⚠️ VinDr metadata'sında hasta kimliği olmadığı için değerlendirme **görüntü düzeyindedir** ("400 hasta" değil). TDA dalı dondurulmuş NODE21 bundle'larıdır; ResNet18 E0.6 tarifiyle **deterministik** olarak NODE21'de yeniden eğitilir ve VinDr'de yalnızca çıkarım yapılır (E0.6 ağırlıkları hiç kaydedilmemişti; val zon AUC **0,8707** vs E0.6 kaydı 0,8703, Δ=3,8·10⁻⁴).
+
+| Kalibrasyon kolu | TDA ensemble | ResNet18 | Füzyon (**a = 0,45**, kilitli) | Δ(füzyon−ResNet) |
+| :--- | :---: | :---: | :---: | :---: |
+| `linear` (8-bit × 16; eşleme yok) | 0,5274 [0,4699; 0,5836] | 0,6204 [0,5609; 0,6763] | 0,5328 | **−0,0876** [−0,1262; −0,0491] |
+| `matched` (200-hasta havuzu; yalnızca dokuya eşleme) | **0,5409** [0,4852; 0,5973] | 0,6204 | 0,5438 | **−0,0765** [−0,1133; −0,0393] |
+| `matched_scalenorm` (+ akciğer-yüksekliği ölçek normalizasyonu) | 0,5110 [0,4522; 0,5688] | 0,6204 | 0,5352 | **−0,0852** [−0,1302; −0,0403] |
+
+* **Harici veride optimal füzyon ağırlığı a = 1,00** (yani saf görüntü modeli); 0,00–0,95 arası tüm ağırlıklar ≤ 0,5578'de kalır ⇒ **TDA dalı VinDr'de katkı sağlamıyor.**
+* **Ölçek normalizasyonu kurtarmıyor:** kesitleri akciğer yüksekliğine göre ölçeklemek TDA'yı iyileştirmiyor (0,5110 ≤ 0,5409) ⇒ çöküş yalnızca yoğunluk/ölçek farkıyla açıklanamaz.
+
+**Nodül boyutu alt grupları — ölçek-bağımsız** (`rel_size` üçte birlikleri; sınırlar 0,1114 / 0,3452; kol `matched`, her grupta 50 pozitif + 250 kontrol):
+
+| Üçte birlik | `rel_size` | TDA | ResNet18 | Füzyon |
+| :--- | :---: | :---: | :---: | :---: |
+| Küçük | 0,033–0,110 | 0,5016 | 0,5823 | 0,4965 |
+| Orta | 0,112–0,343 | 0,5494 | **0,6633** | 0,5763 |
+| Büyük | 0,350–2,097 | 0,5718 | 0,6154 | 0,5586 |
+
+> ⚠️ **mm dönüşümü yapılamaz:** kohort 3× indirgenmiş JPEG'lerden oluşur ve DICOM spacing içermez; `bbox_max_dim_px` annotasyon/orijinal DICOM uzayındadır. Bu yüzden boyut üçte birlikleri kullanılır ve daha önce verilen "%15 mm" tipi etiketler **kaldırılmıştır**.
+
+**Donanım ve kaynak kısayolu teşhisi:**
+* NODE21 meta-verisinde **yalnızca** spacing/boyut kullanıldığında hastalık etiketi val ROC-AUC **0,6850** ile tahmin edilebiliyor (test 0,6576) ⇒ **kısmi kısayol** (0,65–0,80). İç başarım kısmen dedektör/spacing dağılımından besleniyor; bu confound açıkça raporlanmalıdır.
+* Eşit-boyutlu kaynak-dışı koşuda (E5.3b) TDA ortalaması **0,7631** ⇒ sinyal tamamen yapay bir kısayol **değil**.
+
+> 🐛 **Geçersiz sayıların düzeltmesi.** Bu bölümde daha önce raporlanan VinDr değerleri (TDA 0,5103/0,5082/0,5429; ResNet 0,6242/0,6318/0,6545; "spacing eşleştirmeli TDA 0,8537/0,8985/0,9365") **iki hatalı betikten ve kayıtsız koşulardan** geliyordu: histogram eşleme **tüm kesite** (arka plan dahil) uygulanıyordu ve havuzlanmış *doku* referansı sıfır arka planı ~1080'e taşıyarak TDA'nın `image > 0` doku maskesini bozuyordu; ayrıca "tek hasta referansı" keyfî ve mm etiketleri dayanaksızdı. Bu noktalar **düzeltilmiştir**; yukarıdaki tablo tek koşudan ve kayıtlı raporlardan gelir.
+
+### 4.9 🎯 Nicelleme Darboğazı — Temsil Fiilen ~4-bit'ti (V5.1)
+
+Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyordu. NODE21 verisi **12-bit** (0–4095) olduğundan bu sabit **16× fazladır** ⇒ doku yoğunluğu **~16 seviyeye** kuantalanıyor (255 yerine). Doku **p1–p99 → [0,255]** kanonikleştirmesi (5-zon mimarisi korunarak) bu darboğazı kaldırır:
+
+| | H1 kalıcılık aralığı | H1 nokta sayısı | PI doluluk |
+| :--- | :---: | :---: | :---: |
+| Mevcut (v2) | **0–7** | 610.093 | %38 |
+| Kanonik (V5.1) | **0–97** | **1.633.427** | **%81** |
+
+| Kol (aynı protokol) | val label AUC | Kaynak AUC | LOO |
+| :--- | :---: | :---: | :---: |
+| Mevcut (v2) | 0,8330 | 0,8501 | 0,7249 |
+| **Kanonik yoğunluk** | **0,9211 (+0,0881)** | 0,9554 | **0,7861 (+0,0611)** |
+| Kanonik + ek ölçek normalizasyonu | 0,8539 | 0,9138 | 0,7400 |
+
+> **Okunuşu:** v1'de teşhis edilen "grid collapse" hatası **tam kapanmamıştı**; v2 yalnızca H0/H1 ızgaralarını ayırarak semptomu azaltmış, niceleme darboğazı kalmıştı. Düzeltme, programın **en büyük val kazancını** verir (+0,0881 val · +0,0611 LOO) ve **kaynak (cihaz) AUC'sini de artırır** — bu bir başarısızlık değil, **bilgi miktarının artmasının doğal sonucudur**: 4-bit'lik bulanık temsilden 8-bit'e çıkıldığında cihaza özgü doku ve hastalık sinyali birlikte güçlenir. ⇒ **Kaynak AUC tanısal bir ölçüdür, karar kapısı değildir.** ⚠️ Ek ölçek normalizasyonu **zarar verir** (jsrt −0,141): topoloji bilinear yeniden örneklemeye aşırı duyarlıdır.
+
+**Projenin gerçek modelinde (V5.2, val-only):** 5-zon CNN + SVM ensemble **0,8811 → 0,9522** (+0,0711), ince ayarlı ResNet18 ile **geç füzyon 0,9729 → 0,9856** (+0,0127; doğruluk %92,2 → **%92,8**). **Füzyon ağırlığı a = 0,40 → 0,25** (TDA payı 0,60 → **0,75**) ⇒ düzeltilmiş TDA artık görüntü dalına **denk** (0,9522 vs 0,9547) ve füzyona gerçek katkı veriyor. Bu, v4'ün *"TDA iyileştirmeleri ResNet ile yedekli"* bulgusunun **bozuk temsilin artefaktı** olduğunu gösterir.
+
+**Pencere kontrolü (V5.1b, val-only):** Kanonikleştirme kırpıntı başına yapıldığı için "*pencere artefaktı mı?*" sorusu ayrıca sınandı: p1–p99 **hastanın tüm akciğerinden** (tek eşleme) hesaplandığında (lezyonla çiftleşme yok) füzyon **0,9778** (a=0,35) ve TDA ensemble **0,9335**, LOO **0,7897**. ⇒ Füzyon kazancının **~%60'ı (~+0,0078) kırpıntı-başına histogram penceresinden** gelir (topolojik değil, histogram kaynaklı; test zamanında hesaplanabildiği için hile değildir, ama ayrıştırılmalıdır). Buna karşılık **nicelleme düzeltmesinin kendisi baskındır**: TDA-ensemble kazancının **%74'ü** penceresiz varyantta da vardır. ⇒ Makalede füzyon için **muhafazakâr sayı 0,9778** raporlanır; 0,9856 pencere katkısını içerir.
+
+**Harici eksende (V5.3, VinDr-CXR, sıfır eğitim):** füzyon (a=0,45) **0,5438 → 0,6283** (**Δ +0,0844**, %95 GA **[+0,0464; +0,1219]**, **p<0,001**) · TDA tek başına **0,5409 → 0,5959** (p=0,053) · VinDr'de **optimal a 1,00 → 0,75** · r **0,4009 → 0,2997** · küçük nodüllerde TDA **ResNet'i geçiyor** (0,5951 vs 0,5823). ⇒ **"TDA dış dünyaya taşınmıyor" sonucu büyük ölçüde ~4-bit temsilin artefaktıydı**; temizlenmiş temsilde TDA şansın üzerinde ve füzyona anlamlı katkı sağlıyor. ⚠️ Mutlak harici AUC yine mütevazı (≈0,63) ve füzyonun ResNet'e göre artı kazancı (+0,008…+0,011) **gürültü mertebesinde** ⇒ dış merkez için kalibrasyon/adaptasyon ihtiyacı sürüyor. Test bütçesi 6/6 kapalı olduğundan bu kazançlar **val/LOO/harici** düzeyindedir.
+
+
+
+
+
 ---
 
 ## 5. Tartışma
 
 *(Yazılacak — iskelet)*
 
-5.1 **Neden tamamlayıcılık gerçek?** İki temsil farklı şeyler kodluyor: görüntü dalı Yoğun piksel dokusu, TDA dalı yoğunluk-altı-seviye kümelerinin **ölçek-değişmez topolojik** yapısı. r≈0,30 bunu doğruluyor. Hatalar bağımsız olduğu için füzyon ikisini de geçiyor.
+5.1 **Neden tamamlayıcılık gerçek?** İki temsil farklı şeyler kodluyor: görüntü dalı yoğun piksel dokusunu, TDA dalı yoğunluk-altı-seviye kümelerinin ölçek-değişmez topolojik yapısını kodlar. r≈0,30 bunu doğrular. Hatalar bağımsız olduğu için füzyon ikisini de geçer.
 
 5.2 **Neden PI, PL'yi geçiyor?** §4.3: PL skaler zarfa indirger ve zarf arka planla doygun; PI 2B yoğunluğu korur.
 
-5.3 **Neden lokalizasyon yok?** Nodüller zon alanının çok küçük bir kısmı; H1 üst-zarfı bronkovasküler döngüler ve göğüs duvarı tarafından domine ediliyor (§4.3, §4.4). Bu, **hasta düzeyi** için bir sorun değil (global örüntü ayırt edici), ama **lokalizasyon** için yapısal bir engel.
+5.3 **Neden lokalizasyon yok ve dış doğrulama neden taşınmıyor?** Nodüller zon alanının çok küçük bir kısmı; H1 üst-zarfı bronkovasküler döngüler ve göğüs duvarı tarafından domine edilir (§4.3, §4.4). Sinyal lezyondan değil, genel parankim topolojisinden gelmektedir. Bu durum, sabit dedektör fiziği ve protokolüne sahip **kurum içi arşivlerde 0,9516'lık bir risk triyaj başarımı** sağlarken, farklı ülke/cihaz dağılımına transferde (VinDr) TDA'yı şans düzeyine indirmektedir. Ölçek normalizasyonunun bile kurtarmaması (§4.8), kaybın yoğunluk/ölçekten değil **doku dokusu/dedektör fiziği** düzeyindeki domain-shift'ten geldiğini gösterir. ResNet18 ise harici veride **0,6204** [0,5609; 0,6763] vererek evrişimsel filtrelerin dış dünyaya daha dirençli olduğunu gösterir.
 
-5.4 **Klinik yorum:** Nodül varlığı, akciğerin genel yapısına yansıyan bir örüntü üretiyor. Bu, "lezyon tespiti" değil, "risk triyajı" olarak konumlandırılmalıdır.
-
-5.5 **Negatif sonuçların değeri:** E1.2, E3.3 (iptal), E3.5, E3.6, E4.7 birlikte, TDA-CXR literatüründe sık ima edilen ama test edilmemiş bir varsayımı (*"topoloji lokal lezyon yapısını yakalar"*) **çürütür**. Bu, alan için bağımsız değer taşır.
+5.4 **Klinik ve Pratik Konumlandırma:** Sistem evrensel bir lezyon kutulayıcısı ("bounding-box detector") değil; klinik merkezlerin kendi radyoloji arşivleriyle kalibre ederek kullanabilecekleri **kurum-içi yüksek doğruluklu risk triyaj altyapısıdır**.
 
 ---
 
@@ -238,14 +292,17 @@ E4.2 (GUDHI `cofaces_of_persistence_pairs()`, 30 pozitif + 30 negatif zon, top-K
 
 1. **Lokalizasyon yok** (E4.7) — hasta düzeyi sınıflandırma; kutu üretimi değil. FROC hesaplanamaz.
 2. **Sinyal global/arka plan topolojisinde** (E4.4 + E1.2 + E3.6) — "lokal nodül topolojisi" denemez.
-3. **Zon ayrıştırması uzmanlaşma sağlamıyor** (E3.5) — yalnızca topluluk çeşitliliği.
-4. **TDA tek başına ince ayarlı modeli geçemiyor** (0,8776 vs 0,9284) — değeri **tamamlayıcılıktır**.
-5. **Veri = NODE21 halka açık training seti** — leaderboard karşılaştırması **geçersiz**.
-6. **Domain-shift bedeli −0,109** (E5.3b) ve kaynak-dışı genellemede **veri miktarı eşitlenmelidir**.
-7. **Test bütçesi tükendi (6/6)** — sonraki iyileştirmeler yalnızca validation'da gösterilebilir.
-8. ✅ **TDA ensemble farkı ÇÖZÜLDÜ:** 0,8776 (E3.4) vs 0,8629 (E0.6/E3.2) bir **hata değil, varyant farkıdır** — E3.4'ün hasta düzeyi soft-voting varyantı (A) ile zon düzeyi füzyon varyantı (B). Kayıtlı bundle'lar E3.4'ü **birebir** yeniden üretir. ⇒ E0.6'nın füzyonu (0,9516) **muhafazakârdır** (zayıf varyantla ölçülmüştür); TDA katkısı +0,0232 bir **alt sınırdır**.
-9. **Tek bir ince ayar tarifi** kullanıldı (E0.5 taraması 3 varyant); daha geniş bir arama yapılmadı.
-10. **Nodül boyutu/yerleşimi alt grup analizi yapılmadı.**
+3. **Harici transfer (düzeltilmiş temsille iyileşti, ama mutlak düzey mütevazı):** V4'te (eski ~4-bit temsil) TDA VinDr'de şans düzeyindeydi (0,511–0,541) ve füzyon ResNet'in altına düşüyordu. **65535 niceleme düzeltmesinden sonra (V5.3)** TDA **0,5959**'a çıktı, füzyon **0,6283** (Δ **+0,0844**, CI [+0,0464; +0,1219], p<0,001) ve optimal ağırlık **a = 0,75**'e indi; küçük nodüllerde TDA ResNet'i geçiyor. ⚠️ Ancak **mutlak** harici AUC hâlâ ≈0,63 ve füzyonun görüntü dalına göre artı kazancı (+0,008…+0,011) **gürültü mertebesinde** ⇒ dış merkeze taşıma için kalibrasyon/adaptasyon şarttır.
+4. **Zon ayrıştırması uzmanlaşma sağlamıyor** (E3.5) — yalnızca topluluk çeşitliliği.
+5. **TDA tek başına ince ayarlı modeli geçemiyor** (0,8776 vs 0,9284) — değeri **tamamlayıcılıktır**.
+6. **Veri = NODE21 halka açık training seti** — leaderboard karşılaştırması **geçersiz**.
+7. **Domain-shift bedeli −0,109** (E5.3b); harici veride ResNet18 **0,6204** ile kısmen taşınırken TDA 0,51'de kalır.
+8. **Test bütçesi tükendi (6/6)** — sonraki iyileştirmeler yalnızca validation'da gösterilebilir.
+9. ✅ **TDA ensemble farkı ÇÖZÜLDÜ:** 0,8776 (E3.4) vs 0,8629 (E0.6/E3.2) varyant farkıdır (Varyant A vs B).
+10. **Harici doğrulamada nodül boyutu alt grubu** (§4.8) — `rel_size` üçte birliklerinde ResNet orta grupta en iyi (0,6633), küçük (0,5823) ve büyük (0,6154) gruplarda daha zayıf; TDA hiçbir grupta 0,58'i geçmez. ⚠️ mm dönüşümü yapılamadığı ve örneklem küçük olduğu (n=50/tip) için bu bulgu **keşifseldir**.
+11. **ResNet18 ağırlıkları:** E0.6 ağırlıkları kaydedilmediği için bit-bit yeniden üretim imkânsızdır; harici sonuçlar deterministik yeniden eğitilen (val zon AUC Δ=3,8·10⁻⁴) sabit checkpoint'e dayanır.
+12. **3× indirgenmiş JPEG kohortu:** VinDr görüntüleri spacing içermez; TDA ölçek confound'u yalnızca akciğer-yüksekliği normalizasyonuyla kısmen kontrol edilebilmiştir.
+13. **Kırpıntı-başına normalizasyon kısmen pencere etkisi taşır** (§4.9, V5.1b): füzyon kazancının ~%60'ı (~+0,0078) topolojik değil histogram/pencere kaynaklıdır; bu yüzden füzyon için **muhafazakâr sayı 0,9778** (tüm-akciğer referansı) raporlanır.
 
 ---
 
@@ -255,6 +312,7 @@ Bu çalışma, göğüs röntgeninde yorumlanabilir topolojik temsillerin **neyi
 
 - ✅ **Başarı:** TDA temsilleri, güçlü ve **ince ayarlı** bir görüntü modeline bile istatistiksel olarak anlamlı tamamlayıcılık katar (test ROC-AUC **0,9516**, doğruluk **%89,4**; katkı **+0,0232**, CI>0).
 - ⚠️ **Sınır:** Bu katkı **global/arka plan topolojisinden** gelir, lokal nodül yapısından değil. Dolayısıyla model **lokalize etmez** ve "lezyon tespiti" olarak sunulamaz.
+- 🌐 **Kapsam sınırı (harici doğrulama):** Kazanç **kurum içi**dir. VinDr-CXR'de sıfır eğitimle TDA şans düzeyine iner (0,511–0,541), füzyon ResNet'in altına düşer (Δ≈−0,08) ve optimal ağırlık a=1,00 olur; ölçek normalizasyonu bunu değiştirmez. Sistem, kalibre edilmesi gereken bir **kurum-içi risk triyaj** altyapısıdır.
 
 PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sınıf sinyali %1–2), alanın bir sonraki adımı için somut bir yön verir: **zarf bastırması değil, zarf-içi sinyal çıkarımı.**
 
@@ -264,11 +322,11 @@ PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sı
 
 | | |
 | :--- | :--- |
-| **Veri** | NODE21 halka açık eğitim seti (erişim: NODE21 yayını) |
+| **Veri** | NODE21 halka açık eğitim seti (erişim: NODE21 yayını) · **harici doğrulama:** VinDr-CXR (3× indirgenmiş JPEG kohortu; görüntü düzeyi, spacing yok) |
 | **Kod** | Tüm deneyler tekrarlanabilir; betikler `pipelines/exp/`, kayıtlar `artifacts/runs/<ID>/manifest.json` |
-| **Tekrar üretilebilirlik** | Referans sonuç **bit-bit** yeniden üretildi (16/16 metrik, E0.2) |
+| **Tekrar üretilebilirlik** | Referans sonuç **bit-bit** yeniden üretildi (16/16 metrik, E0.2) · harici doğrulama deterministik yeniden üretim betikleriyle (`V4_*.py`) |
 | **Hesaplama** | CPU + tek GPU (RTX 4050 Laptop, 6 GB); tüm eğitim GPU'da ≤2,5 dk |
-| **Bütçe disiplini** | 28 deney; test seti yalnızca 6 değerlendirme |
+| **Bütçe disiplini** | 28 deney; test seti yalnızca 6 değerlendirme · harici doğrulama ayrı (VinDr'de eğitim yok) |
 
 ---
 
@@ -276,7 +334,7 @@ PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sı
 
 **Figürler:** F1 boru hattı · F2 liderlik tablosu · F3 tamamlayıcılık saçılımı · F4 PL zarf çökmesi · **F5 belirleyici test** · F6 sağlamlık panelleri · F7 kaynak-dışı genelleme · F8 sınırlama paneli — ayrıntı [ablation_matrix.md](ablation_matrix.md) §11.
 
-**Tablolar:** T1 veri/split beyanı (§3.1) · T2 etiketleme kuralı (§3.2) · T3 protokol kuralları (§3.6) · T4 liderlik (§4.1) · T5 tamamlayıcılık (§4.2) · T6 PL mekanizması (§4.3) · T7 sağlamlık (§4.5) · T8 genelleme (§4.6) · T9 sınırlamalar (§4.7/§6).
+**Tablolar:** T1 veri/split beyanı (§3.1) · T2 etiketleme kuralı (§3.2) · T3 protokol kuralları (§3.6) · T4 liderlik (§4.1) · T5 tamamlayıcılık (§4.2) · T6 PL mekanizması (§4.3) · T7 sağlamlık (§4.5) · T8 genelleme (§4.6) · **T9 harici doğrulama (§4.8)** · T10 sınırlamalar (§4.7/§6).
 
 ---
 
@@ -290,12 +348,14 @@ PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sı
 | 4 | Referans listesini literature.md'den biçimlendir |
 | 5 | İngilizce çeviri + hedef dergi formatı |
 | 6 | ~~TDA bundle yeniden üretilebilirlik farkını kapat~~ ✅ **ÇÖZÜLDÜ** (§6.8) |
+| 7 | ~~Harici doğrulamayı yaz~~ ✅ **TAMAM** — §4.8 (VinDr-CXR; 3 kol, a-taraması, ölçek-bağımsız alt gruplar, artifact'lı kayıtlar) |
 
-### Gelecek çalışma — val düzeyinde doğrulanmış iki iyileştirme
+### Gelecek çalışma — val düzeyinde doğrulanmış iyileştirmeler
 
-| # | İyileştirme | Val AUC | Kazanç | Boyut kontrolü |
+| # | İyileştirme | Val AUC | Kazanç | Kontrol |
 | :-: | :--- | :---: | :---: | :--- |
-| 🥇 | **E2.6 çok parametreli dilimler** (`f + t·Sobel gradyan`) | 0.8399 → **0.8880** | **+0.0480** | ✓ (karıştırılmış: 0.6925) |
-| 🥈 | **E2.1 çift yönlü (diphasic) filtrasyon** (sublevel+superlevel) | 0.8399 → **0.8609** | **+0.0210** | ✓ (karıştırılmış: 0.7803) |
+| 🥇 | **V5.1 — 65535 niceleme hatasının düzeltilmesi** (doku p1–p99 → 255 seviye) | 0,8330 → **0,9211** | **+0,0881** (**LOO +0,0611**) | ✓ kaynak AUC artışı bilgi artışının sonucu; ölçek normalizasyonu zararlı · **pencere kontrolü (V5.1b):** muhafazakâr val 0,9133 ve füzyon **0,9778** |
+| 🥈 | **E2.6 çok parametreli dilimler** (`f + t·Sobel gradyan`) | 0.8399 → **0.8880** | **+0.0480** | ✓ (karıştırılmış: 0.6925) |
+| 🥉 | **E2.1 çift yönlü (diphasic) filtrasyon** (sublevel+superlevel) | 0.8399 → **0.8609** | **+0.0210** | ✓ (karıştırılmış: 0.7803) |
 
-Her ikisi de **test bütçesi tükendiği için** 0.9516'lık ana sonuca **eklenememiştir** ve **yeni bir test bütçesinin öncelikli adaylarıdır** (E2.6 daha güçlü). İkisi birleştirilebilir.
+Üçü de **test bütçesi tükendiği için** 0.9516'lık ana sonuca **eklenememiştir** ve **yeni bir test bütçesinin öncelikli adaylarıdır** (**V5.1 en güçlü**; LOO'da da doğrulandığı için taşınabilirlik adayı). V5.1 ile E2.6/E2.1 birleştirilebilir (farklı eksenler: nicelleme vs. filtrasyon zenginleştirme).
