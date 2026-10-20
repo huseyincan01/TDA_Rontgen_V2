@@ -302,6 +302,32 @@ NODE21'in **kendi içindeki 4 kaynağı** (chestxray14 0,143 mm/px · padchest 0
 >
 > ⚠️ **V5.1 sonrası güncelleme:** Bu kapı **çürütülmüştür** — yoğunluk kanonikleştirmesi label AUC'yi **+0,088**, LOO'yu **+0,061** artırırken kaynak AUC'yi de **+0,105** artırdı. ⇒ Kaynak AUC **tanısal** kalmalı, **karar kapısı** olmamalı (bkz. §7.4).
 
+### 7.3b Kaynak-içi AUC Denetimi (A3) — Etiket ile Kaynak Tamamen İç İçe
+
+**A3** · [betik](pipelines/exp/A3_source_confound_audit.py) · rapor: `artifacts/runs/A3_source_confound_audit/report.json`
+
+NODE21 test setinde tüm pozitifler 4 dış kaynaktan (chestxray14: 89, padchest: 58, jsrt: 19, openi: 6), tüm negatifler ise tek `node21_control` havuzundan (562) gelir. Her kaynak tek sınıflı olduğu için klasik "kaynak-içi AUC" **tanımsızdır**. Yerine geçen metrik: **kaynak pozitifleri vs ortak kontrol** AUC'si ve makro ortalama:
+
+| Model | Genel AUC | Makro AUC | chestxray14 | padchest | jsrt | openi |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **TDA PI CNN** | 0,8631 | **0,8920** | 0,8158 | 0,9052 | 0,9433 | 0,9036 |
+| TDA PI RBF-SVM | 0,8289 | 0,8672 | 0,8161 | 0,8062 | 0,9303 | 0,9161 |
+| Ham görüntü CNN | 0,7043 | 0,6638 | 0,7648 | 0,6171 | 0,7419 | 0,5316 |
+
+* Model 4 kaynağın 4'ünde de ayrım yapıyor (0,82–0,94) ⇒ sinyal tek bir kaynağın artefaktı değil.
+* TDA, ham CNN'i makroda belirgin geçiyor (0,892 vs 0,664) ⇒ TDA kazancı yalnızca kaynak kimliği değil.
+* Kontrol ortalama skoru 0,555, özgüllük@0,5 = 0,358 ⇒ işletim noktası kaymıştır (kilitli Youden eşiği 0,6949 ile özgüllük %79,72).
+
+### 7.3c PL Zarf Mekanizma Otopsisi — Maske Sınırı Artefaktı (A4)
+
+**A4** · [betik](pipelines/exp/A4_mask_boundary_audit.py) · rapor: `artifacts/runs/A4_mask_boundary_audit/report.json`
+
+GUDHI `cofaces_of_persistence_pairs` ile 100 dengeli train zonunda (50 poz / 50 neg) hücre-piksel geri izleme otopsisi:
+* Baseline filtrasyonda doku içi pikseller ~12 seviyelik dar bir banda (240–252) sıkıştığı için, saf doku içi kalıcılık en fazla **7,0** olabilir (ort. H0: 3,6 · H1: 4,2).
+* E4.4'te ölçülen ve PL üst zarfını doyuran devasa tepelerin ($\text{kalıcılık} \ge 50$ döngülerin) **%100,0'ı** (599/599) doku ile dış siyah arka plan (0) arasındaki yapay segmentasyon maskesi basamağından kaynaklanır.
+* Pozitif ve negatif zonlarda sınır oranı eşittir (%60,2 vs %59,6).
+* **Mekanizma kanıtı:** PL çöküşü biyolojik damar ağacından değil, **akciğer maskesi geometrik sınır basamağındandır**. PI $(b, p)$ uzayında bu artefaktı tek köşeye hapsederek doku sinyalini korurken, PL üst zarf projeksiyonunda bu 248 kalıcılıklı yapay tepe tarafından tamamen körleştirilir.
+
 ---
 
 ## 7.4 Fiziksel Kanonikleştirme (V5.1) — 5-zon mimarisi korunarak
