@@ -1,0 +1,126 @@
+{
+  "experiment": "V5.1b",
+  "question": "V5.2'nin 0.9856 füzyonu, kırpıntı-başına uyarlanabilir pencere artefaktı mı?",
+  "arm": "c_lungref (tüm-akciğer tek p1/p99, o hastanın tüm zonlarına uygulanır)",
+  "gates_svm": {
+    "val_label": {
+      "patient_auc": 0.9133316684356205,
+      "n_patients": 733,
+      "n_pos": 171
+    },
+    "source": {
+      "macro_ovr_auc": 0.9617271648076209,
+      "per_class": {
+        "chestxray14": 0.9806185567010309,
+        "jsrt": 0.9962065946892326,
+        "openi": 0.9175607001693957,
+        "padchest": 0.9525228076708248
+      },
+      "n_train": 790,
+      "n_val": 172
+    },
+    "loo": {
+      "mean_auc": 0.7896875054889884,
+      "folds": {
+        "chestxray14": {
+          "patient_auc": 0.7561163467206807,
+          "n_test_patients": 2635,
+          "n_train_balanced_zones": 1034
+        },
+        "padchest": {
+          "patient_auc": 0.7844798714951097,
+          "n_test_patients": 1341,
+          "n_train_balanced_zones": 1034
+        },
+        "jsrt": {
+          "patient_auc": 0.8284662982511748,
+          "n_test_patients": 636,
+          "n_train_balanced_zones": 1034
+        }
+      }
+    },
+    "val_label_tta": {
+      "patient_auc": 0.9121662400366277,
+      "n_patients": 733,
+      "n_pos": 171
+    },
+    "loo_tta": {
+      "mean_auc": 0.7918475318388332,
+      "folds": {
+        "chestxray14": {
+          "patient_auc": 0.7671623942057945,
+          "n_test_patients": 2635,
+          "n_train_balanced_zones": 1034
+        },
+        "padchest": {
+          "patient_auc": 0.8013849006753948,
+          "n_test_patients": 1341,
+          "n_train_balanced_zones": 1034
+        },
+        "jsrt": {
+          "patient_auc": 0.80699530063531,
+          "n_test_patients": 636,
+          "n_train_balanced_zones": 1034
+        }
+      }
+    }
+  },
+  "ensemble_fusion": {
+    "val_tda_cnn": 0.8972730282214681,
+    "val_tda_svm": 0.9222254407018123,
+    "val_tda_ensemble": 0.9335223040635604,
+    "val_image_resnet_e0.6": 0.9547297856492593,
+    "val_fusion_best_a": 0.9777890424563436,
+    "fusion_best_a": 0.35,
+    "val_fusion_a0.45": 0.9771166101133825,
+    "fusion_metrics_best_a": {
+      "threshold": 0.7747019142267947,
+      "roc_auc": 0.9778,
+      "pr_auc": 0.9376,
+      "accuracy": 0.9401,
+      "sensitivity": 0.907,
+      "specificity": 0.9502,
+      "precision": 0.8478,
+      "f1": 0.8764,
+      "tp": 156,
+      "fp": 28,
+      "tn": 534,
+      "fn": 16,
+      "n_samples": 734,
+      "n_positive": 172,
+      "n_negative": 562
+    },
+    "n_val_patients": 734,
+    "n_pos": 172,
+    "elapsed_s": 28.7
+  },
+  "references": {
+    "a_density_fusion_val": 0.9856,
+    "v2_fusion_val": 0.9729
+  },
+  "comparison": {
+    "fusion_delta_vs_a_density": -0.0078109575436564604,
+    "fusion_delta_vs_v2": 0.004889042456343584
+  },
+  "decision": "ARTEFAKT VAR → KEEP c_lungref'e devredilir",
+  "interpretation": {
+    "summary": "Kırpıntı-başına uyarlanabilir pencere, füzyon val kazancının BİR KISMINI açıklıyor (-0.0078); nicelleme düzeltmesinin kendisi baskın ve gerçek.",
+    "adaptive_window_contribution": {
+      "fusion_val_auc": -0.0078,
+      "note": "0.0127'lik kazancın ~%60'ı; topolojik değil, histogram/pencere kaynaklı (kırpıntının kendi p99'u lezyondan hafifçe etkilenir). Test zamanında hesaplanabilir olduğu için hile değildir; ancak 'topolojik parmak izi' iddiası için ayrıştırılmalıdır."
+    },
+    "quantization_fix_survives": {
+      "tda_ensemble_v2": 0.8811,
+      "tda_ensemble_c_lungref": 0.9335,
+      "delta": 0.0524,
+      "share_of_a_density_gain": 0.74,
+      "note": "+0.0711'lik TDA-ensemble kazancının %74'ü pencere olmadan da var."
+    },
+    "recommended_reporting": {
+      "conservative_fusion_val_auc": 0.9778,
+      "per_crop_fusion_val_auc": 0.9856,
+      "text": "Makalede muhafazakâr sayı c_lungref (0.9778) olarak raporlanmalı; 0.9856 pencere katkısını içerir ve bu ayrım açıkça yazılmalıdır."
+    },
+    "decision_final": "KEEP korunur (çiftleşmesiz varyantta da TDA ensemble +0.0524, LOO 0.7897)."
+  }
+}

@@ -1,0 +1,68 @@
+# Deney Konfigürasyonu — V4: VinDr-CXR harici doğrulama
+#
+# Dosya adı sözleşmesi: configs/experiments/<ID>_<slug>.yaml
+#
+# NOT: V4 bir "tek değişkenli model deneyi" değil, v3 ana iddiasının (kurum dışı
+# transfer) bağımsız veri üzerinde sınavıdır. Ön-kayıt yine de zorunludur.
+
+experiment:
+  id: "V4"
+  slug: "vindr_external_validation"
+  phase: 4
+  workstream: "W4"
+  date: "2026-10-17"
+
+# --- Ön-kayıt (koşu başlamadan dolduruldu) ---
+preregistration:
+  hypothesis: >
+    NODE21'de eğitilen v3 (E0.6) mimarisi (TDA ensemble + ince ayarlı ResNet18
+    geç füzyonu) hiçbir VinDr eğitimi olmadan, aynı ölçüm protokolüyle
+    VinDr-CXR'de şans düzeyinin (0.5) anlamlı biçimde üzerinde kalır ve TDA
+    dalı füzyona katkı sağlar.
+  single_variable: "Veri kaynağı (NODE21 → VinDr-CXR); mimari, ağırlıklar, eşik sabit."
+  success_threshold:
+    metric: "fusion_roc_auc"
+    primary: "belirleyici değil — bu deney TANIMLAYICI (dış doğrulama)"
+    secondary: "tda_branch_auc > 0.5 ve fusion_auc >= resnet_auc"
+  kill_criterion: "Her iki dal da şans düzeyinde (≈0.5) kalırsa transfer iddiası düşer."
+
+# --- Değişmeyen referans (v3 E0.6 kilidi) ---
+baseline:
+  resnet_checkpoint_recipe: "E0.6 (artifacts/runs/E0.6_decisive_test/test_report.json)"
+  resnet_val_zone_auc_reference: 0.8703325946876191
+  tda_bundles:
+    cnn: "artifacts/models/zone_cnn/zone_cnn_bundle.pt"
+    svm: "artifacts/models/zone_svm/zone_svm_bundle.joblib"
+  tda_ensemble_cnn_weight: 0.55          # E3.4
+  fusion_definition: "a * resnet + (1 - a) * tda"
+  fusion_a: 0.45                          # E0.6 kilitli görüntü ağırlığı
+  patient_threshold: 0.7172159718111142   # E0.6 kilitli eşik
+  seed: 42
+
+# --- Harici veri ve kollar ---
+external_data:
+  name: "VinDr-CXR (Hospital 108 & Hanoi Medical University Hospital)"
+  level: "image"        # VinDr metadata'sında hasta kimliği YOK
+  n_images: 400         # 150 nodül/kitle + 250 saf normal (seed 42)
+  images: "data/external_vindr/images/*.jpg"   # 3x indirgenmiş; spacing YOK
+  cohort: "data/external_vindr/cohort_with_diameters.csv"
+
+variant:
+  name: "Kalibrasyon + ölçek kolları"
+  arms:
+    linear: "8-bit × 16 (≈NODE21 12-bit), histogram eşleme YOK"
+    matched: "200-hasta havuzlanmış NODE21 referansına histogram eşleme (yalnızca doku)"
+    matched_scalenorm: "matched + akciğer yüksekliğine göre ölçek normalizasyonu"
+  subgroup_definition: "rel_size = bbox_max_dim_px / image_h üçte birlikleri (mm dönüşümü YOK)"
+
+# --- Girdi/çıktı sözleşmesi ---
+io:
+  report_dir: "artifacts/runs/V4_vindr_external_validation"
+  reports:
+    - "vindr_report_linear.json"
+    - "vindr_report_matched.json"
+    - "vindr_report_matched_scalenorm.json"
+    - "vindr_summary.json"
+  predictions:
+    - "vindr_predictions_<arm>.csv"
+  tracked_copies: "data/external_vindr/"

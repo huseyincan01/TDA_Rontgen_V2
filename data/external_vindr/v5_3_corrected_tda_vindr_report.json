@@ -1,0 +1,101 @@
+{
+  "experiment": "V5.3",
+  "question": "65535 niceleme düzeltmesi TDA dalını harici veride taşınır hâle getirdi mi?",
+  "cohort": {
+    "n_images": 400,
+    "n_positive": 150,
+    "n_negative": 250,
+    "level": "image",
+    "source": "VinDr-CXR 3x downsampled JPEG"
+  },
+  "protocol": {
+    "training_on_vindr": false,
+    "tda_bundles": "V5.1 (NODE21, kanonik yoğunluk)",
+    "resnet": "E0.6 checkpoint",
+    "calibration": "kanonik yoğunluk (per-kırpıntı doku p1–p99); histogram eşleme YOK",
+    "ranges": "ranges_a_density.json (NODE21-train türevi)",
+    "features_fill_ratio": 0.812025
+  },
+  "results": {
+    "tda_auc": 0.59592,
+    "tda_ci95": [
+      0.5475488802342652,
+      0.6449745131644965
+    ],
+    "resnet_auc": 0.6204,
+    "resnet_ci95": [
+      0.5608431501873332,
+      0.6763618267033584
+    ],
+    "fusion_a045": 0.6282533333333333,
+    "fusion_a045_ci95": [
+      0.5699100378815212,
+      0.6834297748183499
+    ],
+    "a_sweep": {
+      "0.00": 0.59592,
+      "0.05": 0.6261733333333334,
+      "0.10": 0.6299600000000001,
+      "0.15": 0.6275066666666667,
+      "0.20": 0.6296933333333333,
+      "0.25": 0.6291333333333333,
+      "0.30": 0.6283066666666666,
+      "0.35": 0.62932,
+      "0.40": 0.6281466666666666,
+      "0.45": 0.6282533333333333,
+      "0.50": 0.6288133333333333,
+      "0.55": 0.6279600000000001,
+      "0.60": 0.62748,
+      "0.65": 0.6279066666666666,
+      "0.70": 0.6302266666666667,
+      "0.75": 0.6316666666666667,
+      "0.80": 0.6276666666666666,
+      "0.85": 0.6237466666666667,
+      "0.90": 0.6216666666666667,
+      "0.95": 0.6201466666666666,
+      "1.00": 0.6204
+    },
+    "a_best": {
+      "a": 0.75,
+      "auc": 0.6316666666666667
+    },
+    "correlation_r": 0.29971581224087335
+  },
+  "subgroups_scale_free": {
+    "kucuk_tercile": {
+      "n_positive": 50,
+      "tda_auc": 0.59512,
+      "resnet_auc": 0.5823200000000001,
+      "fusion_auc": 0.6026
+    },
+    "orta_tercile": {
+      "n_positive": 50,
+      "tda_auc": 0.63564,
+      "resnet_auc": 0.6632399999999999,
+      "fusion_auc": 0.68116
+    },
+    "buyuk_tercile": {
+      "n_positive": 50,
+      "tda_auc": 0.5569999999999999,
+      "resnet_auc": 0.6156399999999999,
+      "fusion_auc": 0.601
+    }
+  },
+  "tertile_boundaries_rel_size": [
+    0.11144670388091435,
+    0.34520210001404694
+  ],
+  "v4_reference_matched_arm": {
+    "tda": 0.5409,
+    "resnet": 0.6204,
+    "fusion": 0.5438,
+    "a_opt": 1.0
+  },
+  "comparison_vs_v4": {
+    "delta_tda": 0.05501999999999996,
+    "delta_resnet": 0.0,
+    "delta_fusion_a045": 0.08445333333333338,
+    "a_opt_old": 1.0,
+    "a_opt_new": 0.75
+  }
+}

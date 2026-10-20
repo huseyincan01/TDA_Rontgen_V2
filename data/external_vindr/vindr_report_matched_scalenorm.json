@@ -1,0 +1,143 @@
+{
+  "arm": "matched_scalenorm",
+  "a_locked": 0.45,
+  "auc": {
+    "tda": 0.5109733333333333,
+    "resnet": 0.6203599999999999,
+    "fusion": 0.5352
+  },
+  "ci95": {
+    "tda": [
+      0.4521789532623394,
+      0.56880735048515
+    ],
+    "resnet": [
+      0.5609189075967217,
+      0.676335711219889
+    ],
+    "fusion": [
+      0.47652740991553566,
+      0.5914344808348504
+    ]
+  },
+  "pr_auc": {
+    "tda": 0.37167693119882483,
+    "resnet": 0.49457082763169186,
+    "fusion": 0.38295364441132684
+  },
+  "correlation_r_resnet_tda": 0.2727796551291363,
+  "fusion_delta_over_resnet": -0.0851599999999999,
+  "fusion_delta_ci95": [
+    -0.13015102749015983,
+    -0.04026532229450031
+  ],
+  "fusion_delta_p": 0.0,
+  "a_sweep": {
+    "0.00": 0.5109733333333333,
+    "0.05": 0.5129866666666667,
+    "0.10": 0.51688,
+    "0.15": 0.5210133333333333,
+    "0.20": 0.5252,
+    "0.25": 0.5283733333333334,
+    "0.30": 0.5313066666666667,
+    "0.35": 0.5333600000000001,
+    "0.40": 0.5348266666666666,
+    "0.45": 0.5352,
+    "0.50": 0.53568,
+    "0.55": 0.5361066666666666,
+    "0.60": 0.5360266666666667,
+    "0.65": 0.53712,
+    "0.70": 0.5375466666666666,
+    "0.75": 0.5386933333333334,
+    "0.80": 0.5413600000000001,
+    "0.85": 0.5453333333333333,
+    "0.90": 0.5499466666666666,
+    "0.95": 0.55784,
+    "1.00": 0.6203599999999999
+  },
+  "a_best_in_vindr": {
+    "a": 1.0,
+    "auc": 0.6203599999999999
+  },
+  "thresholds": {
+    "e0.6_locked_0.7172": {
+      "threshold": 0.7172159718111142,
+      "roc_auc": 0.5352,
+      "pr_auc": 0.383,
+      "accuracy": 0.5425,
+      "sensitivity": 0.3933,
+      "specificity": 0.632,
+      "precision": 0.3907,
+      "f1": 0.392,
+      "tp": 59,
+      "fp": 92,
+      "tn": 158,
+      "fn": 91,
+      "n_samples": 400,
+      "n_positive": 150,
+      "n_negative": 250
+    },
+    "vindr_youden": {
+      "threshold": 0.567719903623732,
+      "metrics": {
+        "threshold": 0.567719903623732,
+        "roc_auc": 0.5352,
+        "pr_auc": 0.383,
+        "accuracy": 0.48,
+        "sensitivity": 0.8533,
+        "specificity": 0.256,
+        "precision": 0.4076,
+        "f1": 0.5517,
+        "tp": 128,
+        "fp": 186,
+        "tn": 64,
+        "fn": 22,
+        "n_samples": 400,
+        "n_positive": 150,
+        "n_negative": 250
+      }
+    }
+  },
+  "subgroups_scale_free": {
+    "kucuk_tercile": {
+      "definition": "rel_size = bbox_max_dim_px / image_h üçte birlik dilimi",
+      "n_positive": 50,
+      "n_negative": 250,
+      "rel_size_range": [
+        0.0333333333333333,
+        0.1104166666666666
+      ],
+      "tda_auc": 0.48368,
+      "resnet_auc": 0.5823199999999998,
+      "fusion_auc": 0.50464
+    },
+    "orta_tercile": {
+      "definition": "rel_size = bbox_max_dim_px / image_h üçte birlik dilimi",
+      "n_positive": 50,
+      "n_negative": 250,
+      "rel_size_range": [
+        0.1119617224880382,
+        0.3427083333333333
+      ],
+      "tda_auc": 0.56104,
+      "resnet_auc": 0.66332,
+      "fusion_auc": 0.6006400000000001
+    },
+    "buyuk_tercile": {
+      "definition": "rel_size = bbox_max_dim_px / image_h üçte birlik dilimi",
+      "n_positive": 50,
+      "n_negative": 250,
+      "rel_size_range": [
+        0.3501896333754741,
+        2.096875
+      ],
+      "tda_auc": 0.4881999999999999,
+      "resnet_auc": 0.61544,
+      "fusion_auc": 0.50032
+    }
+  },
+  "subgroup_tertile_boundaries_rel_size": [
+    0.11144670388091435,
+    0.34520210001404694
+  ]
+}

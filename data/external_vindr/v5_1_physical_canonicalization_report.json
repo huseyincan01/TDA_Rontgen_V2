@@ -1,0 +1,276 @@
+{
+  "experiment": "V5.1",
+  "arms": {
+    "baseline": {
+      "val_label": {
+        "patient_auc": 0.8330055565961166,
+        "n_patients": 733,
+        "n_pos": 171
+      },
+      "source": {
+        "macro_ovr_auc": 0.8501002946421119,
+        "per_class": {
+          "chestxray14": 0.8793127147766323,
+          "jsrt": 0.9436825211555296,
+          "openi": 0.7284020327498589,
+          "padchest": 0.849003909886427
+        },
+        "n_train": 790,
+        "n_val": 172
+      },
+      "loo": {
+        "mean_auc": 0.7249407936437894,
+        "folds": {
+          "chestxray14": {
+            "patient_auc": 0.7380267222228469,
+            "n_test_patients": 2635,
+            "n_train_balanced_zones": 1034
+          },
+          "padchest": {
+            "patient_auc": 0.6405289663170821,
+            "n_test_patients": 1341,
+            "n_train_balanced_zones": 1034
+          },
+          "jsrt": {
+            "patient_auc": 0.7962666923914392,
+            "n_test_patients": 636,
+            "n_train_balanced_zones": 1034
+          }
+        }
+      },
+      "val_label_tta": {
+        "patient_auc": 0.8373498990655761,
+        "n_patients": 733,
+        "n_pos": 171
+      },
+      "source_tta": {
+        "macro_ovr_auc": 0.8517243299820993,
+        "per_class": {
+          "chestxray14": 0.8790378006872852,
+          "jsrt": 0.9463087248322148,
+          "openi": 0.7329192546583851,
+          "padchest": 0.8486315397505121
+        },
+        "n_train": 790,
+        "n_val": 172
+      },
+      "loo_tta": {
+        "mean_auc": 0.7255743155321263,
+        "folds": {
+          "chestxray14": {
+            "patient_auc": 0.7399554736705147,
+            "n_test_patients": 2635,
+            "n_train_balanced_zones": 1034
+          },
+          "padchest": {
+            "patient_auc": 0.6528693430249505,
+            "n_test_patients": 1341,
+            "n_train_balanced_zones": 1034
+          },
+          "jsrt": {
+            "patient_auc": 0.7838981299009137,
+            "n_test_patients": 636,
+            "n_train_balanced_zones": 1034
+          }
+        }
+      }
+    },
+    "a_density": {
+      "val_label": {
+        "patient_auc": 0.9211358764645896,
+        "n_patients": 733,
+        "n_pos": 171
+      },
+      "source": {
+        "macro_ovr_auc": 0.9554076878982583,
+        "per_class": {
+          "chestxray14": 0.9815807560137457,
+          "jsrt": 1.0,
+          "openi": 0.8949745906267645,
+          "padchest": 0.9450754049525227
+        },
+        "n_train": 790,
+        "n_val": 172
+      },
+      "loo": {
+        "mean_auc": 0.7860832457055867,
+        "folds": {
+          "chestxray14": {
+            "patient_auc": 0.74526425862537,
+            "n_test_patients": 2635,
+            "n_train_balanced_zones": 1034
+          },
+          "padchest": {
+            "patient_auc": 0.7550964716972941,
+            "n_test_patients": 1341,
+            "n_train_balanced_zones": 1034
+          },
+          "jsrt": {
+            "patient_auc": 0.8578890067940961,
+            "n_test_patients": 636,
+            "n_train_balanced_zones": 1034
+          }
+        }
+      },
+      "val_label_tta": {
+        "patient_auc": 0.9002570185844206,
+        "n_patients": 733,
+        "n_pos": 171
+      },
+      "source_tta": {
+        "macro_ovr_auc": 0.9622155133854107,
+        "per_class": {
+          "chestxray14": 0.9927147766323023,
+          "jsrt": 1.0,
+          "openi": 0.9028797289666854,
+          "padchest": 0.9532675479426549
+        },
+        "n_train": 790,
+        "n_val": 172
+      },
+      "loo_tta": {
+        "mean_auc": 0.7966911840895549,
+        "folds": {
+          "chestxray14": {
+            "patient_auc": 0.7722322436804576,
+            "n_test_patients": 2635,
+            "n_train_balanced_zones": 1034
+          },
+          "padchest": {
+            "patient_auc": 0.7741055203765838,
+            "n_test_patients": 1341,
+            "n_train_balanced_zones": 1034
+          },
+          "jsrt": {
+            "patient_auc": 0.843735788211623,
+            "n_test_patients": 636,
+            "n_train_balanced_zones": 1034
+          }
+        }
+      }
+    },
+    "b_density_scale": {
+      "val_label": {
+        "patient_auc": 0.8538740088655803,
+        "n_patients": 733,
+        "n_pos": 171
+      },
+      "source": {
+        "macro_ovr_auc": 0.9138150684149677,
+        "per_class": {
+          "chestxray14": 0.9440549828178695,
+          "jsrt": 0.9947475926466297,
+          "openi": 0.8119706380575946,
+          "padchest": 0.9044870601377769
+        },
+        "n_train": 790,
+        "n_val": 172
+      },
+      "loo": {
+        "mean_auc": 0.7399875300257364,
+        "folds": {
+          "chestxray14": {
+            "patient_auc": 0.7717748529040902,
+            "n_test_patients": 2635,
+            "n_train_balanced_zones": 1034
+          },
+          "padchest": {
+            "patient_auc": 0.7310591730288578,
+            "n_test_patients": 1341,
+            "n_train_balanced_zones": 1034
+          },
+          "jsrt": {
+            "patient_auc": 0.7171285641442608,
+            "n_test_patients": 636,
+            "n_train_balanced_zones": 1034
+          }
+        }
+      },
+      "val_label_tta": {
+        "patient_auc": 0.8761524213856112,
+        "n_patients": 733,
+        "n_pos": 171
+      },
+      "source_tta": {
+        "macro_ovr_auc": 0.9235411806682876,
+        "per_class": {
+          "chestxray14": 0.9518900343642611,
+          "jsrt": 0.9944557922381092,
+          "openi": 0.836815358554489,
+          "padchest": 0.9110035375162912
+        },
+        "n_train": 790,
+        "n_val": 172
+      },
+      "loo_tta": {
+        "mean_auc": 0.7304924166267953,
+        "folds": {
+          "chestxray14": {
+            "patient_auc": 0.7784734793664154,
+            "n_test_patients": 2635,
+            "n_train_balanced_zones": 1034
+          },
+          "padchest": {
+            "patient_auc": 0.74634858812074,
+            "n_test_patients": 1341,
+            "n_train_balanced_zones": 1034
+          },
+          "jsrt": {
+            "patient_auc": 0.6666551823932307,
+            "n_test_patients": 636,
+            "n_train_balanced_zones": 1034
+          }
+        }
+      }
+    }
+  },
+  "decisions": {
+    "a_density": {
+      "val_ok": true,
+      "loo_ok": true,
+      "source_ok": false,
+      "delta_val": 0.08813031986847297,
+      "delta_loo": 0.06114245206179736,
+      "delta_source": 0.10530739325614635,
+      "decision": "KILL"
+    },
+    "b_density_scale": {
+      "val_ok": true,
+      "loo_ok": true,
+      "source_ok": false,
+      "delta_val": 0.020868452269463655,
+      "delta_loo": 0.015046736381946979,
+      "delta_source": 0.06371477377285584,
+      "decision": "KILL"
+    }
+  },
+  "config": {
+    "grid": 20,
+    "sigma": 1.0,
+    "svm": {
+      "C": 10.0,
+      "gamma": "scale"
+    },
+    "loo_cap": 1034,
+    "loo_sources": [
+      "chestxray14",
+      "padchest",
+      "jsrt"
+    ],
+    "seed": 42,
+    "target_lung_height_px": 809.0,
+    "rules": "val>=-0.005 & loo>=+0.015 & source<=-0.03"
+  },
+  "owner_override": {
+    "date": "2026-10-17",
+    "decision": "KEEP",
+    "applies_to": "a_density (65535 niceleme hatasinin duzeltilmesi)",
+    "rationale": "A2 kaynak AUC'nin yukselmesi basarisizlik degildir: 4-bit'e sikismis bulanik temsili 8-bit'e (256 seviye) cikardigimiz icin bilgi miktari artmistir; cihaza ozgu doku da hastalik sinyali de birlikte guclenmistir. Asil hedefler buyuk olcude artmistir: val label AUC +0.0881, LOO +0.0611 (+TTA ile LOO +0.0718). Bu nedenle 65535 niceleme hatasinin duzeltilmesi KEEP olarak isaretlenmistir.",
+    "note_on_rule": "Kural-temelli karar (decisions) KILL olarak kayitli kaldi; kapi degisikligi bir sonraki deney icin AYRICA on-kayit edilmelidir (LOO birincil + val guardrail; kaynak AUC tanisal, kapi degil).",
+    "follow_ups": [
+      "V5.2: duzeltilmis TDA -> 5-zon CNN + SVM ensemble ve ince ayarli ResNet18 fuzyonu (val-only)",
+      "V5.3: VinDr-CXR harici dogrulamasinin duzeltilmis TDA ile tekrari",
+      "V5.1b: sabit referans normalizasyon kontrolu (uyarlanabilir pencere confound'u)"
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "experiment": "A0/A1 — sadece meta-veri (spacing/çözünürlük) kısayol testi",
+  "n_patients": 4882,
+  "features": [
+    "orig_h",
+    "orig_w",
+    "spacing_y",
+    "spacing_x",
+    "aspect_ratio",
+    "pixel_area"
+  ],
+  "split_sizes": {
+    "train": 3414,
+    "val": 734,
+    "test": 734
+  },
+  "metrics": {
+    "logreg": {
+      "val_roc_auc": 0.6849913101051064,
+      "test_roc_auc": 0.657587105851196
+    },
+    "gradient_boosting": {
+      "val_roc_auc": 0.6783704378051808,
+      "test_roc_auc": 0.634533021600596
+    },
+    "max_val_roc_auc": 0.6849913101051064
+  },
+  "spacing_y_per_source": {
+    "chestxray14": {
+      "count": 617,
+      "mean": 0.1474,
+      "std": 0.0175
+    },
+    "jsrt": {
+      "count": 149,
+      "mean": 0.3121,
+      "std": 0.0207
+    },
+    "node21_control": {
+      "count": 3748,
+      "mean": 0.2725,
+      "std": 0.097
+    },
+    "openi": {
+      "count": 54,
+      "mean": 0.3315,
+      "std": 0.0296
+    },
+    "padchest": {
+      "count": 314,
+      "mean": 0.2989,
+      "std": 0.0731
+    }
+  },
+  "feature_means_by_label": {
+    "0": {
+      "orig_h": 1024.0,
+      "orig_w": 1024.0,
+      "spacing_y": 0.2725,
+      "spacing_x": 0.2725,
+      "aspect_ratio": 1.0,
+      "pixel_area": 1048576.0
+    },
+    "1": {
+      "orig_h": 1024.0,
+      "orig_w": 1024.0,
+      "spacing_y": 0.2197,
+      "spacing_x": 0.2197,
+      "aspect_ratio": 1.0,
+      "pixel_area": 1048576.0
+    }
+  },
+  "decision": "KISMI_KISAYOL",
+  "interpretation": "Meta-veri (spacing/boyut) tek başına kısmi kısayol (val AUC ~0.65-0.80). Bu yüzden NODE21 içi başarım kısmen donanım/spacing dağılımından etkilenir; kurum dışı genelleme iddiaları bu confound ile birlikte okunmalıdır.",
+  "note": "test_roc_auc yalnızca bilgi amaçlıdır; test bütçesi v3'te tüketilmiştir (6/6)."
+}

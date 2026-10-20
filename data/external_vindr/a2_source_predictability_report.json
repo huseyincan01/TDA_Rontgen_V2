@@ -1,0 +1,124 @@
+{
+  "experiment": "A2 — kaynak (cihaz/kurum) ayrıştırılabilirliği",
+  "question": "Temsillerimiz etiketten bağımsız olarak hangi cihazdan geldiğini kodluyor mu?",
+  "design": {
+    "scope": "yalnızca nodül-pozitif hastalar (etiketten bağımsız cihaz değişkeni)",
+    "level": "hasta düzeyi (5 zon ortalaması)",
+    "split": "patient_splits train → val; TEST HASTALARI KULLANILMADI",
+    "classes": [
+      "chestxray14",
+      "jsrt",
+      "openi",
+      "padchest"
+    ]
+  },
+  "chance_reference": 0.563953488372093,
+  "representations": {
+    "tda_pi_800": {
+      "logreg": {
+        "accuracy": 0.7034883720930233,
+        "majority_baseline_accuracy": 0.563953488372093,
+        "macro_ovr_roc_auc": 0.8501002946421119,
+        "per_class_ovr_auc": {
+          "chestxray14": 0.8793127147766323,
+          "jsrt": 0.9436825211555296,
+          "openi": 0.7284020327498589,
+          "padchest": 0.849003909886427
+        },
+        "n_train": 790,
+        "n_val": 172,
+        "class_support_val": {
+          "chestxray14": 97,
+          "jsrt": 23,
+          "openi": 11,
+          "padchest": 41
+        },
+        "pipeline": "StandardScaler -> LogisticRegression"
+      },
+      "hgb": {
+        "accuracy": 0.8023255813953488,
+        "majority_baseline_accuracy": 0.563953488372093,
+        "macro_ovr_roc_auc": 0.9110266638549469,
+        "per_class_ovr_auc": {
+          "chestxray14": 0.9223367697594501,
+          "jsrt": 0.985701779982492,
+          "openi": 0.8176171654432524,
+          "padchest": 0.9184509402345932
+        },
+        "n_train": 790,
+        "n_val": 172,
+        "class_support_val": {
+          "chestxray14": 97,
+          "jsrt": 23,
+          "openi": 11,
+          "padchest": 41
+        },
+        "pipeline": "HistGradientBoostingClassifier"
+      }
+    },
+    "resnet18_512": {
+      "logreg": {
+        "accuracy": 0.8953488372093024,
+        "majority_baseline_accuracy": 0.563953488372093,
+        "macro_ovr_roc_auc": 0.9493837823700886,
+        "per_class_ovr_auc": {
+          "chestxray14": 0.9947766323024054,
+          "jsrt": 0.9956229938721914,
+          "openi": 0.846979107848673,
+          "padchest": 0.9601563954570843
+        },
+        "n_train": 790,
+        "n_val": 172,
+        "class_support_val": {
+          "chestxray14": 97,
+          "jsrt": 23,
+          "openi": 11,
+          "padchest": 41
+        },
+        "pipeline": "StandardScaler -> LogisticRegression"
+      },
+      "hgb": {
+        "accuracy": 0.872093023255814,
+        "majority_baseline_accuracy": 0.563953488372093,
+        "macro_ovr_roc_auc": 0.9434138986356169,
+        "per_class_ovr_auc": {
+          "chestxray14": 0.9920274914089348,
+          "jsrt": 0.9927049897869857,
+          "openi": 0.8328627893845285,
+          "padchest": 0.9560603239620182
+        },
+        "n_train": 790,
+        "n_val": 172,
+        "class_support_val": {
+          "chestxray14": 97,
+          "jsrt": 23,
+          "openi": 11,
+          "padchest": 41
+        },
+        "pipeline": "HistGradientBoostingClassifier"
+      }
+    }
+  },
+  "metadata_only_baseline": {
+    "accuracy": 0.8023255813953488,
+    "majority_baseline_accuracy": 0.563953488372093,
+    "macro_ovr_roc_auc": 0.9557909969696654,
+    "per_class_ovr_auc": {
+      "chestxray14": 0.9994501718213059,
+      "jsrt": 0.9530201342281879,
+      "openi": 0.9395821569734614,
+      "padchest": 0.9311115248557066
+    },
+    "n_train": 790,
+    "n_val": 172,
+    "class_support_val": {
+      "chestxray14": 97,
+      "jsrt": 23,
+      "openi": 11,
+      "padchest": 41
+    },
+    "pipeline": "StandardScaler -> LogisticRegression"
+  },
+  "interpretation": "Yüksek AUC, temsilin fiziksel/kurumsal imza taşıdığını gösterir; bu imza iç testte etiketle ilişkili olduğu için başarımı şişirir, dış merkezde ise çöker. Hedef: label AUC'sini korurken bu AUC'yi düşürmek.",
+  "caveat": "Kaynaklar nodül boyutu/görünüş dağılımı bakımından da farklı olabilir; ayrıştırılabilirliğin bir kısmı fizik değil anatomi/hastalık spektrumu olabilir. Bu yüzden 'spacing-only' referansı ve boyut-eşleştirilmiş kontroller birlikte okunmalı."
+}

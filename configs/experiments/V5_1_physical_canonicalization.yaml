@@ -1,0 +1,68 @@
+# Deney Konfigürasyonu — V5.1: Fiziksel kanonikleştirme (yoğunluk + ölçek) ve etiketsiz TTA
+#
+# Bu deney, V4 (VinDr harici doğrulama) + A2 (kaynak ayrıştırılabilirliği) teşhisinden
+# doğdu: temsillerimiz **cihaz/ölçek** bilgisini hastalık kadar iyi kodluyor.
+# Hedef: bu fiziksel imzayı azaltırken iç başarımı korumak.
+
+experiment:
+  id: "V5.1"
+  slug: "physical_canonicalization"
+  phase: 5
+  workstream: "W5"
+  date: "2026-10-17"
+
+# --- Ön-kayıt (koşu başlamadan yazıldı) ---
+preregistration:
+  hypothesis: >
+    Zon kesitlerini doku p1–p99 aralığına kanonikleştirmek (mutlak yoğunluk/bit-derinliği
+    bağımlılığını kaldırmak) ve akciğer yüksekliğine göre ölçeklemek (piksel-ölçeği
+    bağımlılığını kaldırmak), **5-zon mimarisi korunarak** iç val başarımını korurken
+    (i) kaynak (cihaz) ayrıştırılabilirliğini düşürür ve (ii) kaynak-dışı (LOO) genellemeyi artırır.
+  single_variable: "Filtrasyonun yoğunluk/ölçek kanonikleştirmesi (a → b, tek müdahale eklenir)"
+  success_threshold:
+    metric: "üçlü kapı"
+    val_label_auc: ">= baseline − 0.005"
+    loo_mean_auc: ">= baseline + 0.015 (E5.3b protokolü, eşit boyut 1034)"
+    source_auc: "<= baseline − 0.03 (A2 protokolü)"
+    ci_required: false   # kapı üçlüsü deterministik; bootstrap ayrıca raporlanır
+  kill_criterion: "Üç koşuldan en az biri sağlanmazsa KILL."
+
+# --- Değişmeyen referans ---
+baseline:
+  features: "data/processed/features_v2/X_zone_features.npy"   # v2 dondurulmuş PI
+  meta: "data/processed/features_v2/features_metadata.csv"
+  splits: "data/processed/splits_v2/zone_splits.csv"
+  patient_splits: "data/processed/splits_v2/patient_splits.csv"
+  tda_ranges: "data/processed/tda_config/tda_ranges_v2.json"
+  seed: 42
+  model: "RBF-SVM (tek değişken için SABİT; arm başına tuning yapılmaz)"
+  svm: {C: 10.0, gamma: "scale", probability: true}
+  reference_metrics:
+    val_label_auc: 0.8330        # bu protokolle ölçülen baseline (v3 tuned: 0.8399)
+    source_auc: 0.8501           # A2 ile birebir aynı
+    loo_mean_auc: 0.7249         # E5.3b protokolü, SVM (yayınlanan CNN: 0.7631)
+
+# --- Basamaklar (tek değişken: her basamak bire bir müdahale ekler) ---
+variant:
+  arms:
+    a_density: "doku p1–p99 → [0,255] kanonik yoğunluk (mutlak yoğunluk bağımsız)"
+    b_density_scale: "a + akciğer yüksekliğine göre ölçek (hedef = NODE21 train medyanı)"
+  tta_rows: "Her kol için +TTA: standardizasyon hedef (etiketsiz) kümesinde yeniden fit edilir"
+  tta_definition: >
+    Etiketsiz test-time adaptation. SVM dalında BN yoktur; TTA, öznitelik
+    standardizasyonunun (StandardScaler) HEDEF kümenin etiketsiz istatistiğiyle
+    yeniden fit edilmesiyle uygulanır (BN running-stats recalibrasyonunun karşılığı).
+    Eğitim girdileri/etiketleri kilitlidir; hedef etiketleri kullanılmaz.
+  reported_separately: true   # Kural: saf zero-shot ve +TTA ayrı satır
+
+# --- Kapsam kuralı ---
+scope:
+  preserve_5_zones: true      # tek kanonik akciğer görüntüsüne GEÇİLMEZ
+  paper_draft_impact: "paper_draft.md iskeleti korunur; sonuçlar v3 yapısını bozmadan eklenir"
+
+# --- Girdi/çıktı sözleşmesi ---
+io:
+  cache: "data/processed/features_v5_1/"
+  report: "data/external_vindr/v5_1_physical_canonicalization_report.json"
+  run_dir: "artifacts/runs/V5.1_physical_canonicalization"
+  script: "pipelines/exp/V5_1_physical_canonicalization.py"

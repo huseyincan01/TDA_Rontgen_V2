@@ -1,0 +1,26 @@
+{
+  "method": "v4_deterministic_cohort_build",
+  "seed": 42,
+  "source": "C:\\Users\\Huseyincan\\codes\\rontgen_V2\\venv\\Lib\\site-packages\\torchxrayvision\\data\\vinbigdata-train.csv.gz",
+  "logic": {
+    "positive": "class_name ~ 'nodule|mass'",
+    "normal": "tüm rad_id'ler 'No finding'",
+    "size_metric": "bbox_max_dim_px (annotasyon/orijinal DICOM uzayı, maks. anotatör)",
+    "scale_free_metric": "rel_size = bbox_max_dim_px / image_h",
+    "mm_conversion": "YOK — JPEG kohortu indirgenmiş, DICOM spacing yok"
+  },
+  "n_positive": 150,
+  "n_normal": 250,
+  "n_images_present": 400,
+  "bbox_max_dim_px": {
+    "min": 32.0,
+    "median": 197.0,
+    "max": 1698.0
+  },
+  "image_h": {
+    "min": 640.0,
+    "median": 960.0,
+    "max": 1136.0
+  },
+  "overlap_with_previous_cohort": 400
+}

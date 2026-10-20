@@ -1,0 +1,42 @@
+# Deney Konfigürasyonu — V5.1b: Sabit (tüm-akciğer) referans kontrolü
+#
+# V5.1'deki `a_density` p1–p99'u HER ZON KIRPINTISININ kendi dokusundan hesaplıyordu
+# (uyarlanabilir pencere). Bu deney, V5.2'deki 0,9856'lık füzyon sıçramasının bu
+# artefakttan gelmediğini doğrular: p1–p99 aynı hastanın TÜM AKCİĞER dokusundan hesaplanır.
+
+experiment:
+  id: "V5.1b"
+  slug: "fixed_reference"
+  phase: 5
+  workstream: "W5"
+  date: "2026-10-17"
+
+preregistration:
+  hypothesis: >
+    Tüm-akciğer referanslı p1–p99 (per-kırpıntı uyarlanabilir pencere YOK) aynı
+    CNN ensemble + füzyon val başarımını verir ⇒ V5.2'nin 0,9856'sı pencere artefaktı değildir.
+  single_variable: "p1–p99 referansı: per-kırpıntı (a_density) ↔ tüm-akciğer (c_lungref)"
+  success_threshold:
+    metric: "fusion_val_auc"
+    tolerance: 0.005          # |c_lungref − 0,9856| ≤ 0,005 ⇒ artefakt YOK
+  kill_criterion: >
+    c_lungref füzyonu v2 seviyesine (~0,973) düşerse ⇒ 0,9856 uyarlanabilir pencere
+    artefaktıydı; KEEP, a_density'den c_lungref'e devredilir.
+
+baseline:
+  references:
+    a_density_fusion_val: 0.9856     # V5.2
+    v2_fusion_val: 0.9729            # V5.2
+    a_density_val_label_auc: 0.9211
+    a_density_loo: 0.7861
+    a_density_source_auc: 0.9554
+
+variant:
+  arm: "c_lungref"
+  definition: "scaled = (v − p1_akciğer)/(p99_akciğer − p1_akciğer) × 255 ; p1/p99 = 5 zon birleşimi"
+
+io:
+  cache: "data/processed/features_v5_1/"
+  report: "data/external_vindr/v5_1b_fixed_reference_report.json"
+  run_dir: "artifacts/runs/V5.1b_fixed_reference"
+  script: "pipelines/exp/V5_1b_fixed_reference.py"
