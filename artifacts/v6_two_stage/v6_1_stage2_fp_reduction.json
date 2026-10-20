@@ -1,0 +1,251 @@
+{
+  "experiment": "V6.1",
+  "stage": "2. asama lokal TDA + FP eleme (val)",
+  "config": {
+    "inner": 32,
+    "outer": 64,
+    "grid": 20,
+    "kd_tree": "c_lungref korunur (yerel min-max yok)",
+    "train_candidates": 40000,
+    "train_positive": 611,
+    "positive_ratio": 0.0153,
+    "ranges": {
+      "h0_birth": [
+        0.0,
+        230.0
+      ],
+      "h0_pers": [
+        0.0,
+        226.0
+      ],
+      "h1_birth": [
+        25.0,
+        248.0
+      ],
+      "h1_pers": [
+        0.0,
+        33.0
+      ],
+      "n_h0": 28854,
+      "n_h1": 41274
+    },
+    "train_patients": 800,
+    "val_patients": 734,
+    "froc_convention": "duplicate hit'ler FP sayılır",
+    "K_budgets": [
+      30,
+      50
+    ]
+  },
+  "results": {
+    "M5_heatTTA|K30|a_stage1": {
+      "froc": {
+        "0.5": 0.5238,
+        "1": 0.6623,
+        "2": 0.7403,
+        "4": 0.8442
+      },
+      "patient_auc": {
+        "top1": 0.795,
+        "top3": 0.807,
+        "noisyor": 0.802
+      }
+    },
+    "M5_heatTTA|K30|b_tda_spatial": {
+      "froc": {
+        "0.5": 0.3333,
+        "1": 0.4675,
+        "2": 0.5584,
+        "4": 0.7013
+      },
+      "patient_auc": {
+        "top1": 0.8759,
+        "top3": 0.9102,
+        "noisyor": 0.9187
+      }
+    },
+    "M5_heatTTA|K30|c_patch_cnn": {
+      "froc": {
+        "0.5": 0.0823,
+        "1": 0.1342,
+        "2": 0.1991,
+        "4": 0.303
+      },
+      "patient_auc": {
+        "top1": 0.6528,
+        "top3": 0.6604,
+        "noisyor": 0.6566
+      }
+    },
+    "M5_heatTTA|K30|d_fusion": {
+      "froc": {
+        "0.5": 0.5671,
+        "1": 0.6537,
+        "2": 0.7273,
+        "4": 0.8312
+      },
+      "patient_auc": {
+        "top1": 0.9183,
+        "top3": 0.9312,
+        "noisyor": 0.9371
+      }
+    },
+    "M5_heatTTA|K50|a_stage1": {
+      "froc": {
+        "0.5": 0.5238,
+        "1": 0.6623,
+        "2": 0.7403,
+        "4": 0.8442
+      },
+      "patient_auc": {
+        "top1": 0.795,
+        "top3": 0.807,
+        "noisyor": 0.802
+      }
+    },
+    "M5_heatTTA|K50|b_tda_spatial": {
+      "froc": {
+        "0.5": 0.2814,
+        "1": 0.381,
+        "2": 0.5108,
+        "4": 0.6017
+      },
+      "patient_auc": {
+        "top1": 0.8722,
+        "top3": 0.911,
+        "noisyor": 0.9191
+      }
+    },
+    "M5_heatTTA|K50|c_patch_cnn": {
+      "froc": {
+        "0.5": 0.0519,
+        "1": 0.0866,
+        "2": 0.1645,
+        "4": 0.2078
+      },
+      "patient_auc": {
+        "top1": 0.6601,
+        "top3": 0.6666,
+        "noisyor": 0.6613
+      }
+    },
+    "M5_heatTTA|K50|d_fusion": {
+      "froc": {
+        "0.5": 0.5325,
+        "1": 0.632,
+        "2": 0.7056,
+        "4": 0.7835
+      },
+      "patient_auc": {
+        "top1": 0.9142,
+        "top3": 0.9315,
+        "noisyor": 0.9359
+      }
+    },
+    "M5M6TTA|K30|a_stage1": {
+      "froc": {
+        "0.5": 0.2814,
+        "1": 0.4026,
+        "2": 0.5195,
+        "4": 0.6234
+      },
+      "patient_auc": {
+        "top1": 0.6879,
+        "top3": 0.7085,
+        "noisyor": 0.7111
+      }
+    },
+    "M5M6TTA|K30|b_tda_spatial": {
+      "froc": {
+        "0.5": 0.3463,
+        "1": 0.4545,
+        "2": 0.5671,
+        "4": 0.697
+      },
+      "patient_auc": {
+        "top1": 0.8947,
+        "top3": 0.9249,
+        "noisyor": 0.9285
+      }
+    },
+    "M5M6TTA|K30|c_patch_cnn": {
+      "froc": {
+        "0.5": 0.1126,
+        "1": 0.1775,
+        "2": 0.2511,
+        "4": 0.4069
+      },
+      "patient_auc": {
+        "top1": 0.6513,
+        "top3": 0.6485,
+        "noisyor": 0.644
+      }
+    },
+    "M5M6TTA|K30|d_fusion": {
+      "froc": {
+        "0.5": 0.5108,
+        "1": 0.6234,
+        "2": 0.71,
+        "4": 0.7792
+      },
+      "patient_auc": {
+        "top1": 0.9044,
+        "top3": 0.9377,
+        "noisyor": 0.9477
+      }
+    },
+    "M5M6TTA|K50|a_stage1": {
+      "froc": {
+        "0.5": 0.2814,
+        "1": 0.4026,
+        "2": 0.5195,
+        "4": 0.6234
+      },
+      "patient_auc": {
+        "top1": 0.6879,
+        "top3": 0.7085,
+        "noisyor": 0.7111
+      }
+    },
+    "M5M6TTA|K50|b_tda_spatial": {
+      "froc": {
+        "0.5": 0.3117,
+        "1": 0.4113,
+        "2": 0.5108,
+        "4": 0.6147
+      },
+      "patient_auc": {
+        "top1": 0.8818,
+        "top3": 0.9215,
+        "noisyor": 0.9261
+      }
+    },
+    "M5M6TTA|K50|c_patch_cnn": {
+      "froc": {
+        "0.5": 0.0736,
+        "1": 0.0996,
+        "2": 0.1775,
+        "4": 0.2597
+      },
+      "patient_auc": {
+        "top1": 0.6609,
+        "top3": 0.667,
+        "noisyor": 0.6617
+      }
+    },
+    "M5M6TTA|K50|d_fusion": {
+      "froc": {
+        "0.5": 0.4978,
+        "1": 0.6061,
+        "2": 0.6753,
+        "4": 0.7662
+      },
+      "patient_auc": {
+        "top1": 0.9069,
+        "top3": 0.9425,
+        "noisyor": 0.9512
+      }
+    }
+  },
+  "notes": "1. asama dondurulmus checkpoint'ler kullanildi; disk yazimi yok (yalniz JSON+model)."
+}

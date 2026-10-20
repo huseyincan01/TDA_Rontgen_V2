@@ -1,0 +1,19 @@
+{
+  "n_positive_with_bbox": 150,
+  "assumption": "original = 3x JPEG (fit_ratio=1.0)",
+  "metric": "görüntü başına >=1 nodül yakalandı (Kriter-1)",
+  "recall": {
+    "M5_heatTTA": {
+      "10": 0.7667,
+      "20": 0.86,
+      "30": 0.88,
+      "50": 0.9
+    },
+    "M5M6TTA": {
+      "10": 0.7267,
+      "20": 0.82,
+      "30": 0.8733,
+      "50": 0.8933
+    }
+  }
+}

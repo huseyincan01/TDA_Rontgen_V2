@@ -1,0 +1,78 @@
+{
+  "experiment": "V6.3",
+  "purpose": "VinDr bilesen otopsisi + V5.3(global)/V6.2(lokal) tamamlayicilik + nihai sabitleme",
+  "node21_val": {
+    "M5_heatTTA|K30": {
+      "n_patients": 734,
+      "n_lesions": 231,
+      "auc_stage1": 0.802,
+      "auc_tda_hgb": 0.9187,
+      "auc_e_fusion": 0.9358,
+      "auc_v53_global": 0.9821,
+      "r_v53_vs_v6": 0.4372,
+      "auc_combined_rankavg": 0.987,
+      "bridge_lr": {
+        "coef": [
+          7.1008124351501465,
+          4.657317638397217
+        ],
+        "intercept": -8.66407585144043
+      }
+    },
+    "M5M6TTA|K50": {
+      "n_patients": 734,
+      "n_lesions": 231,
+      "auc_stage1": 0.7111,
+      "auc_tda_hgb": 0.9261,
+      "auc_e_fusion": 0.9546,
+      "auc_v53_global": 0.9821,
+      "r_v53_vs_v6": 0.3852,
+      "auc_combined_rankavg": 0.9921,
+      "bridge_lr": {
+        "coef": [
+          6.703023910522461,
+          5.293010234832764
+        ],
+        "intercept": -8.863059043884277
+      }
+    }
+  },
+  "vindr": {
+    "n_images": 400,
+    "n_positive": 150,
+    "auc_stage1": 0.4618,
+    "auc_tda_hgb": 0.5901,
+    "auc_e_fusion": 0.5911,
+    "auc_v53_global": 0.6283,
+    "r_v53_vs_v6": 0.359,
+    "auc_combined_rankavg": 0.6214,
+    "auc_combined_bridge_lr": 0.6244,
+    "bbox_recall": {
+      "available": true,
+      "assumption": "orijinal = 3x JPEG",
+      "fit_ratio": 1.0
+    }
+  },
+  "final_configs": {
+    "max_auc": {
+      "stage1": "M5M6TTA",
+      "K": 50,
+      "stage2": "e_fusion_tda (Aşama-1 + lokal TDA-HGB)",
+      "patient_auc": 0.9546,
+      "note": "yama CNN mimariden ÇIKARILDI (0.646 AUC, gereksiz)"
+    },
+    "froc_optimal": {
+      "stage1": "M5_heatTTA",
+      "K": 30,
+      "stage2": "f_hierarchical (e_fusion × P_NoisyOR)",
+      "froc": "0.589/0.658/0.753/0.857"
+    }
+  },
+  "artifacts": {
+    "stage2_final": "checkpoints/stage2_final_tda_hgb.joblib",
+    "stage1": [
+      "checkpoints/M5_centernet.pt",
+      "checkpoints/M6_fcos.pt"
+    ]
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "experiment": "V6.2",
+  "stage": "duzeltilmis FROC + dogrusal olmayan TDA toplulugu + hiyerarsik kalibrasyon + VinDr transfer",
+  "protocol": {
+    "froc": "post-fusion NMS(20px) + duplikasyon IGNORE (LUNA16 stili)",
+    "tda_ensemble": "HGB + RBF-SVM + MLP (rank-normalize ortalama)",
+    "hierarchical": "S_final = p_aday x P_NoisyOR(hasta)"
+  },
+  "node21_val": {
+    "M5_heatTTA|K30|a_stage1": {
+      "froc": {
+        "0.5": 0.5238,
+        "1": 0.6667,
+        "2": 0.7403,
+        "4": 0.8442
+      },
+      "patient_auc": {
+        "top1": 0.795,
+        "top3": 0.807,
+        "noisyor": 0.802
+      }
+    },
+    "M5_heatTTA|K30|b_tda_hgb": {
+      "froc": {
+        "0.5": 0.3377,
+        "1": 0.4719,
+        "2": 0.5584,
+        "4": 0.7013
+      },
+      "patient_auc": {
+        "top1": 0.8759,
+        "top3": 0.9102,
+        "noisyor": 0.9187
+      }
+    },
+    "M5_heatTTA|K30|b2_tda_ens": {
+      "froc": {
+        "0.5": 0.1732,
+        "1": 0.2468,
+        "2": 0.3766,
+        "4": 0.4892
+      },
+      "patient_auc": {
+        "top1": 0.6078,
+        "top3": 0.6504,
+        "noisyor": 0.6555
+      }
+    },
+    "M5_heatTTA|K30|c_patch_cnn": {
+      "froc": {
+        "0.5": 0.0736,
+        "1": 0.1299,
+        "2": 0.1861,
+        "4": 0.3074
+      },
+      "patient_auc": {
+        "top1": 0.6458,
+        "top3": 0.6484,
+        "noisyor": 0.6462
+      }
+    },
+    "M5_heatTTA|K30|d_fusion_all": {
+      "froc": {
+        "0.5": 0.5801,
+        "1": 0.6537,
+        "2": 0.7273,
+        "4": 0.8398
+      },
+      "patient_auc": {
+        "top1": 0.918,
+        "top3": 0.9311,
+        "noisyor": 0.9368
+      }
+    },
+    "M5_heatTTA|K30|e_fusion_tda": {
+      "froc": {
+        "0.5": 0.5628,
+        "1": 0.6364,
+        "2": 0.7273,
+        "4": 0.8355
+      },
+      "patient_auc": {
+        "top1": 0.9159,
+        "top3": 0.9293,
+        "noisyor": 0.9358
+      }
+    },
+    "M5_heatTTA|K30|f_hierarchical": {
+      "froc": {
+        "0.5": 0.5887,
+        "1": 0.658,
+        "2": 0.7532,
+        "4": 0.8571
+      },
+      "patient_auc": {
+        "top1": 0.9226,
+        "top3": 0.9328,
+        "noisyor": 0.9358
+      }
+    },
+    "M5M6TTA|K50|a_stage1": {
+      "froc": {
+        "0.5": 0.2814,
+        "1": 0.4026,
+        "2": 0.5195,
+        "4": 0.6234
+      },
+      "patient_auc": {
+        "top1": 0.6879,
+        "top3": 0.7085,
+        "noisyor": 0.7111
+      }
+    },
+    "M5M6TTA|K50|b_tda_hgb": {
+      "froc": {
+        "0.5": 0.3117,
+        "1": 0.4113,
+        "2": 0.5152,
+        "4": 0.6147
+      },
+      "patient_auc": {
+        "top1": 0.8818,
+        "top3": 0.9215,
+        "noisyor": 0.9261
+      }
+    },
+    "M5M6TTA|K50|b2_tda_ens": {
+      "froc": {
+        "0.5": 0.1688,
+        "1": 0.2814,
+        "2": 0.3853,
+        "4": 0.4719
+      },
+      "patient_auc": {
+        "top1": 0.6026,
+        "top3": 0.6477,
+        "noisyor": 0.6532
+      }
+    },
+    "M5M6TTA|K50|c_patch_cnn": {
+      "froc": {
+        "0.5": 0.0519,
+        "1": 0.1169,
+        "2": 0.1861,
+        "4": 0.2554
+      },
+      "patient_auc": {
+        "top1": 0.65,
+        "top3": 0.6584,
+        "noisyor": 0.6522
+      }
+    },
+    "M5M6TTA|K50|d_fusion_all": {
+      "froc": {
+        "0.5": 0.5108,
+        "1": 0.6104,
+        "2": 0.6797,
+        "4": 0.7662
+      },
+      "patient_auc": {
+        "top1": 0.9064,
+        "top3": 0.9424,
+        "noisyor": 0.9509
+      }
+    },
+    "M5M6TTA|K50|e_fusion_tda": {
+      "froc": {
+        "0.5": 0.5281,
+        "1": 0.6147,
+        "2": 0.6883,
+        "4": 0.7706
+      },
+      "patient_auc": {
+        "top1": 0.9111,
+        "top3": 0.9447,
+        "noisyor": 0.9546
+      }
+    },
+    "M5M6TTA|K50|f_hierarchical": {
+      "froc": {
+        "0.5": 0.5238,
+        "1": 0.632,
+        "2": 0.7143,
+        "4": 0.7835
+      },
+      "patient_auc": {
+        "top1": 0.9134,
+        "top3": 0.9429,
+        "noisyor": 0.9472
+      }
+    }
+  },
+  "vindr_zeroshot": {
+    "n_images": 400,
+    "n_positive": 150,
+    "auc_fusion_all": 0.5915,
+    "auc_fusion_tda": 0.591,
+    "v5_3_reference": 0.6283
+  },
+  "v5_3_reference_vindr_auc": 0.6283
+}

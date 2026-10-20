@@ -1,0 +1,105 @@
+{
+  "experiment": "V6.5b",
+  "config": [
+    "scale",
+    1.0
+  ],
+  "pca_components": 128,
+  "pca_explained_var": 0.9196,
+  "folds": 5,
+  "N": [
+    0,
+    10,
+    20,
+    40,
+    80,
+    160
+  ],
+  "curve": {
+    "0": {
+      "bbox_labels_mean": 0.6593,
+      "bbox_labels_std": 0.0442,
+      "image_labels_mean": 0.6593,
+      "image_labels_std": 0.0442,
+      "combined_bbox_mean": 0.6673,
+      "combined_bbox_std": 0.0309,
+      "froc_mean": {
+        "0.5": 0.1192,
+        "1": 0.1645,
+        "2": 0.2115,
+        "4": 0.24
+      }
+    },
+    "10": {
+      "bbox_labels_mean": 0.6057,
+      "bbox_labels_std": 0.0829,
+      "image_labels_mean": 0.6305,
+      "image_labels_std": 0.0336,
+      "combined_bbox_mean": 0.649,
+      "combined_bbox_std": 0.0585,
+      "froc_mean": {
+        "0.5": 0.0504,
+        "1": 0.0749,
+        "2": 0.0999,
+        "4": 0.1553
+      }
+    },
+    "20": {
+      "bbox_labels_mean": 0.5508,
+      "bbox_labels_std": 0.1114,
+      "image_labels_mean": 0.6548,
+      "image_labels_std": 0.0538,
+      "combined_bbox_mean": 0.6144,
+      "combined_bbox_std": 0.0618,
+      "froc_mean": {
+        "0.5": 0.0575,
+        "1": 0.0715,
+        "2": 0.0884,
+        "4": 0.1426
+      }
+    },
+    "40": {
+      "bbox_labels_mean": 0.6068,
+      "bbox_labels_std": 0.0659,
+      "image_labels_mean": 0.6728,
+      "image_labels_std": 0.0495,
+      "combined_bbox_mean": 0.6395,
+      "combined_bbox_std": 0.0207,
+      "froc_mean": {
+        "0.5": 0.0891,
+        "1": 0.1275,
+        "2": 0.1414,
+        "4": 0.1869
+      }
+    },
+    "80": {
+      "bbox_labels_mean": 0.644,
+      "bbox_labels_std": 0.0841,
+      "image_labels_mean": 0.6861,
+      "image_labels_std": 0.0441,
+      "combined_bbox_mean": 0.6688,
+      "combined_bbox_std": 0.0324,
+      "froc_mean": {
+        "0.5": 0.1142,
+        "1": 0.1333,
+        "2": 0.1611,
+        "4": 0.2082
+      }
+    },
+    "160": {
+      "bbox_labels_mean": 0.6273,
+      "bbox_labels_std": 0.0766,
+      "image_labels_mean": 0.6796,
+      "image_labels_std": 0.0389,
+      "combined_bbox_mean": 0.6537,
+      "combined_bbox_std": 0.0382,
+      "froc_mean": {
+        "0.5": 0.1072,
+        "1": 0.1336,
+        "2": 0.1839,
+        "4": 0.2256
+      }
+    }
+  },
+  "note": "Kalibrasyon LR'si PCA-128 uzayında; bbox sütunu GT kutusuna isabet eden adaylarla, image sütunu görüntü etiketiyle eğitilmiştir. Aşama-1 donmuş."
+}

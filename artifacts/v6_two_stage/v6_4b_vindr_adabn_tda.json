@@ -1,0 +1,11 @@
+{
+  "n_images": 400,
+  "n_positive": 150,
+  "adabn_m5_stage1_auc": 0.6346,
+  "adabn_m5_tda_hgb_auc": 0.6082,
+  "adabn_m5_e_fusion_tda_auc": 0.6471,
+  "v5_3_global_auc": 0.6283,
+  "combined_v53_adabn_m5_tda_auc": 0.6494,
+  "r_v53_vs_v6": 0.4596,
+  "note": "M6 kullanılmadı (AdaBN M6'yı bozuyordu). Aşama-2 = donmuş stage2_final_tda_hgb (TDA-HGB + LR e_fusion)."
+}

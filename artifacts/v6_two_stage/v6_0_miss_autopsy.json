@@ -1,0 +1,146 @@
+{
+  "experiment": "V6.0",
+  "stage": "kacan nodul otopsisi (val)",
+  "summary": {
+    "M5_heatTTA": {
+      "recall_k1_froc": {
+        "10": 0.8745,
+        "20": 0.9437,
+        "30": 0.9654,
+        "50": 0.9827
+      },
+      "recall_k2_containment": {
+        "10": 0.8745,
+        "20": 0.9524,
+        "30": 0.9697,
+        "50": 0.987
+      },
+      "subgroup_k1_K20": {
+        "kucuk": 0.9679,
+        "orta": 0.8939,
+        "buyuk": 0.8889
+      },
+      "subgroup_k2_K20": {
+        "kucuk": 0.9744,
+        "orta": 0.9091,
+        "buyuk": 0.8889
+      },
+      "n_lesions": 231
+    },
+    "M5M6TTA": {
+      "recall_k1_froc": {
+        "10": 0.7143,
+        "20": 0.8571,
+        "30": 0.961,
+        "50": 0.987
+      },
+      "recall_k2_containment": {
+        "10": 0.7143,
+        "20": 0.8658,
+        "30": 0.9654,
+        "50": 0.9913
+      },
+      "subgroup_k1_K20": {
+        "kucuk": 0.9038,
+        "orta": 0.7727,
+        "buyuk": 0.6667
+      },
+      "subgroup_k2_K20": {
+        "kucuk": 0.9038,
+        "orta": 0.803,
+        "buyuk": 0.6667
+      },
+      "n_lesions": 231
+    }
+  },
+  "miss_autopsy": {
+    "n_missed_at_K50": 4,
+    "n_missed_at_K20": 4,
+    "n_gt_lesions": 231,
+    "Q1_mask_kaynakli": {
+      "disinda_raw_lung": 1,
+      "disinda_dilated": 1
+    },
+    "Q2_boyut_kontrast": {
+      "median_size_mm": 13.350000000000001,
+      "median_size_px": 41.5,
+      "median_contrast": -13.600000000000001
+    },
+    "Q3_tepe_sirasi": {
+      "tepe_yok_tamamen": 3,
+      "rank_51_100": 1,
+      "rank_101_300": 0,
+      "rank_301_plus": 0
+    },
+    "misses": [
+      {
+        "patient": "n0546",
+        "center": [
+          184.0,
+          489.0
+        ],
+        "size_px": [
+          30.0,
+          31.0
+        ],
+        "size_mm": 4.9,
+        "in_raw_lung": true,
+        "in_dilated_lung": true,
+        "contrast": 20.9,
+        "best_hit_rank": null,
+        "hit_at_K20": false
+      },
+      {
+        "patient": "n0628",
+        "center": [
+          888.0,
+          528.0
+        ],
+        "size_px": [
+          49.0,
+          48.0
+        ],
+        "size_mm": 15.8,
+        "in_raw_lung": true,
+        "in_dilated_lung": true,
+        "contrast": 50.5,
+        "best_hit_rank": 53,
+        "hit_at_K20": false
+      },
+      {
+        "patient": "n0756",
+        "center": [
+          250.0,
+          850.0
+        ],
+        "size_px": [
+          73.0,
+          72.0
+        ],
+        "size_mm": 24.0,
+        "in_raw_lung": false,
+        "in_dilated_lung": false,
+        "contrast": -124.7,
+        "best_hit_rank": null,
+        "hit_at_K20": false
+      },
+      {
+        "patient": "n1092",
+        "center": [
+          236.0,
+          304.0
+        ],
+        "size_px": [
+          34.0,
+          34.0
+        ],
+        "size_mm": 10.9,
+        "in_raw_lung": true,
+        "in_dilated_lung": true,
+        "contrast": -48.1,
+        "best_hit_rank": null,
+        "hit_at_K20": false
+      }
+    ]
+  }
+}
