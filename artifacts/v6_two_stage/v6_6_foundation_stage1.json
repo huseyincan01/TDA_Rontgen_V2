@@ -1,0 +1,357 @@
+{
+  "experiment": "V6.6",
+  "stage1_backbone": "resnet50-res512-all (torchxrayvision)",
+  "ckpt_tag": "M5_foundation",
+  "val_stage1": {
+    "n_val_patients": 734,
+    "n_nodule_patients": 172,
+    "n_lesions": 231,
+    "seconds": 118.0,
+    "recall_at_K": {
+      "M5_heatTTA": {
+        "criterion1": {
+          "10": 0.9091,
+          "20": 0.9654,
+          "30": 0.9697,
+          "50": 0.9784
+        },
+        "criterion2": {
+          "10": 0.9134,
+          "20": 0.9697,
+          "30": 0.974,
+          "50": 0.9827
+        },
+        "n_candidates_mean": 106.1
+      },
+      "FND_heatTTA": {
+        "criterion1": {
+          "10": 0.9481,
+          "20": 0.9827,
+          "30": 0.9827,
+          "50": 0.9913
+        },
+        "criterion2": {
+          "10": 0.9481,
+          "20": 0.987,
+          "30": 0.987,
+          "50": 0.9957
+        },
+        "n_candidates_mean": 64.2
+      },
+      "M5": {
+        "criterion1": {
+          "10": 0.8658,
+          "20": 0.961,
+          "30": 0.974,
+          "50": 0.9784
+        },
+        "criterion2": {
+          "10": 0.8658,
+          "20": 0.9654,
+          "30": 0.9784,
+          "50": 0.9827
+        },
+        "n_candidates_mean": 122.1
+      },
+      "FND": {
+        "criterion1": {
+          "10": 0.961,
+          "20": 0.974,
+          "30": 0.9827,
+          "50": 0.987
+        },
+        "criterion2": {
+          "10": 0.961,
+          "20": 0.974,
+          "30": 0.9827,
+          "50": 0.987
+        },
+        "n_candidates_mean": 69.5
+      }
+    },
+    "stage1_only": {
+      "M5_heatTTA": {
+        "froc": {
+          "0.5": 0.5238,
+          "1": 0.6667,
+          "2": 0.7403,
+          "4": 0.8442
+        },
+        "patient_auc": {
+          "top1": 0.795,
+          "top3": 0.807,
+          "noisyor": 0.802
+        }
+      },
+      "FND_heatTTA": {
+        "froc": {
+          "0.5": 0.8312,
+          "1": 0.8658,
+          "2": 0.9264,
+          "4": 0.9524
+        },
+        "patient_auc": {
+          "top1": 0.9595,
+          "top3": 0.9669,
+          "noisyor": 0.9702
+        }
+      },
+      "M5": {
+        "froc": {
+          "0.5": 0.5022,
+          "1": 0.5931,
+          "2": 0.7143,
+          "4": 0.8009
+        },
+        "patient_auc": {
+          "top1": 0.7844,
+          "top3": 0.7997,
+          "noisyor": 0.7957
+        }
+      },
+      "FND": {
+        "froc": {
+          "0.5": 0.8312,
+          "1": 0.8571,
+          "2": 0.9048,
+          "4": 0.9481
+        },
+        "patient_auc": {
+          "top1": 0.955,
+          "top3": 0.9652,
+          "noisyor": 0.9688
+        }
+      }
+    }
+  },
+  "vindr_stage1": {
+    "n_images": 400,
+    "n_positive": 150,
+    "models": {
+      "M5": {
+        "strict_no_adabn": {
+          "patient_auc": {
+            "top1": 0.5599,
+            "top3": 0.5523,
+            "noisyor": 0.5503
+          },
+          "bbox_recall": {
+            "K30": 0.7258,
+            "K50": 0.7518
+          }
+        },
+        "adabn": {
+          "patient_auc": {
+            "top1": 0.6332,
+            "top3": 0.6364,
+            "noisyor": 0.6346
+          },
+          "bbox_recall": {
+            "K30": 0.747,
+            "K50": 0.7825
+          }
+        }
+      },
+      "FND": {
+        "strict_no_adabn": {
+          "patient_auc": {
+            "top1": 0.6469,
+            "top3": 0.6479,
+            "noisyor": 0.6448
+          },
+          "bbox_recall": {
+            "K30": 0.8322,
+            "K50": 0.8652
+          }
+        },
+        "adabn": {
+          "patient_auc": {
+            "top1": 0.5711,
+            "top3": 0.5667,
+            "noisyor": 0.5625
+          },
+          "bbox_recall": {
+            "K30": 0.6619,
+            "K50": 0.7139
+          }
+        }
+      }
+    }
+  },
+  "val_stage2_foundation": {
+    "FND_heatTTA|K30|a_stage1": {
+      "froc": {
+        "0.5": 0.8312,
+        "1": 0.8658,
+        "2": 0.9264,
+        "4": 0.9524
+      },
+      "patient_auc": {
+        "top1": 0.9595,
+        "top3": 0.9669,
+        "noisyor": 0.9702
+      }
+    },
+    "FND_heatTTA|K30|b_tda_hgb": {
+      "froc": {
+        "0.5": 0.2684,
+        "1": 0.3593,
+        "2": 0.4762,
+        "4": 0.6104
+      },
+      "patient_auc": {
+        "top1": 0.8537,
+        "top3": 0.9095,
+        "noisyor": 0.9194
+      }
+    },
+    "FND_heatTTA|K30|e_fusion_tda": {
+      "froc": {
+        "0.5": 0.7489,
+        "1": 0.8225,
+        "2": 0.8528,
+        "4": 0.8961
+      },
+      "patient_auc": {
+        "top1": 0.9715,
+        "top3": 0.9706,
+        "noisyor": 0.9857
+      }
+    },
+    "FND_heatTTA|K30|f_hierarchical": {
+      "froc": {
+        "0.5": 0.7662,
+        "1": 0.8182,
+        "2": 0.8571,
+        "4": 0.9048
+      },
+      "patient_auc": {
+        "top1": 0.9769,
+        "top3": 0.975,
+        "noisyor": 0.9851
+      }
+    },
+    "FND_heatTTA|K50|a_stage1": {
+      "froc": {
+        "0.5": 0.8312,
+        "1": 0.8658,
+        "2": 0.9264,
+        "4": 0.9524
+      },
+      "patient_auc": {
+        "top1": 0.9595,
+        "top3": 0.9669,
+        "noisyor": 0.9702
+      }
+    },
+    "FND_heatTTA|K50|b_tda_hgb": {
+      "froc": {
+        "0.5": 0.2208,
+        "1": 0.3247,
+        "2": 0.4242,
+        "4": 0.5281
+      },
+      "patient_auc": {
+        "top1": 0.8664,
+        "top3": 0.9119,
+        "noisyor": 0.9228
+      }
+    },
+    "FND_heatTTA|K50|e_fusion_tda": {
+      "froc": {
+        "0.5": 0.7446,
+        "1": 0.8009,
+        "2": 0.8528,
+        "4": 0.8788
+      },
+      "patient_auc": {
+        "top1": 0.9722,
+        "top3": 0.9734,
+        "noisyor": 0.9879
+      }
+    },
+    "FND_heatTTA|K50|f_hierarchical": {
+      "froc": {
+        "0.5": 0.7662,
+        "1": 0.8225,
+        "2": 0.8571,
+        "4": 0.8918
+      },
+      "patient_auc": {
+        "top1": 0.9771,
+        "top3": 0.9779,
+        "noisyor": 0.9864
+      }
+    }
+  },
+  "fusion_froc_calibration": {
+    "verdict": "UZLAŞMA YOK — üç kapıyı aynı anda sağlayan w yok",
+    "optimal_w": [],
+    "gates": {
+      "auc_min": 0.985,
+      "froc05_min": 0.831,
+      "froc4_min": 0.95
+    },
+    "pareto_front": [
+      {
+        "w": 0.45,
+        "froc05": 0.8182,
+        "froc4": 0.9177,
+        "auc_noisyor": 0.9909
+      },
+      {
+        "w": 0.5,
+        "froc05": 0.8268,
+        "froc4": 0.9177,
+        "auc_noisyor": 0.9903
+      },
+      {
+        "w": 0.55,
+        "froc05": 0.8355,
+        "froc4": 0.9307,
+        "auc_noisyor": 0.9886
+      },
+      {
+        "w": 0.8,
+        "froc05": 0.8398,
+        "froc4": 0.9524,
+        "auc_noisyor": 0.9779
+      },
+      {
+        "w": 0.9,
+        "froc05": 0.8442,
+        "froc4": 0.9524,
+        "auc_noisyor": 0.9732
+      }
+    ],
+    "best_froc_at": {
+      "w": 0.9,
+      "froc": {
+        "0.5": 0.8442,
+        "1": 0.8701,
+        "2": 0.9177,
+        "4": 0.9524
+      },
+      "auc": {
+        "top1": 0.9622,
+        "top3": 0.9395,
+        "noisyor": 0.9732
+      }
+    },
+    "best_auc_at": {
+      "w": 0.45,
+      "froc": {
+        "0.5": 0.8182,
+        "1": 0.8442,
+        "2": 0.8745,
+        "4": 0.9177
+      },
+      "auc": {
+        "top1": 0.978,
+        "top3": 0.9823,
+        "noisyor": 0.9909
+      }
+    },
+    "report": "v6_6_fusion_calibration.json"
+  }
+}

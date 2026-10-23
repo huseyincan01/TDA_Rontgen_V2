@@ -27,7 +27,7 @@
 4. **Sağlamlık ve genelleme:** σ/ızgara/ağırlık/eşik seçimleri sağlamdır; kaynak-dışı (leave-one-source-out) ortalama **0.8098**.
 5. **v3 temsilinin sınırı:** 5-zon TDA temsili **lokalize etmez** — zon düzeyi AUC 0.48–0.53; nodülün tam merkezinde bile yerel TDA ayrımı yalnızca **0.687**'dir.
 6. **İki aşamalı lokalizasyon (V6):** ayrı bir aday üretici (CenterNet/FCOS) + lokal TDA-HGB FP eleme ile NODE21 test setinde hasta AUC **0.9876** (global + lokal birleşim; r=0.38) ve FROC@2FP **0.642**; tek seferlik ön-kayıtlı mühür.
-7. **Harici transfer (VinDr-CXR, 400 görüntü):** zero-shot fiziksel hizalama (JPEG-denoise + ölçek-eşlemeli yama + CORAL) AUC'yi **0.544 → 0.662**'ye çıkarır; hedef merkezden **160 etiketli görüntü** ile few-shot kalibrasyon **0.724**'e ulaşır. Ancak aday düzeyi TDA sıralaması taşınmaz: hasta AUC ile FROC arasında **kaldırılamayan bir ödünleşim** vardır.
+7. **Harici transfer (VinDr-CXR, 400 görüntü):** saf zero-shot'ta en iyi sonuç V5.3 global füzyonudur (**0.6283**). Etiketsiz AdaBN + fiziksel hizalama (JPEG-denoise + ölçek-eşlemeli yama + CORAL; *transductive*, saf dış doğrulama değil) bandı **0.662**'ye çıkarır — fiziksel hizalamanın AdaBN tabanına katkısı **+0.018**'dir, 0.544→0.662 farkının büyük kısmı AdaBN'indir; hedef merkezden **160 etiketli görüntü** ile few-shot kalibrasyon **0.724**'e ulaşır. Ancak aday düzeyi TDA sıralaması taşınmaz: hasta AUC ile FROC arasında **kaldırılamayan bir ödünleşim** vardır.
 
 **Sonuç.** Yorumlanabilir topolojik temsiller, öğrenilmiş görüntü temsillerine **ölçülebilir ve istatistiksel olarak anlamlı** tamamlayıcılık katar. Ancak CXR'de ayırt edici bilgi **global/arka plan topolojisinde** yoğunlaşmıştır; bu nedenle "nodülü doğru zonda bulma" iddiası **5-zon temsili için** kurulamaz. Lokalizasyon ancak ayrı bir dedektör + lokal TDA katmanıyla (V6) sağlanır ve dış merkezde aday sıralaması kalibre edilmeden taşınmaz. Katkımız, bu sınırı dürüstçe belirleyen ve mekanizmayı nicel olarak gösteren bir çerçevedir.
 
@@ -251,20 +251,34 @@ NODE21 üzerinde eğitilen v3 (E0.6) mimarisi, tamamen bağımsız bir dış ver
 
 #### V6.5 — Transfer güçlendirmesi: fiziksel hizalama ve few-shot site kalibrasyonu (F10)
 
-V5.3'ün (§4.9) 0,6283'ünü temel alarak, AdaBN ile stabilize edilmiş M5 adayları üzerinde **etiketsiz** üç fiziksel/istatistiksel düzeltme tek tek ve birlikte sınandı (400 görüntü, 19.955 aday; referans: 200 NODE21 train hastasından 4.000 aday):
+> 🔒 **Saf zero-shot sınırı.** VinDr'ye **CNN fine-tuning'i yapılmamıştır.** Ancak bu alt bölümdeki sayıların hiçbiri saf zero-shot **değildir**: birinci tablonun taban adayları **AdaBN-M5**'tir (VinDr'in etiketsiz BN istatistikleri ⇒ *transductive*), CORAL satırları ayrıca VinDr özellik kovaryansını kullanır, ikinci tablo ise VinDr **etiketlerini** kullanır. **Saf zero-shot dış doğrulamanın zirvesi V5.3'tür: VinDr AUC 0,6283** (kilitli a = 0,45). Aşağıdaki 0,6439–0,7249 bandı "hedefe hiç dokunulmadan elde edildi" biçiminde raporlanamaz.
 
-| Zero-shot konfigürasyon | VinDr AUC |
+V5.3'ün (§4.9) 0,6283'ünü temel alarak, **AdaBN ile stabilize edilmiş** M5 adayları üzerinde **etiketsiz** üç fiziksel/istatistiksel düzeltme tek tek ve birlikte sınandı (400 görüntü, 19.955 aday; referans: 200 NODE21 train hastasından 4.000 aday):
+
+| Konfigürasyon (taban: AdaBN-M5 ⇒ *transductive*) | VinDr AUC |
 | :--- | :---: |
 | taban (32/64 px, z-score) | 0,6439 |
 | JPEG-denoise σ=1,0 (kübik homoloji öncesi) | 0,6498 |
 | **ölçek-eşlemeli yama** `S = round(32/64 · H_lung/810)` | **0,6562** |
 | quantile (rank-gauss) | 0,6486 |
-| CORAL (tam uzay) | 0,6318 |
-| **denoise + ölçek + CORAL** | **0,6620** |
+| CORAL (tam uzay) — ayrıca VinDr kovaryansı kullanır | 0,6318 |
+| **denoise + ölçek + CORAL** — ayrıca VinDr kovaryansı kullanır | **0,6620** |
 
-⇒ Fiziksel hipotez doğrulanır — VinDr'nin 0,70× ölçeği ve 8-bit JPEG blok gürültüsü ölçülebilir kayıp yaratıyor — ama etki mütevazıdır (**+0,018**). Tek başına CORAL zararlıdır (−0,012); denoise + ölçek üzerine eklenince en iyi konfigürasyonu verir.
+⇒ Fiziksel hipotez doğrulanır — VinDr'nin 0,70× ölçeği ve 8-bit JPEG blok gürültüsü ölçülebilir kayıp yaratıyor — ama etki mütevazıdır (**+0,018**). Tek başına CORAL zararlıdır (−0,012); denoise + ölçek üzerine eklenince en iyi konfigürasyonu verir. ⚠️ Bu iyileştirmeler **AdaBN tabanına göre göreli**dir, saf dış doğrulamaya göre değil.
 
-**Few-shot site kalibrasyonu (5-fold, sızıntısız).** Hedef merkezden N ∈ {0,10,20,40,80,160} etiketli görüntü ayrıldığında (Aşama-1 ağırlıkları donmuş; yalnız 2. aşama tablosal modeli uyarlanır):
+**AdaBN'siz (inductive) denetim.** Aynı kohort ve aynı adaylar **AdaBN kapatılarak** tekrar koşuldu (dondurulmuş NODE21 BN):
+
+| Konfigürasyon | Inductive (AdaBN yok) | Transductive (AdaBN) |
+| :--- | ---: | ---: |
+| base_z | 0,6090 | 0,6439 |
+| + JPEG-denoise σ=1,0 | 0,5829 | 0,6498 |
+| **+ ölçek-eşlemeli yama** | **0,6181** | 0,6562 |
+| + denoise + ölçek | 0,5814 | 0,6523 |
+| + denoise + ölçek + CORAL | 0,5916 | 0,6620 |
+
+⇒ **AdaBN baş roldedir** (her satırda +0,035…+0,071) ve **JPEG-denoise, AdaBN olmadan zararlıdır** (−0,026…−0,037). Fiziksel hizalamanın dürüst **tekil-görüntü (inductive)** katkısı yalnızca **ölçek-eşlemedir: +0,0091** (0,6090 → **0,6181**); bu tavan, saf zero-shot zirvesi olan V5.3 global füzyonunun (**0,6283**) hâlâ altındadır.
+
+**Few-shot site kalibrasyonu (5-fold, sızıntısız) — *(C) süpervizli hedef uyarlaması*, saf dış doğrulama değildir.** Hedef merkezden N ∈ {0,10,20,40,80,160} **etiketli** görüntü ayrıldığında (Aşama-1 ağırlıkları donmuş; yalnız 2. aşama tablosal modeli uyarlanır):
 
 | N | yalnız lokal (AUC ± std) | V5.3 + lokal |
 | ---: | :---: | :---: |
@@ -274,7 +288,7 @@ V5.3'ün (§4.9) 0,6283'ünü temel alarak, AdaBN ile stabilize edilmiş M5 aday
 | 80 | 0,7057 ± 0,022 | 0,6997 ± 0,031 |
 | 160 | **0,7243 ± 0,051** | 0,7054 ± 0,032 |
 
-⇒ **N=10'da aşırı uyum** (0,628 < zero-shot 0,659), N≥40'ta toparlanma, N=160'ta **+0,065**. N≥80'de global V5.3 kanalı katkı vermez; lokal model kalibre edildiğinde global temsil gereksizleşir.
+⇒ **N=10'da aşırı uyum** (0,628 < N=0 tabanı 0,659; ikisi de *transductive*), N≥40'ta toparlanma, N=160'ta **+0,065**. N≥80'de global V5.3 kanalı katkı vermez; lokal model kalibre edildiğinde global temsil gereksizleşir.
 
 **AUC–FROC ödünleşimi (V6.5b/V6.5c).** Görüntü etiketiyle kalibrasyon AUC'yi yükseltirken FROC'u düşürür (0,212 → 0,162 @2FP); bbox-türevli etiketler FROC'u toparlar (0,184) ama AUC'yi 0,627'ye indirir. Ayrıştırılmış çift-kafa (sabit hasta kapısı + 1:5 kutu sıralayıcı + NODE21 çapası) AUC'yi 0,7249'da korur ama FROC'u N ile monoton bozar (0,221 → 0,059) ⇒ **ödünleşim kaldırılamamıştır**; kutu-içi TDA sıralaması VinDr'ye taşınmaz. Bu, §4.7'deki "lokalizasyon taşınır, güven taşınmaz" bulgusunun **aday düzeyindeki** karşılığıdır.
 
@@ -350,7 +364,7 @@ Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyord
 11. **ResNet18 ağırlıkları:** E0.6 ağırlıkları kaydedilmediği için bit-bit yeniden üretim imkânsızdır; harici sonuçlar deterministik yeniden eğitilen (val zon AUC Δ=3,8·10⁻⁴) sabit checkpoint'e dayanır.
 12. **3× indirgenmiş JPEG kohortu:** VinDr görüntüleri spacing içermez; TDA ölçek confound'u yalnızca akciğer-yüksekliği normalizasyonuyla kısmen kontrol edilebilmiştir.
 13. **Kırpıntı-başına normalizasyon kısmen pencere etkisi taşır** (§4.9, V5.1b): füzyon kazancının ~%60'ı (~+0,0078) topolojik değil histogram/pencere kaynaklıdır; bu yüzden füzyon için **muhafazakâr sayı 0,9778** (tüm-akciğer referansı) raporlanır.
-14. **VinDr few-shot kalibrasyonu N≥40 ister** (§4.8): N=10'da 1604-boyutlu LR aşırı uyuyor (0,628 < zero-shot 0,659). Hedef merkezde ~160 etiketli görüntü (80 poz/80 neg) ile AUC 0,724'e çıkar; bu, in-domain 0,9876'nın belirgin altındadır.
+14. **VinDr few-shot kalibrasyonu N≥40 ister** (§4.8): N=10'da 1604-boyutlu LR aşırı uyuyor (0,628 < N=0 tabanı 0,659; **her ikisi de *transductive***, saf zero-shot değil). Hedef merkezde ~160 etiketli görüntü (80 poz/80 neg) ile AUC 0,724'e çıkar; bu, in-domain 0,9876'nın belirgin altındadır.
 15. **AUC–FROC ödünleşimi dış merkezde çözülemedi** (§4.8): görüntü etiketli kalibrasyon AUC'yi, bbox etiketli kalibrasyon FROC'u iyileştiriyor; çift-kafa ikisini aynı anda sağlayamıyor. FROC değerleri ayrıca aday-etiket proxy'sine (görüntü etiketi) duyarlıdır.
 16. **Kaynak/etiket confound'u yapısal (A3):** NODE21'de tüm pozitifler dört dış kaynaktan (chestxray14, padchest, jsrt, openi), tüm negatifler `node21_control` havuzundan gelir ⇒ **kaynak-içi AUC tanımsızdır**. Kaynak-pozitifleri vs ortak kontrol AUC'si dört kaynakta da **0,82–0,94** (makro **0,892**; TDA, ham CNN'in 0,664'ünü geçiyor) ⇒ etki tek kaynağa indirgenemez; ancak aynı kaynaktan kontrol olmadığı için confound **tamamen** dışlanamaz. Bu nedenle birincil genelleme kanıtı **kaynak-dışı (0,81)** ve **VinDr**'dir (0,63–0,66). Ayrıca kontrol ortalama skoru 0,555 ve özgüllük@0,5 = 0,358 ⇒ işletim noktası kaymıştır.
 17. **Persistence Landscape zarf doygunluğu maske sınırı artefaktıdır (A4):** E4.4'teki devasa tepeler (~110 tepe, 180–220 kalıcılık) damar ağacından değil, doku dışı siyah arka plan (0) ile doku (~240) arasındaki yapay segmentasyon maskesi basamağından kaynaklanır (kalıcılığı $\ge 50$ olan H1 döngülerinin %100'ü sınır geçişlidir; saf doku içi kalıcılık en fazla 7'dir). PL fonksiyonel üst zarfı bu sınır sinyali tarafından körleştirilirken, PI $(b, p)$ 2B uzayında artefaktı köşeye izole ederek doku sinyalini korur.
@@ -363,7 +377,7 @@ Bu çalışma, göğüs röntgeninde yorumlanabilir topolojik temsillerin **neyi
 
 - ✅ **Başarı:** TDA temsilleri, güçlü ve **ince ayarlı** bir görüntü modeline bile istatistiksel olarak anlamlı tamamlayıcılık katar (test ROC-AUC **0,9516**, doğruluk **%89,4**; katkı **+0,0232**, CI>0).
 - ⚠️ **Sınır:** Bu katkı **global/arka plan topolojisinden** gelir, lokal nodül yapısından değil. **5-zon TDA temsili lokalize etmez**; lokalizasyon ancak ayrı bir aday üretici + lokal TDA katmanıyla (V6) sağlanır: test hasta AUC **0,9876** (global+lokal), FROC@2FP **0,642**. Yani "lezyon tespiti" iddiası **v3 katmanı** için değil, **V6 katmanı** için kurulabilir.
-- 🌐 **Kapsam sınırı (harici doğrulama):** Kazanç **kurum içi**dir. VinDr-CXR'de sıfır eğitimle V5.3 füzyonu **0,6283**, V6.5 fiziksel hizalaması **0,6620**'tir; hedef merkezden 160 etiketli görüntüyle few-shot kalibrasyon **0,7243**'e ulaşır. Ancak aday düzeyi sıralama taşınmaz ve AUC–FROC ödünleşimi sürer ⇒ sistem, hedef-site kalibrasyonu gerektiren bir **kurum-içi risk triyaj** altyapısıdır.
+- 🌐 **Kapsam sınırı (harici doğrulama):** Kazanç **kurum içi**dir. VinDr-CXR'de **saf zero-shot zirvesi V5.3 füzyonudur (0,6283)**; V6.5'in **0,6620**'si AdaBN tabanlı ***transductive*** bir sonuçtur (fiziksel hizalamanın AdaBN tabanına katkısı +0,018) ve saf dış doğrulama olarak okunamaz. Hedef merkezden 160 **etiketli** görüntüyle few-shot kalibrasyon **0,7243**'e ulaşır (***süpervizli***). Ancak aday düzeyi sıralama taşınmaz ve AUC–FROC ödünleşimi sürer ⇒ sistem, hedef-site kalibrasyonu gerektiren bir **kurum-içi risk triyaj** altyapısıdır.
 
 PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sınıf sinyali %1–2), alanın bir sonraki adımı için somut bir yön verir: **zarf bastırması değil, zarf-içi sinyal çıkarımı.**
 

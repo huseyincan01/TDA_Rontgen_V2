@@ -857,6 +857,18 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 
 ## 7. Bağımsız Dış Doğrulama (VinDr-CXR)
 
+> 🔒 **ZERO-SHOT SINIRI (bölümün tamamı için zorunlu beyan).**
+> VinDr-CXR'ye **CNN fine-tuning'i hiç yapılmadı.** Aşama-1 ağırlıkları (`M5_centernet.pt`, `M6_fcos.pt`) ve 2. aşama bundle'ı her VinDr koşusunda **dondurulmuş** NODE21 modelleridir; NODE21 test mührü (0,9876) VinDr'den **tamamen bağımsızdır**.
+> Ancak VinDr bilgisi **üç ayrı kanaldan** girmiştir. Bu yüzden bu bölümde raporlanan sayılar üç sınıfa ayrılır ve **saf dış doğrulama olarak yalnızca (A) raporlanabilir:**
+>
+> | Sınıf | VinDr'den ne kullanır | Etiket? | Bu belgedeki satırlar |
+> | :--- | :--- | :---: | :--- |
+> | **(A) Saf zero-shot** | yalnızca görüntünün kendisi (denoise, kendi akciğer yüksekliği) + **NODE21** referans istatistikleri | ❌ | V4 üç kol · V5.3 · V6.3 bileşen otopsisi · V6.4 Adım 2 (`M5_domain_gen`) ve Adım 1'in AdaBN'siz baz satırları (0,5443 / 0,5440 / 0,5453) |
+> | **(B) Transductive** (etiketsiz **hedef** istatistiği) | VinDr **BN istatistikleri** veya VinDr **özellik dağılımı** (kovaryans) | ❌ | ⚠️ **V6.5 KOL 1'in TAMAMI** — 8 konfigürasyonun hepsi `AdaBN-M5` adayları üzerinde koşar (0,6439 → 0,6620) · V6.4 Adım 1 / 1b AdaBN satırları (0,6332 · 0,6346 · 0,6471 · 0,6494) |
+> | **(C) Süpervizli hedef uyarlaması** | VinDr **etiketleri** | ✅ | V6.5 KOL 2 · V6.5b · V6.5c few-shot eğrilerinin tamamı |
+>
+> ⚠️ **Saf zero-shot (A) zirvesi: VinDr AUC 0,6283** — V5.3 global 5-zon füzyonu (kilitli a = 0,45). V6.5'in **0,6439–0,6620** bandı, taban adayları AdaBN-M5 olduğu için **(B)** sınıfındadır; "VinDr'ye hiç dokunulmadan elde edildi" biçiminde **sunulamaz**. KOL 1'in içindeki `base_z` / `denoise*` / `scale*` / `quantile` satırları da AdaBN tabanını miras alır — bunlar "saf" değil, **AdaBN'e göre göreli** iyileştirmelerdir.
+
 ### V4 — VinDr-CXR üzerinde sıfır-eğitim harici test (dış kalibrasyon ablasyonu)
 
 * **Veri:** VinDr-CXR (Vietnam — Hospital 108 & Hanoi Medical University Hospital), 3× indirgenmiş JPEG kohortu. **400 görüntü**: 150 nodül/kitle + 250 saf normal (annotasyonların *tamamı* "No finding"), `seed = 42`. ⚠️ **Görüntü düzeyi:** VinDr metadata'sında hasta kimliği yoktur; kohort "400 hasta" değil **400 görüntüdür**. Kohort deterministik olarak [`V4_build_vindr_cohort.py`](pipelines/exp/V4_build_vindr_cohort.py) ile üretilir ve önceki kohortla **400/400 örtüşür**.
@@ -1164,9 +1176,11 @@ Temsil: aday merkezli **32×32 (çekirdek) + 64×64 (çevre)** H0/H1 PI (1600 bo
 ⇒ **Test setindeki en yüksek hasta AUC'si**: v3 headline 0,9516 ve V5.2 0,9612'nin üzerinde. Küresel ve lokal temsiller r=0,38 ile yeterince dik ⇒ birleşim **gerçek tamamlayıcılık** sağlıyor. Test seti bu mühürle **bir kez** kullanıldı; eşik/ağırlık seçimi yapılmadı.
 * **Kayıt:** `artifacts/v6_two_stage/v6_4_domain_and_test_seal.json` · `checkpoints/M5_domain_gen.pt`
 
-### V6.5 — VinDr harici transfer güçlendirmesi (zero-shot + few-shot, 400 görüntü)
+### V6.5 — VinDr harici transfer güçlendirmesi (transductive + few-shot, 400 görüntü)
 
-**KOL 1 — eğitimsiz (0 VinDr etiketi).** AdaBN-M5 · K=50 · 19.955 aday; 8 konfigürasyon, aynı dondurulmuş 2. aşama (HGB + füzyon LR). Referans dağılım: 200 NODE21 train hastası, 4.000 aday.
+> ⚠️ **Bu alt bölümün tamamı (A) saf zero-shot DEĞİLDİR** — bkz. §7 başındaki zero-shot sınırı. KOL 1'in taban adayları `AdaBN-M5`'tir (VinDr etiketsiz BN istatistikleri); KOL 2 ise VinDr **etiketlerini** kullanır.
+
+**KOL 1 — etiketsiz ama *transductive* (0 VinDr etiketi; taban adayları AdaBN-M5).** AdaBN-M5 · K=50 · 19.955 aday; 8 konfigürasyon, aynı dondurulmuş 2. aşama (HGB + füzyon LR). Referans dağılım: 200 NODE21 train hastası, 4.000 aday.
 
 | Konfig | AUC | Δ vs taban |
 | :--- | ---: | ---: |
@@ -1192,7 +1206,7 @@ Temsil: aday merkezli **32×32 (çekirdek) + 64×64 (çevre)** H0/H1 PI (1600 bo
 | 80 | 0,7057 ± 0,022 | 0,6997 ± 0,031 | 0,114 / 0,139 / 0,181 |
 | 160 | **0,7243 ± 0,051** | **0,7054 ± 0,032** | 0,115 / 0,162 / 0,219 |
 
-⇒ **Az-örnekli kalibrasyon N≥40'ta çalışıyor:** N=10'da aşırı uyum var (0,628 < zero-shot 0,659), N=40'ta toparlıyor, N=160'ta yalnız lokal **0,7243 ± 0,051** (+0,065 vs zero-shot). **V5.3 global kanalı N≥80'de katkı vermiyor, hatta seyreltiyor** (0,7054 < 0,7243): hedef merkezde lokal model kalibre edildiğinde global temsil gereksizleşiyor. FROC ise kalibrasyonla **iyileşmiyor** (N=0'da 0,212 → N=160'ta 0,162 @2FP): kalibrasyon görüntü düzeyi sıralamayı düzeltiyor, lezyon düzeyi sıralamayı değil.
+⇒ **Az-örnekli kalibrasyon N≥40'ta çalışıyor:** N=10'da aşırı uyum var (0,628 < N=0 tabanı 0,659; ikisi de *transductive*), N=40'ta toparlıyor, N=160'ta yalnız lokal **0,7243 ± 0,051** (+0,065 vs N=0 tabanı). **V5.3 global kanalı N≥80'de katkı vermiyor, hatta seyreltiyor** (0,7054 < 0,7243): hedef merkezde lokal model kalibre edildiğinde global temsil gereksizleşiyor. FROC ise kalibrasyonla **iyileşmiyor** (N=0'da 0,212 → N=160'ta 0,162 @2FP): kalibrasyon görüntü düzeyi sıralamayı düzeltiyor, lezyon düzeyi sıralamayı değil.
 * **Sınırlama:** aday etiketi = görüntü etiketi (bbox'tan türetilmedi) ⇒ FROC değerleri mutlak değil, kalibrasyon eğrisi olarak okunmalı.
 * **Kayıt:** `artifacts/v6_two_stage/v6_5_vindr_transfer_boost.json`.
 
@@ -1224,3 +1238,210 @@ Temsil: aday merkezli **32×32 (çekirdek) + 64×64 (çevre)** H0/H1 PI (1600 bo
 ⇒ **Kriter biçimsel olarak N=10'da sağlanıyor (AUC 0,7249 ≥ 0,724; FROC@2 0,2208 ≥ 0,22) ama mekanizma çalışmıyor:** kazanç yalnız **+0,009** ve N arttıkça FROC **monoton çöküyor** (0,221 → 0,059). α büyüdükçe hedef kutu sıralayıcısı sıfır-eğitim öncülünü **bozuyor**. Teşhis: VinDr'de kutu-içi TDA sıralaması taşınmıyor (V6.3'ün "lokalizasyon taşınıyor, güven taşınmıyor" bulgusunun aday düzeyindeki karşılığı); 1:5 hard-negative kurgusu bunu düzeltmiyor. **Karar: KILL** — AUC–FROC ödünleşimi kaldırılmadı, yalnızca FROC eksenine taşındı.
 * **Metodolojik not:** Kafa-1 sabit olduğu için N yalnız Kafa-2'yi kontrol eder; N≥10'daki 0,7249 **sabit hedef-modelin** AUC'sidir, N=10'un kalibrasyon başarısı değildir. FROC@2'nin N ile düşmesi bu yüzden doğrudan Kafa-2'nin kalitesini ölçer.
 * **Kayıt:** `artifacts/v6_two_stage/v6_5c_decoupled_calibration.json`.
+
+### V6.5d — 🔒 Inductive (AdaBN'siz) vs Transductive (AdaBN) fiziksel hizalama ayrımı
+
+**Motivasyon.** V6.5 KOL 1'in taban adayları **`AdaBN-M5`** idi ([v6_5_vindr_transfer_boost.py:292](pipelines/v6_two_stage/v6_5_vindr_transfer_boost.py#L292), docstring: *"KOL 1 zero-shot: AdaBN-M5 adayları üzerinde"*). AdaBN, VinDr'in **etiketsiz BN istatistiklerini** kullanır ⇒ **0,6439–0,6620 bandının tamamı transductive**'tir. Fiziksel hizalamanın hiçbir hedef istatistiği kullanmayan **tekil-görüntü (inductive / strict)** etkisi hiç ölçülmemişti. Bu bölüm o boşluğu kapatır.
+
+**Protokol.** Aynı VinDr kohortu (400 görüntü), aynı `M5_centernet` adayları ama **AdaBN KAPALI** (dondurulmuş NODE21 BatchNorm), aynı dondurulmuş 2. aşama (HGB + füzyon LR); referans 200 NODE21 train hastası / 4.000 aday. Betik: [`v6_5d_strict_no_adabn.py`](pipelines/v6_two_stage/v6_5d_strict_no_adabn.py) · Kayıt: `v6_5_vindr_transfer_boost.json` → `strict_no_adabn_ablation`.
+
+| Konfigürasyon | **Inductive** (AdaBN yok) | Transductive (AdaBN) | Δ (AdaBN etkisi) |
+| :--- | ---: | ---: | ---: |
+| base_z | 0,6090 | 0,6439 | +0,0349 |
+| + JPEG-denoise σ=1,0 | 0,5829 | 0,6498 | +0,0669 |
+| **+ ölçek-eşlemeli yama** | **0,6181** | 0,6562 | +0,0381 |
+| + denoise + ölçek | 0,5814 | 0,6523 | +0,0709 |
+| + denoise + ölçek + CORAL | 0,5916 | 0,6620 | +0,0704 |
+
+Yalnız dedektör (AdaBN'siz) hasta AUC: top1 **0,5599** · top3 0,5559 · noisy-OR 0,5538 — V6.4'ün AdaBN'siz 0,5443'ü ile tutarlı (fark: burada NMS + TTA'sız çıkarım).
+
+**Bulgular — üçü de önceki yorumu değiştirir:**
+
+1. **AdaBN baş rolde:** her satırda **+0,035…+0,071**. V6.5'in "+0,018 fiziksel hizalama" kazancı **AdaBN tabanına göre göreli**ydi; ham etki AdaBN'indir.
+2. **JPEG-denoise, AdaBN olmadan ZARARLI:** base 0,6090 → denoise1.0 0,5829 (**−0,0261**); ölçek 0,6181 → denoise+ölçek 0,5814 (**−0,0367**). ⇒ Denoise kazancı **tamamen AdaBN etkileşimi**ydi; hedef istatistiği olmadan yumuşatma ince dokuyu bozuyor. (σ=0,6'nın AdaBN'li koşuda da zararlı olması bu teşhisi destekler.)
+3. **Tek gerçek inductive kazanç ölçek-eşlemedir:** 0,6090 → **0,6181 (+0,0091)**. Fiziksel hizalamanın dürüst **tekil-görüntü** katkısı budur — "+0,018" değil.
+4. **CORAL inductive değildir** (VinDr kovaryansı): 0,5916. Bu yüzden **inductive tavan 0,6181**'dir.
+5. ⚠️ **Inductive tavan (0,6181) hâlâ V5.3 global füzyonunun (0,6283) altında** ⇒ saf sıfır-öğrenmede en iyi VinDr kanalı **global 5-zon füzyonu** olmaya devam ediyor.
+
+**Karar: KEEP (denetim kaydı).** Bu bölüm V6.5'in sayılarını geçersiz kılmaz; **hangi sayının hangi sınıfa ait olduğunu** kesinleştirir: `(A) inductive` = ölçek-eşleme ailesi; `(B) transductive` = AdaBN ve CORAL aileleri; `(C) süpervizli` = few-shot.
+
+---
+
+## 10. V6.6 — Foundation X-Ray Backbone Stage-1 (CXR vakıf omurgası)
+
+> **Motivasyon.** V6.0'ın 1. aşama dedektörü (M5), **ImageNet (kedi/köpek)** ile öneğitilmiş ResNet18 kullanıyordu. V6.3'ün teşhisi netti: dedektör **lokalizasyonu taşıyor** (VinDr bbox recall@K50 ≈ 0,90) ama **görüntü düzeyi güveni taşımıyor** (AUC ≈ 0,46–0,56). V6.6, 1. aşamanın gövdesini **800.000+ gerçek göğüs röntgeni** ile (NIH ChestX-ray14, CheXpert, PadChest, MIMIC-CXR, OpenI, RSNA, VinDr) eğitilmiş bir **CXR vakıf omurgası** ile değiştirir.
+
+### V6.6.0 — Omurga seçimi ve mimari
+
+| | |
+| :--- | :--- |
+| **Omurga** | `torchxrayvision` **`resnet50-res512-all`** (pc-nih-rsna-siim-vin-state, 512×512 native) |
+| **Neden bu?** | native girdi **512 = kanonik girdimizle birebir** ⇒ yeniden örnekleme yok, küçük nodül çözünürlüğü korunur. `densenet121-res224-all` 512→224 küçültmesi isterdi ve bu tam da kaçırdığımız küçük nodülleri silerdi. (`--backbone` ile desteklenir.) |
+| **KRİTİK girdi ölçeği** | torchxrayvision omurgaları 1 kanallı girdiyi [0,1] değil **[−1024, +1024]** bekler (`xrv.utils.normalize(img, 255)`). Uygulandı: `foundation_input()` |
+| **Boyun** | C2..C5 (1/4, 1/8, 1/16, 1/32) → **C5 üzerinde ASPP** (d = 1, 3, 6, 12 + global-pool) → **FPN** yukarı-doğru birleştirme → P2 (128×128) |
+| **Kafa** | 128×128'de fuse (64ch) → ×2 upsample → **256×256 CenterNet** (1ch Gaussian heatmap + 1ch radius) |
+| **Sözleşme** | Çıktı **M5 ile birebir aynı** (512 girdi → 256×256 = 1024'e stride-4) ⇒ aday çıkarımı, değerlendirme ve 2. aşama kodu **değişmeden** çalışır |
+
+### V6.6.1 — Unutmayı önleyen iki fazlı diferansiyel eğitim
+
+| Faz | Epoch | Omurga | BN | Öğrenme hızı |
+| :--- | :---: | :--- | :--- | :--- |
+| **Isınma** | 1–5 | **donuk** (`requires_grad=False`) | `.eval()` | head **1e-3** |
+| **Diferansiyel FT** | 6–18 | üst bloklar açık (`layer3`+`layer4`, **22,1M** param) | `.eval()` (running istatistik **donuk**) | backbone **1e-4** · head **1e-3**, Cosine Annealing |
+
+* **Neden BN donuk?** 800.000 röntgenlik `running_mean/var` istatistikleri batch=4 ile bozulmamalı. (Bu karar aşağıda **ampirik olarak doğrulandı** — bkz. V6.6.3: AdaBN vakıf modelini *bozuyor*.)
+* **Veri:** 790 nodül + 790 temiz kontrol (**1:1**), RAM önbelleği (512 uint8) ile I/O'suz.
+* **Augmentasyon:** yatay çevirme + **gama γ ∈ [0,8; 1,25]** + **rastgele ölçek ±%20** (ölçek değişince merkez/yarıçap da dönüştürülür).
+* **Kayıp:** Gaussian Focal (α=2, β=4) + 0,1 · L1(radius, yalnız pozitifler) — M5 ile aynı.
+* **Eğitim kaybı:** 13,35 → **1,26** (18 epoch, ~20 dk, RTX 4050 6 GB; tepe VRAM ≈ 1,4 GB).
+* **Checkpoint'ler:** `M5_foundation.pt` (final) · `M5_foundation_warm.pt` (epoch 5 — unutma teşhisi).
+
+### V6.6.2 — NODE21 val Aşama-1 kıyaslaması (elma-elma, 734 hasta / 231 lezyon)
+
+Aynı protokol, aynı val seti, aynı aday çıkarımı — **tek değişken: omurga**.
+
+| Model | K10 | K20 | K30 | K50 | FROC @0,5 / 1 / 2 / 4 FP | Hasta AUC (top1 / top3 / noisy-OR) |
+| :--- | ---: | ---: | ---: | ---: | :---: | :---: |
+| M5_heatTTA (ImageNet ResNet18) | 0,9091 | 0,9654 | 0,9697 | 0,9784 | 0,524 / 0,667 / 0,740 / 0,844 | 0,795 / 0,807 / 0,802 |
+| **FND_heatTTA (CXR vakıf + FPN/ASPP)** | **0,9481** | **0,9827** | **0,9827** | **0,9913** | **0,831 / 0,866 / 0,926 / 0,952** | **0,960 / 0,967 / 0,970** |
+| M5 (TTA'sız) | 0,8658 | 0,9610 | 0,9740 | 0,9784 | 0,502 / 0,593 / 0,714 / 0,801 | 0,784 / 0,800 / 0,796 |
+| FND (TTA'sız) | 0,9610 | 0,9740 | 0,9827 | 0,9870 | 0,831 / 0,857 / 0,905 / 0,948 | 0,955 / 0,965 / 0,969 |
+
+Kriter 2 (kapsama, IoBB ≥ 0,50 veya IoU ≥ 0,15) tablosu `v6_6_foundation_stage1.json` içindedir.
+
+**🔑 Dört bulgu:**
+
+1. **%98 oracle-Recall kapısı ilk kez GEÇİLDİ.** FND K20 = 0,9827, K30 = 0,9827, K50 = **0,9913**. V6.0'ın ön-kayıtlı kapısı (`gate_98`) M5 ile K20/K30'da **hiçbir varyantta** sağlanamamıştı (en iyi 0,974) — bu, o başarısızlığı kapatan sonuçtur.
+2. **FROC'ta ezici kazanç:** @0,5 FP **0,524 → 0,831 (+0,307)**; @4 FP 0,844 → **0,952**. FROC, sistemin en zayıf halkasıydı.
+3. **Yalnız-Aşama-1 hasta AUC 0,795 → 0,960 (+0,165).** Bu sayı, **eski TAM iki aşamalı sistemin** lokal AUC'sinin (V6.2 `e_fusion_tda` = 0,955) **üzerindedir** ⇒ aşama-1 artık tek başına eski uçtan uca sistemi geçiyor. Teşhis: V6.2'nin 2. aşaması, zayıf bir dedektörün FP'lerini temizlemekle meşguldü; dedektör güçlenince yük ortadan kalkıyor.
+4. **TTA'sız FND bile M5_heatTTA'yı geçiyor** (top1 0,955 vs 0,795) ⇒ kazanç TTA'dan değil omurgadan geliyor.
+
+### V6.6.3 — VinDr-CXR Aşama-1 (400 görüntü): strict zero-shot vs AdaBN
+
+| Model | **Strict** (AdaBN yok — saf sıfır-öğrenme) | AdaBN'li | bbox Recall@K30 / K50 |
+| :--- | ---: | ---: | :---: |
+| M5 (ImageNet) | 0,5599 | **0,6332** ↑ | 0,726 / 0,752 |
+| **FND (CXR vakıf)** | **0,6469** | 0,5711 ↓ | **0,832 / 0,865** |
+
+**🔑 Üç bulgu:**
+
+1. **Yeni en iyi saf zero-shot sonucu: 0,6469.** Vakıf omurgası, hedefe **hiç dokunmadan** M5'in **AdaBN'li** hâlini (0,6332) ve V5.3 global füzyonunu (**0,6283**) geçiyor. Yani V6.5'in tüm transductive/kalibrasyon zahmetiyle ulaştığı bandın üstüne, **hiçbir hedef istatistiği kullanmadan** çıkılıyor.
+2. **AdaBN vakıf modelini BOZUYOR** (0,6469 → 0,5711, **−0,076**). Nedeni sağlam: vakıf omurgasının BN istatistikleri **zaten 800.000 gerçek CXR'den** (VinDr dahil) geliyor ⇒ 400 görüntüyle yeniden hesaplamak onları bozuyor. M5'te ise tersi: ImageNet istatistikleri CXR'e uymuyor, AdaBN düzeltiyor (**+0,073**).
+3. ⇒ **Genel kural (V6.4 + V6.5d + V6.6.3 birlikte):** AdaBN'in değeri, omurganın **CXR-yerliliğiyle ters orantılıdır**. ImageNet ResNet18'de +0,073; CXR vakıf modelinde −0,076. **AdaBN bir yama, ilaç değil** — ve daha iyi omurga, yamayı gereksiz *ve* zararlı kılıyor.
+4. **bbox recall da taşınıyor:** K30 0,726 → **0,832**; K50 0,752 → **0,865** (bu tek koşu içindeki elma-elma farktır; V6.3'ün kayıtlı 0,90'ı farklı bir çıkarım yolu kullanır, doğrudan karşılaştırılamaz).
+
+* **Betikler:** [`detector_models_foundation.py`](pipelines/v6_two_stage/detector_models_foundation.py) · [`v6_6_train_foundation.py`](pipelines/v6_two_stage/v6_6_train_foundation.py) · [`v6_6_foundation_stage1.py`](pipelines/v6_two_stage/v6_6_foundation_stage1.py) · [`v6_6_vindr_e2e.py`](pipelines/v6_two_stage/v6_6_vindr_e2e.py)
+* **Kayıt:** `artifacts/v6_two_stage/v6_6_foundation_stage1.json` · `v6_6_vindr_e2e.json` · `checkpoints/M5_foundation.pt`
+
+### V6.6.4 — Aşama-2 entegrasyonu (NODE21 val, dondurulmuş lokal TDA-HGB)
+
+Foundation adayları üzerinde **değişmemiş** V6.3 2. aşaması (c_lungref + 32/64 çift-ölçek PI + 4 uzamsal öncül → HGB → füzyon LR):
+
+| K | Aşama-2 bileşeni | FROC @0,5 / 1 / 2 / 4 FP | Hasta AUC (top1 / top3 / noisy-OR) |
+| :-: | :--- | :---: | :---: |
+| 30 | yalnız Aşama-1 | **0,831 / 0,866 / 0,926 / 0,952** | 0,960 / 0,967 / 0,970 |
+| 30 | lokal TDA-HGB | 0,268 / 0,359 / 0,476 / 0,610 | 0,854 / 0,910 / 0,919 |
+| 30 | `e_fusion_tda` | 0,749 / 0,823 / 0,853 / 0,896 | 0,972 / 0,971 / 0,986 |
+| 30 | `f_hierarchical` | 0,766 / 0,818 / 0,857 / 0,905 | **0,977** / 0,975 / 0,985 |
+| 50 | `e_fusion_tda` | 0,745 / 0,801 / 0,853 / 0,879 | 0,972 / 0,973 / **0,988** |
+| 50 | `f_hierarchical` | 0,766 / 0,823 / 0,857 / 0,892 | **0,977** / 0,978 / 0,986 |
+
+**V6.2 (M5 tabanlı) kayıtlı sayılarıyla karşılaştırma:**
+
+| Sistem | Hasta AUC (noisy-OR) | FROC @0,5 / 1 / 2 / 4 |
+| :--- | ---: | :---: |
+| V6.2 `M5M6TTA·K50·e_fusion_tda` | 0,955 | 0,528 / 0,615 / 0,688 / 0,771 |
+| V6.2 `M5_heatTTA·K30·f_hierarchical` | 0,936 | 0,589 / 0,658 / 0,753 / 0,857 |
+| **V6.6 `FND·K50·e_fusion_tda`** | **0,988** | 0,745 / 0,801 / 0,853 / 0,879 |
+| **V6.6 `FND·K50·f_hierarchical`** | 0,986 | **0,766 / 0,823 / 0,857 / 0,892** |
+
+**🔑 İki bulgu:**
+
+1. **İki aşamalı mimari artık gereksizleşmiyor — aksine en iyi AUC'yi veriyor.** Aşama-1 tek başına 0,960 (top1) / 0,970 (noisy-OR) iken `e_fusion_tda` **0,972 / 0,988**. Füzyon kazancı +0,018 noisy-OR'dur. (V6.5'in "N≥80'de lokal model kalibre edilince global temsil gereksizleşiyor" bulgusunun tersi yönde: burada *lokal TDA* hâlâ katkı veriyor.)
+2. 🚨 **FROC darboğazı YER DEĞİŞTİRDİ.** Aşama-1 tek başına FROC@0,5 = **0,831**; lokal TDA'yı devreye sokmak onu **0,749**'a **düşürüyor** (AUC'yi ise 0,960 → 0,972 yükseltiyor). ⇒ Güçlü bir dedektörün ardından lokal TDA **FROC'a zarar veriyor**. Bu, V6.5b'nin AUC–FROC ödünleşiminin **kurum içi** karşılığıdır ve somut bir tasarım kararı doğurur: **FROC-optimal (lezyon bulma) dağıtımda 2. aşama atlanmalı; AUC-optimal (hasta triyajı) dağıtımda tutulmalı.**
+
+### V6.6.5 — VinDr-CXR uçtan uca transfer (foundation + lokal TDA, 400 görüntü)
+
+V6.5 şablonunun üç protokolü, foundation adaylarıyla (23.028 strict / 21.924 AdaBN aday):
+
+**(A) STRICT / inductive — AdaBN YOK (saf tekil-görüntü):**
+
+| Konfigürasyon | Hasta AUC | FROC @0,5 / 1 / 2 / 4 FP |
+| :--- | ---: | :---: |
+| base_z | 0,6416 | 0,156 / 0,189 / 0,227 / 0,270 |
+| + JPEG-denoise σ=1,0 | 0,6593 | 0,170 / 0,218 / 0,286 / 0,345 |
+| + ölçek-eşlemeli yama | 0,6528 | 0,158 / 0,187 / 0,218 / 0,267 |
+| + denoise + ölçek | 0,6550 | 0,173 / 0,220 / 0,291 / **0,352** |
+| + denoise + ölçek + CORAL † | **0,6637** | 0,180 / 0,225 / 0,258 / 0,322 |
+
+**(B) TRANSDUCTIVE — AdaBN (VinDr etiketsiz BN):**
+
+| Konfigürasyon | Hasta AUC | FROC @0,5 / 1 / 2 / 4 FP |
+| :--- | ---: | :---: |
+| base_z | 0,5524 | 0,073 / 0,097 / 0,123 / 0,180 |
+| + JPEG-denoise σ=1,0 | 0,5769 | 0,106 / 0,154 / 0,177 / 0,222 |
+| + ölçek-eşlemeli yama | 0,5926 | 0,078 / 0,092 / 0,137 / 0,180 |
+| + denoise + ölçek | 0,5707 | 0,123 / 0,156 / 0,194 / 0,234 |
+| + denoise + ölçek + CORAL † | 0,5960 | 0,095 / 0,128 / 0,163 / 0,182 |
+
+**(C) FEW-SHOT hasta kalibrasyonu (5-fold CV, hedef ETİKETLİ):**
+
+| N | STRICT tabanı (`scale_z`) | TRANSDUCTIVE tabanı (AdaBN+CORAL) |
+| ---: | :---: | :---: |
+| 0 | 0,6517 ± 0,0329 | 0,5976 ± 0,0458 |
+| 10 | 0,6757 ± 0,0589 | 0,5684 ± 0,0605 |
+| 20 | 0,6739 ± 0,0136 | 0,5743 ± 0,0827 |
+| 40 | 0,7036 ± 0,0488 | 0,5361 ± 0,0635 |
+| 80 | 0,7248 ± 0,0668 | 0,5867 ± 0,0739 |
+| 160 | **0,7344 ± 0,0505** | 0,6019 ± 0,0488 |
+
+† CORAL VinDr özellik kovaryansını kullandığı için **inductive değildir** (tek kanal transductive); diğer dört satır hiçbir hedef istatistiği kullanmaz.
+
+**🔑 Beş bulgu:**
+
+1. **AdaBN vakıf modelini HER konfigürasyonda bozuyor** (−0,065…−0,089). V6.6.3'ün bulgusu uçtan uca hatta da doğrulandı.
+2. **JPEG-denoise artık YARARLI — M5'te zararlıydı.** M5-strict'te 0,6090 → 0,5829 (**−0,026**); foundation-strict'te 0,6416 → 0,6593 (**+0,018**). ⇒ CXR-yerli omurga JPEG blok artefaktını tolere ediyor, yumuşatmanın kazancı geri geliyor. **Fiziksel hizalamanın işe yarayıp yaramaması omurgaya bağlıdır.**
+3. **Inductive tavan 0,6181 → 0,6593 (+0,041)**; CORAL ile 0,6637. (V6.5'in AdaBN'li 0,6620'sine, **hedefe hiç dokunmadan** ulaşılıyor.)
+4. **Few-shot çalışıyor ve monoton:** 0,6517 → **0,7344 ± 0,0505** (V6.5: 0,7243). V6.5'te N=10'da çöken eğri artık **ilk adımdan itibaren iyileşiyor** (N=10: 0,6757). Transductive tabanda ise few-shot **çalışmıyor** (N=40: 0,5361 < N=0 0,5976) ⇒ AdaBN bozuk bir temsil bırakıyor.
+5. **VinDr FROC@4FP: 0,240 (V6.5 tabanı) → 0,352** — dış merkezde lezyon bulma da ölçülebilir biçimde iyileşti.
+
+* **Betik:** [`v6_6_vindr_e2e.py`](pipelines/v6_two_stage/v6_6_vindr_e2e.py) · **Kayıt:** `artifacts/v6_two_stage/v6_6_vindr_e2e.json`
+
+### V6.6.6 — Füzyon FROC ağırlık kalibrasyonu (Pareto taraması, kapanış)
+
+**Soru.** V6.6'da yalnız Aşama-1 FROC@0,5 = 0,831 verirken, **M5 üzerinde öğrenilmiş** `e_fusion_tda` (LR) katsayıları kullanılınca FROC **0,745**'e düşüyordu. Basit z-skorlu doğrusal füzyon ailesinde daha iyi bir işletim noktası var mı?
+
+`S_fused(i) = w · z(s1_fnd) + (1 − w) · z(tda_hgb)`, **w ∈ [0, 1] adım 0,05**; 35.666 aday / 734 hasta / 231 lezyon. Skorlar noisy-OR toplaması için **sigmoid** ile [0,1]'e eşlendi (monoton ⇒ FROC ve top1/top3 değişmez, yalnız noisy-OR anlamlı olur). Betik: [`v6_6_fusion_calibration.py`](pipelines/v6_two_stage/v6_6_fusion_calibration.py).
+
+**🔴 Sonuç: üç kapıyı aynı anda sağlayan w YOKTUR — kesişim boş.**
+
+| Kapı | Sağlandığı aralık |
+| :--- | :--- |
+| FROC@4 ≥ 0,950 | yalnız **w ∈ [0,70 … 1,00]** |
+| AUC (noisy-OR) ≥ 0,985 | yalnız **w ∈ [0,30 … 0,60]** |
+| ⇒ | **kesişim ∅** — FROC@4'ü açan her ağırlıkta AUC 0,985'in altına iner |
+
+**Seçilmiş noktalar:**
+
+| w | FROC@0,5 | FROC@1 | FROC@2 | FROC@4 | AUC noisy-OR | AUC top1 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0,00 (yalnız TDA) | 0,2208 | — | — | 0,5281 | 0,9255 | 0,8664 |
+| 0,45 (**AUC-optimal**) | 0,8182 | 0,8788 | 0,9307 | 0,9177 | **0,9909** | **0,9780** |
+| **0,55 (önerilen)** | **0,8355** | 0,8788 | 0,9221 | 0,9307 | 0,9886 | 0,9746 |
+| **0,70 (FROC@4 garantili)** | 0,8312 | 0,8788 | 0,9221 | **0,9524** | 0,9827 | 0,9689 |
+| 0,90 (**FROC-optimal**) | **0,8442** | 0,8831 | 0,9221 | 0,9524 | 0,9732 | 0,9622 |
+| 1,00 (yalnız Aşama-1) | 0,8312 | 0,8658 | 0,9264 | 0,9524 | 0,9692 | 0,9595 |
+| **REF: `e_fusion_tda` (miras LR)** | 0,7446 | 0,8009 | 0,8528 | 0,8788 | 0,9737 | 0,9722 |
+
+**🔑 İki bulgu:**
+
+1. ✅ **Kalibrasyon, miras alınan LR katsayılarını DOMİNE ediyor.** **w ∈ [0,35 … 0,60]** aralığı dört metrikte de `e_fusion_tda`'ya eşit veya üstündür. Özellikle **w = 0,55**: FROC@0,5 0,745 → **0,836**, FROC@4 0,879 → **0,931**, AUC noisy-OR 0,974 → **0,989**, top1 0,972 → **0,975**. Hiçbir eksende gerileme yok.
+2. ⚖️ **Önerilen işletim noktaları:**
+   * **w\* = 0,55** — *varsayılan* (regresyonsuz; AUC ve FROC@0,5 kapıları sağlanır).
+   * **w = 0,70** — FROC@4 ≥ 0,950 **zorunlu**ysa (lezyon bulma dağıtımı); AUC 0,9827, kapıya yalnız **0,0023** uzak.
+   * **w = 0,45** — hasta triyajı (en yüksek AUC 0,9909).
+   * **w = 0,90** — en yüksek FROC@0,5 (0,8442).
+3. 🎯 **Teşhis.** Kapı üçlüsü, **AUC–FROC ödünleşimi** nedeniyle tanım gereği çelişkilidir: eşikler "en iyi AUC'li model" ile "en iyi FROC'lu model"in **aynı anda** olmasını istiyordu. V6.5b/V6.5c'de *dış merkezde* görülen bu ödünleşim, güçlü dedektörden sonra **kurum içinde de** ölçüldü (bkz. V6.6.4). Kalibrasyonun yaptığı iş, ödünleşmeyi **kaldırmak değil**, frontier'ı miras alınan noktanın **tamamının üstüne taşımaktır**.
+
+* **Kayıt:** `artifacts/v6_two_stage/v6_6_fusion_calibration.json` (21 ağırlığın tam eğrisi + Pareto cephesi + öneri bloğu) · ana rapora `fusion_froc_calibration` anahtarıyla işlendi.
+* **Önbellek:** `v6_6_val_candidate_scores.npz` (yalnız skaler skorlar; görüntü/kırpıntı YOK) ⇒ tarama yeniden koşulabilir.

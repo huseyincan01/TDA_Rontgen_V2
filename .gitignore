@@ -101,3 +101,5 @@ artifacts/thresholds/*
 # V6 raporları (hafif JSON, ~40 KB) → TAKİP EDİLİR; checkpoint'ler (~11 MB) edilmez
 !artifacts/v6_two_stage/
 artifacts/v6_two_stage/checkpoints/
+# Türetilmiş önbellek (yeniden üretilebilir: --recompute) → takip edilmez
+artifacts/v6_two_stage/*.npz

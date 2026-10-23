@@ -116,5 +116,89 @@
     "workers": 10,
     "ref_patients": 200,
     "note": "KOL2: 2. aşama tablosal modeli hedef merkezde kalibre edilir; Aşama-1 ağırlıkları donmuştur. Aday etiketi = görüntü etiketi (kaba)."
+  },
+  "strict_no_adabn_ablation": {
+    "experiment": "V6.5d",
+    "date": "2026-10-23",
+    "goal": "AdaBN KAPALI (dondurulmuş NODE21 BN) fiziksel hizalama denetimi",
+    "protocol": "VinDr-CXR 400 görüntü, adaylar M5_centernet (AdaBN'siz), K=50; aynı dondurulmuş 2. aşama (HGB + füzyon LR); referans 200 NODE21 train hastası",
+    "n_candidates": 19842,
+    "detector_only_patient_auc_no_adabn": {
+      "top1": 0.5599,
+      "top3": 0.5559,
+      "noisyor": 0.5538
+    },
+    "configs": {
+      "strict_base_z": {
+        "auc": 0.609,
+        "inductive": true,
+        "scale": "fixed",
+        "denoise_sigma": 0.0,
+        "align": "z"
+      },
+      "strict_denoise1.0_z": {
+        "auc": 0.5829,
+        "inductive": true,
+        "scale": "fixed",
+        "denoise_sigma": 1.0,
+        "align": "z"
+      },
+      "strict_scale_z": {
+        "auc": 0.6181,
+        "inductive": true,
+        "scale": "scale",
+        "denoise_sigma": 0.0,
+        "align": "z"
+      },
+      "strict_denoise1.0_scale_z": {
+        "auc": 0.5814,
+        "inductive": true,
+        "scale": "scale",
+        "denoise_sigma": 1.0,
+        "align": "z"
+      },
+      "strict_denoise1.0_scale_coral": {
+        "auc": 0.5916,
+        "inductive": false,
+        "scale": "scale",
+        "denoise_sigma": 1.0,
+        "align": "coral"
+      }
+    },
+    "comparison_vs_adabn": {
+      "strict_base_z": {
+        "no_adabn_auc": 0.609,
+        "adabn_auc": 0.6439,
+        "delta_adabn_minus_strict": 0.0349,
+        "inductive": true
+      },
+      "strict_denoise1.0_z": {
+        "no_adabn_auc": 0.5829,
+        "adabn_auc": 0.6498,
+        "delta_adabn_minus_strict": 0.0669,
+        "inductive": true
+      },
+      "strict_scale_z": {
+        "no_adabn_auc": 0.6181,
+        "adabn_auc": 0.6562,
+        "delta_adabn_minus_strict": 0.0381,
+        "inductive": true
+      },
+      "strict_denoise1.0_scale_z": {
+        "no_adabn_auc": 0.5814,
+        "adabn_auc": 0.6523,
+        "delta_adabn_minus_strict": 0.0709,
+        "inductive": true
+      },
+      "strict_denoise1.0_scale_coral": {
+        "no_adabn_auc": 0.5916,
+        "adabn_auc": 0.662,
+        "delta_adabn_minus_strict": 0.0704,
+        "inductive": false
+      }
+    },
+    "inductive_ceiling": "strict_denoise1.0_scale_z",
+    "note": "CORAL satırı VinDr kovaryansını kullandığı için inductive değildir (tek kanal transductive); diğer dört satır hiçbir hedef istatistiği kullanmaz.",
+    "classification": "strict (inductive) zero-shot"
   }
 }
