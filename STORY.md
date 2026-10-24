@@ -130,6 +130,9 @@ taşındı: **Aşama-1** aday üretici + **Aşama-2** lokal TDA ile FP eleme.
 * **Aşama-2 (lokal TDA-HGB):** 32/64 px çift ölçek PI + 4 uzamsal öncül → HGB.
   `e_fusion_tda` val **AUC 0,955**; `f_hierarchical` **FROC@4FP 0,857**.
   Yama CNN (0,646) **mimariden çıkarıldı**.
+  ⚠️ *Dürüstlük notu (§12.2, Tuzak B):* 0,955, füzyon LR'ının 1. aşamanın **in-sample**
+  skorlarıyla uydurulduğu bundle'dan gelir; **sızıntısız** eşdeğeri sabit **w=0,55**
+  füzyonudur (V6.6.6: nOR **0,9886**). V6.7 gönderim modeli bu tuzağı yapısal olarak kapatır.
 * **Test mührü (tek sefer):** V6 lokal **0,9464** · V5.2 global 0,9612 ·
   **birleşik 0,9876** (r=0,376).
 
@@ -189,6 +192,12 @@ FROC **@1/8, 1/4, 1/2** FP/görüntü; **`rank_metric = 0,75·AUC + 0,25·Sens@0
 
 **En iyi: rank_metric 0,9131** (AUC 0,9678 · Sens@0,125 0,6710 · @0,25 0,7489 · @0,5 0,8009).
 
+> 🔧 **V6.8 güncellemesi (§12.4b):** buradaki "yarıçap kafası kullanılamaz" hükmü
+> **kaldırıldı**. Çökmenin nedeni kayıp ağırlığı değil, kaybın **tüm Gaussian-pozitif
+> bölge** üzerinde ortalanmasıymış. `R > 0` (merkez) maskesiyle aynı kafa 6 dakikada
+> eğitildi ve **rank_metric 0,9185** ile sabit 56 px kutuyu geçti (üç duyarlılık
+> noktasında da artış). Gönderim sözleşmesi hâlâ kilitli **sabit 56 px**'tir.
+
 → [experiments.md §10 · V6.6.7](experiments.md), [ablation_matrix.md §14.6](ablation_matrix.md)
 
 ## 11. V6.7 — Tam veri ve Docker
@@ -203,6 +212,11 @@ aramasi yok, yarıçap kafası detach) ve **Tuzak B** (2. aşama matrisinde 1. a
 **yok**; füzyon **yeniden uydurulmadı**) korumalarıyla. Bilimsel checkpoint'ler
 SHA-256 ile teyitli **değişmedi**.
 
+> ⚠️ **V6.8 notu (12.4b–c):** buradaki iki tasarım kararı ölçüldü — **yarıçap kafası
+> detach** gerekliydi *ama yetmiyordu* (asıl sorun kayıp maskesiydi; onarım 12.4b) ve
+> **BN donuk** kararının in-domain val'de **ölçülebilir faydası bulunamadı** (12.4c).
+> Gönderim modeli bu nedenle **değiştirilmedi** (Tuzak A: kilitli sözleşme).
+
 **Docker:** resmî baseline şemasına **birebir** (köşe sırası **TR,TL,BL,BR** · `name`
 alanı yok · **z = slice indeksi** · x/y = piksel × spacing), **non-root** (`algorithm`,
 uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3B `.mha`,
@@ -215,23 +229,145 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
 
 ## 12. Nerede duruyoruz — ve neyi bilmiyoruz
 
+> ⚠️ **Bu bölüm üç ayrı şeyi aynı torbaya koymuyor.** *Kimsenin yapamayacağı* şeyler
+> (12.1), *bizim yaptığımız* hatalar (12.2), *bulunup kapatılmış* tarihsel hatalar
+> (12.3) ve *V6.8'de kapatılan kanıt boşlukları* (12.4) ayrı listelenir. Aksi hâlde
+> okuyucu "bizim eksiğimiz" ile "yapısal sınır"ı karıştırıyor.
+
 **Bildiğimiz:**
 * Kurum içinde güçlü bir hasta düzeyi triyaj sistemi var (füzyon 0,9516; V6.6 uçtan uca
-  val AUC 0,988).
-* Lokalizasyon katmanı çalışıyor (K50 recall 0,991; resmî metrik simülasyonu 0,9131).
+  val AUC 0,988 — **sızıntısız** sabit-ağırlık eşdeğeri **0,9886**).
+* Lokalizasyon katmanı çalışıyor (K50 recall 0,991; resmî metrik simülasyonu 0,9131 →
+  **0,9185** onarılmış yarıçap kafasıyla, V6.8).
 * **TDA'nın gerçek katkısı global/arka plan topolojisinde**; lokal nodül topolojisinde
   değil (E3.6: 0,6866). Dış merkezde taşınan kısım sınırlı (VinDr zero-shot 0,647).
 
-**Bilmediğimiz / ölçmediğimiz:**
+### 12.1 Bilinemez / ölçülemez (⚪ hata değil)
+
 * **Resmî test setinde hiçbir skor yok** — verimiz NODE21'in **halka açık eğitim
-  seti**; resmî test setleri özel. Karşılaştırma **geçersiz** (Kural 9).
-* Tam-veri gönderim modeli NODE21'de **değerlendirilemez** (tüm veri eğitimde).
-* İki fazlı eğitimin **unutma-önleme** katkısı izole edilmedi (ısınma checkpoint'i silindi).
-* `densenet121-res224-all` yolu kodda var, **koşulmadı**.
-* TDA'nın AUC–FROC ödünleşimi **çözülmedi**; sadece frontier taşındı.
+  seti**; resmî test setleri **herkese kapalı**. Karşılaştırma **geçersiz** (Kural 9).
+  Bu bir eksik değil, erişilemezliktir.
+* Tam-veri gönderim modeli NODE21'de **değerlendirilemez** — tüm veri eğitimde.
+  *Mantıksal zorunluluk*: hem tüm veriyi kullanıp hem o veride ölçemezsin (bilinçli ödünleşim).
+* TDA'nın **AUC–FROC ödünleşimi çözülmedi** — *çözülmemiş problem*, hata değil:
+  tanımlandı, üç kez saldırıldı (V6.5b/5c · V6.6.6), frontier taşındı, ödünleşim kaldı.
+
+### 12.2 Yaptığımız gerçek hatalar
+
+| # | Hata | Durum |
+| :-: | :--- | :--- |
+| 1 | 🔴 **Isınma (warm) kanıtı silindi:** `M5_foundation_warm.pt` teşhis için kaydedildi, sonra "temizlik" diye **değerlendirilmeden silindi** | ✅ **V6.8'de yeniden üretildi ve ölçüldü** (12.4a) |
+| 2 | 🔴 **Yarıçap kafası çöktü ve haftalar boyunca fark edilmedi:** kayıp ağırlığı 0,1 iken focal kayıp 1–13 mertebesinde; resmî metrik (IoU>0,2) uygulanana kadar kutu üretmiyorduk | ✅ V6.6.7'de bulundu → **V6.8'de onarıldı** (12.4b): neden ağırlık değil **kayıp maskesi**ymiş; onarılan kafa sabit 56 px'i geçti (**0,9131 → 0,9185**) |
+| 3 | 🔴 **Tuzak B — füzyon LR'ı in-sample s1 ile uyduruldu:** V6.1–V6.4'te 2. aşamanın LR'ı, 1. aşamanın *kendi eğitim bölmesindeki* skorlarıyla eğitildi. Val dürüsttür (M5 val'i görmedi) ama katsayılar aşırı özgüvenli dağılıma göre seçildi ⇒ hafif iyimserlik riski | ✅ V6.7'de **yapısal olarak kapatıldı** (s1 matrise girmez + w kilitli); V6.2'nin 0,955'i ve V6.6.4'ün 0,988'i artık **"referans"**, sızıntısız eşdeğeri sabit **w=0,55 → 0,9886** (V6.6.6) |
+| 4 | 🟡 **Çift sigmoid:** V6.6.6'da LR referans satırının noisy-OR'u **0,9737** yazılmıştı (LR çıktısı zaten [0,1] iken bir kez daha sigmoid) | ✅ Düzeltildi → **0,9879**; betik ve artifact yeniden üretildi (arşiv birebir aynı çıktı) |
+| 5 | 🟡 **V6.5 KOL 1 "zero-shot" diye etiketlendi ama AdaBN'liydi** (raporlama hatası) | ✅ V6.5d'de düzeltildi; 0,6439–0,6620 bandının tamamı **transductive** ilan edildi |
+| 6 | 🟡 **`densenet121-res224-all` koşulmadı:** "512 doğal çözünürlük olduğu için ResNet50" savı **ölçümle değil akıl yürütmeyle** duruyor | ⏳ Hâlâ açık (12.5) |
+| 7 | 🟡 **"BN donuk = unutma-önleme" gerekçesi ölçülmemişti** (V6.6/V6.7'de argüman olarak yazıldı, test edilmedi) | ✅ V6.8'de ölçüldü (12.4c): **ölçülebilir fayda yok** (Δ nOR −0,0003; yedi metrikte BN açık ≥) |
+
+### 12.3 Tarihsel hatalar (bulundu ve düzeltildi — kayıtları var)
+
+* **v1 — beş metodolojik hata** (etiket sızıntısı, kirli negatif havuz, keyfi PI ızgarası,
+  yanlış katmanlama, FDR'siz 800 özellik) ⇒ 17 türev varlık silindi. → §1
+* **V2.4 — sessiz hata:** `sitk.Resample` spacing hatası geniş `except` tarafından
+  yutuldu ⇒ **4148 boş diyagram** ve **tam 0,5000 AUC**. Düzeltme: blok ortalaması +
+  boş-diyagram sanity koruması. → [v4_roadmap.md](v4_roadmap.md)
+* **E0.5 — önbellek kayması:** 9380 vs 5710 satır ⇒ görüntüler etiketlerle kaydı
+  (AUC 0,58). → [experiments.md](experiments.md) §E0.5
+* **E3.6 — boyut confound'u:** eşleştirilmemiş ilk koşuda sınıflandırıcı nodülü değil
+  **yama boyutunu** öğrendi (**0,994** → boyut eşleştirilince **0,6866**).
+* **V4 (VinDr) — iki hatalı betik:** histogram eşleme **tüm kesite** uygulanıp doku
+  maskesi bozuldu; kayıtsız koşular ve tutarsız sayılar (**0,8537/0,8985/0,9365**)
+  kaldırıldı. → [experiments.md](experiments.md) §7
+* **E2.1/E2.6 — baseline'ı yeniden türetmek kazancı şişirir:** +0,0646 → gerçek **+0,0210**.
+
+### 12.4 V6.8 — kanıt boşluklarının kapatılması
+
+**(a) Isınma ablasyonu (silinen kanıt geri getirildi).** `v6_8_fix_checks.py --task warm`
+ısınma fazını **aynı tohum/takvim/augmentasyon/kayıpla** yeniden üretti (train split
+1:1 = 1580 örnek, 5 epoch donuk omurga) ve val'de (734 hasta) final 18-epoch modele
+karşı ölçtü:
+
+| Ölçüm (val) | Isınma (5 ep, donuk omurga) | **Final (18 ep, iki fazlı)** | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K20 | 0,9654 | **0,9827** | **+0,0173** |
+| Recall@K50 | 0,9913 | 0,9913 | 0,0000 |
+| FROC@0,5 | 0,7792 | **0,8312** | **+0,0520** |
+| FROC@4 | 0,9091 | **0,9524** | **+0,0433** |
+| Hasta AUC (noisy-OR) | 0,9416 | **0,9702** | **+0,0286** |
+| Hasta AUC (top1) | 0,9275 | **0,9595** | **+0,0320** |
+
+* ✅ **2. faz gerçekten kazandırıyor** — en büyük kazanç **FROC@0,5'te (+0,052)**;
+  K50'de ise katkı **tam sıfır** (0,9913 → 0,9913) ⇒ ısınma, K50 tavanını **zaten**
+  yakalıyor; ince ayarın işi **düşük-FP bölgesini** düzeltmek.
+* 🔒 **Kanıt bütünlüğü:** yeniden üretilen ısınma koşusunun epoch kayıpları V6.6'nın
+  kayıtlı train log'uyla örtüşüyor (13,36/2,23/2,10/1,96/1,87 vs 13,35/2,22/2,11/1,97/1,90)
+  ve **final kolunun sayıları V6.6'nın yayımlanmış değerlerinin aynısı** (K20 0,9827 ·
+  FROC@0,5 0,831 · @4 0,952 · top1 0,960) ⇒ karşılaştırma elmayla elmadır.
+* ⚠️ **Dürüst sınır:** Δ(final−ısınma) 2. fazın **toplam** katkısıdır (13 ek epoch +
+  üst blokların açılması). Bunu tek başına *"unutma-önleme katkısı"* saymak fazla iddia
+  olurdu; BN dondurmanın payı ayrı kolda ölçülür (`--task bn`, 12.5).
+
+**(b) Yarıçap kafası onarımı (V6.6.7'den beri açık olan hata).** V6.6.7 çökmeyi
+"kayıp ağırlığı 0,1" ile açıklamıştı. V6.8 bu açıklamayı test etti: **ağırlık 1,0**
+(10×) ile kafa **yine çöktü** (r₁₀₂₄ medyanı **0,02 px**) ⇒ ağırlık neden değildi.
+Gerçek neden, kaybın **tüm Gaussian-pozitif bölge** (961 piksel) üzerinde ortalanması,
+oysa yarıçap hedefinin **yalnız merkez pikselinde** dolu olmasıydı (ölçüm: süpervizyonun
+**%0,11**'i hedef taşır) ⇒ gradyanın **%99,9'u** "0 tahmin et" yönündeydi; kaybın
+minimumu **sabit 0**.
+
+| Kutu geometrisi (aynı adaylar) | rank_metric | Sens@0,125 | Sens@0,25 | Sens@0,5 |
+| :--- | ---: | ---: | ---: | ---: |
+| sabit 48 px | 0,9109 | 0,6710 | 0,7403 | 0,7922 |
+| sabit 56 px (V6.6.7 optimumu) | 0,9131 | 0,6710 | 0,7489 | 0,8009 |
+| sabit 64 px | 0,9077 | 0,6537 | 0,7273 | 0,7879 |
+| **onarılmış yarıçap kafası** (`R>0` maskesi, ağırlık 1,0, 6 epoch) | **0,9185** | **0,6970** | **0,7706** | **0,8312** |
+
+* ✅ **Onarım çalıştı ve sabit kutuyu geçti:** rank_metric **0,9131 → 0,9185** ve
+  **üç işletim noktasının üçünde de** duyarlılık arttı ⇒ yarıçap kafası **ilk kez**
+  resmî metrikte işe yarar hâle geldi. AUC her satırda **0,9678** (kutu geometrisi
+  sıralamayı değiştirmez) ⇒ kazanç tamamen **IoU tabanlı eşleştirmeden**.
+* ⚠️ Kafa, GT aralığının (17,5–59,5 px) **ortasına sıkışıyor** (p10 26 / medyan 33 /
+  p90 47): kalibre değil, **regresyona-ortalama** — ama sabit kutudan iyi.
+* ⚠️ **Gönderim sözleşmesi değişmedi** (kilitli sabit 56 px, Tuzak A); onarılan kafayı
+  gönderime almak tam-veri modelinin yarıçap dalını aynı maske düzeltmesiyle yeniden
+  eğitmeyi gerektirir — **ayrı bir sürüm kararı**.
+
+**(c) Unutma-önleme kolu — BN dondurma ölçüldü ve faydası GÖSTERİLEMEDİ.**
+V6.6/V6.7'nin gerekçesi *"BN `.eval()` — 800k röntgenlik istatistik bozulmasın"* idi;
+bu bir **argümandı**. V6.8 aynı takvimi (18 epoch) **tek farkla** koştu: 2. fazda BN
+running istatistikleri **açık**. Sonuç tasarım beklentisinin **tersine**:
+
+| Ölçüm (val 734/231) | 2. faz BN **AÇIK** | Final (BN **donuk**) | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K20 | **0,9913** | 0,9827 | +0,0086 |
+| Recall@K50 | **0,9957** | 0,9913 | +0,0044 |
+| FROC@0,5 | **0,8442** | 0,8312 | +0,0130 |
+| FROC@1 | **0,8918** | 0,8658 | +0,0260 |
+| FROC@4 | 0,9524 | 0,9524 | 0,0000 |
+| Hasta AUC (top1) | **0,9646** | 0,9595 | +0,0051 |
+| Hasta AUC (noisy-OR) | 0,9699 | **0,9702** | −0,0003 |
+
+* 🔴 **Ölçülebilir fayda yok:** sekiz metrikten yedisinde BN açık en az onun kadar iyi;
+  tek "kayıp" noisy-OR'da **−0,0003** (gürültü).
+* ⚠️ **Ters yönde kanıt da değil:** 231 lezyonda FROC@0,5'in standart hatası ≈ **0,024**
+  ⇒ 0,013 ≈ **0,5 SE**; tek tohum, tek val bölmesi. Doğru cümle:
+  *"BN dondurma ölçülebilir bir unutma-önleme faydası göstermedi; zarar da vermedi."*
+* 🎯 **Hipotezin asıl sınavı alan dışıdır:** BN istatistikleri transfer edilen şeyin
+  parçasıdır (V6.6.3: AdaBN vakıf modelini **bozuyordu**) — V6.8 bunu test **etmez**.
+
+### 12.5 Hâlâ açık
+
+* **`densenet121-res224-all`** omurga yolu kodda var, **koşulmadı** — "512 doğal
+  çözünürlük" savı ölçümle desteklenmedi (~30 dk iş).
+* **BN dondurmanın alan-dışı (VinDr) payı** — in-domain val'de fark yok (12.4c);
+  hipotezin sınavı transferde yapılmalı.
+* **Onarılan yarıçap dalının gönderime alınması** (12.4b) — mühendislik kararı.
+* **AUC–FROC ödünleşimi** (12.1) — çözülmüş değil, yönetiliyor.
+
+
 
 ---
 
-*Son güncelleme: V6.7 (Ekim 2026) · Ayrıntı: [experiments.md](experiments.md) (deneyler),
+*Son güncelleme: V6.8 (Ekim 2026) · Ayrıntı: [experiments.md](experiments.md) (deneyler),
 [ablation_matrix.md](ablation_matrix.md) (tablolar), [progress.md](progress.md) (v1–v3),
 [roadmap.md](roadmap.md) (v3 protokolü), [v4_roadmap.md](v4_roadmap.md) (v4), [paper_draft.md](paper_draft.md) (makale).*

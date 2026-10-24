@@ -404,6 +404,14 @@ def main() -> None:
     cnn = train_patch_cnn(Xt_pat, yt, device, epochs=6)
 
     # füzyon için eğitim skorları → LR
+    #
+    # ⚠️ TUZAK B (V6.8'de belgelendi — bkz. STORY.md §12.2): buradaki `s1_t`, 1. aşamanın
+    # KENDİ eğitim bölmesindeki (in-sample) skorudur. Val değerlendirmesi dürüsttür (M5
+    # val'i görmedi) ama füzyon KATSAYILARI modelin ezberlediği skor dağılımına göre
+    # seçildiği için hafif iyimserlik riski taşır. Bu yüzden buradan çıkan `e_fusion_tda`
+    # sayıları (V6.2 val AUC 0,955 / V6.6 0,988) artık **referans**tır; sızıntısız
+    # alternatif, 1. aşama skorunu matrise hiç sokmayan SABİT ağırlıklı füzyondur
+    # (V6.6.6: w=0,55 → nOR 0,9886). V6.7 gönderim hattı bu tuzağı yapısal olarak kapatır.
     p_tda_t = hgb.predict_proba(sc.transform(Xt_ts))[:, 1]
     p_img_t = predict_patch(cnn, Xt_pat, device)
     Zt = np.stack([s1_t, p_tda_t, p_img_t], axis=1)

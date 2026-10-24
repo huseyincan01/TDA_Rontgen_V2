@@ -192,9 +192,23 @@ def main() -> None:
         import joblib
         lr = joblib.load(CKPT / "stage2_final_tda_hgb.joblib")["lr_fusion"]
         s_lr = lr.predict_proba(np.stack([s1, tda], 1))[:, 1]
-        r = eval_w(pidx, x, y, s1z, tdaz, hit, nod, pids, n_les, None, s_override=s_lr)
+        # DİKKAT: LR çıktısı ZATEN [0,1] olasılığıdır ⇒ sigmoid UYGULANMAZ.
+        # (Önceki sürümde yanlışlıkla sigmoid uygulanıyordu ⇒ noisy-OR bozuluyordu;
+        #  FROC/top1 sıralamaya bağlı olduğu için etkilenmiyordu.)
+        lr_recs = []
+        for k, pid in enumerate(pids):
+            m = np.where(pidx == k)[0]
+            lr_recs.append({"pid": pid,
+                            "is_nodule": bool(nod[m[0]]) if len(m) else False,
+                            "cands": [(float(x[i]), float(y[i]), float(s_lr[i]),
+                                       None if hit[i] < 0 else int(hit[i])) for i in m]})
+        lfr, lau = v62.froc_fixed(lr_recs, len(lr_recs), n_les)
+        lfh, lah = v62.froc_fixed(v62.hierarchical(lr_recs), len(lr_recs), n_les)
+        r = {"froc": lfr, "auc": lau, "hier_froc": lfh, "hier_auc": lah}
         ref["e_fusion_tda_LR"] = {"froc": r["froc"], "auc": r["auc"],
-                                  "hier_froc": r["hier_froc"], "hier_auc": r["hier_auc"]}
+                                  "hier_froc": r["hier_froc"], "hier_auc": r["hier_auc"],
+                                  "note": "LR çıktısı zaten [0,1] ⇒ sigmoid YOK "
+                                          "(çift-sigmoid hatası düzeltildi)"}
         print(f"  REF e_fusion_tda (LR)  FROC@0.5={r['froc']['0.5']:.4f} @4={r['froc']['4']:.4f}"
               f" | AUC nOR={r['auc']['noisyor']} top1={r['auc']['top1']}", flush=True)
     except Exception as exc:  # noqa: BLE001

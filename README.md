@@ -33,9 +33,9 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 
 | | |
 | :--- | :--- |
-| **En iyi kurum içi sonuç** | Füzyon test ROC-AUC **0,9516** (v3 headline; V6.6 uçtan uca val AUC **0,988**) |
+| **En iyi kurum içi sonuç** | Füzyon test ROC-AUC **0,9516** (v3 headline; V6.6 uçtan uca val AUC **0,988** · **sızıntısız** sabit-ağırlık eşdeğeri **0,9886**) |
 | **Lokalizasyon (V6.6)** | Yalnız Aşama-1: Recall@K20/K30 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
-| **Resmî metrik simülasyonu** | `rank_metric = 0,75·AUC + 0,25·Sens@0,25` → **0,9131** (IoU>0,2, 56 px kutu) |
+| **Resmî metrik simülasyonu** | `rank_metric = 0,75·AUC + 0,25·Sens@0,25` → **0,9131** (IoU>0,2, 56 px sabit kutu) · **onarılmış yarıçap kafasıyla 0,9185** (V6.8) |
 | **Harici (VinDr-CXR)** | Saf zero-shot en iyi **0,6469**; 160 hedef etiketle few-shot **0,7344** |
 | **Gönderim modeli** | 4.882 hastanın tamamıyla eğitildi → **NODE21'de değerlendirilemez** |
 | **Konteyner** | `submission_docker/` · çevrimdışı (`--network=none`) test edildi · non-root · CUDA 13,9 GB / CPU 3,51 GB |
@@ -62,7 +62,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 | Dal | Anlamı |
 | :--- | :--- |
 | `main` | **v3 — kapandı, yayına hazır** (`v3-publication-ready`) |
-| `exp/v4-directional-radial` | **aktif dal** — v4'ten başlayıp **V6.7'ye** kadar tüm çalışma (V5 fiziksel kanonikleştirme, V6 iki aşamalı lokalizasyon, V6.6 CXR vakıf omurgası, V6.7 tam veri + Docker) |
+| `exp/v4-directional-radial` | **aktif dal** — v4'ten başlayıp **V6.8'e** kadar tüm çalışma (V5 fiziksel kanonikleştirme, V6 iki aşamalı lokalizasyon, V6.6 CXR vakıf omurgası, V6.7 tam veri + Docker, V6.8 kanıt boşluklarının kapatılması) |
 
 ---
 

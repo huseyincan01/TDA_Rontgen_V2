@@ -132,20 +132,21 @@
       },
       "auc": {
         "top1": 0.9722,
-        "top3": 0.9729,
-        "noisyor": 0.9737
+        "top3": 0.9734,
+        "noisyor": 0.9879
       },
       "hier_froc": {
-        "0.5": 0.7619,
-        "1": 0.8095,
-        "2": 0.8528,
-        "4": 0.8831
+        "0.5": 0.7662,
+        "1": 0.8225,
+        "2": 0.8571,
+        "4": 0.8918
       },
       "hier_auc": {
-        "top1": 0.9769,
-        "top3": 0.9758,
-        "noisyor": 0.9761
-      }
+        "top1": 0.9771,
+        "top3": 0.9779,
+        "noisyor": 0.9864
+      },
+      "note": "LR çıktısı zaten [0,1] ⇒ sigmoid YOK (çift-sigmoid hatası düzeltildi)"
     },
     "stage1_only_w1": {
       "froc": {
@@ -167,8 +168,7 @@
       0.4,
       0.45,
       0.5,
-      0.55,
-      0.6
+      0.55
     ],
     "best_joint_shortfall_w": 0.7,
     "best_joint_shortfall": 0.0023,

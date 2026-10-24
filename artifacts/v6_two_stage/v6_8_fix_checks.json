@@ -1,0 +1,433 @@
+{
+  "experiment": "V6.8-fix-checks",
+  "purpose": "V6.6'da silinen ısınma kanıtını yeniden üret + yarıçap kafasını onar",
+  "warm_ablation": {
+    "question": "İki fazlı eğitimin 2. fazı (diferansiyel ince ayar) gerçekten kazandırıyor mu?",
+    "restored_evidence": "V6.6'da M5_foundation_warm.pt değerlendirilmeden silinmişti; bu koşu onu aynı tohum/takvimle yeniden üretir",
+    "protocol": "train split 1:1 (1580 örnek) · ısınma 5 epoch donuk omurga · aug/kayıp/tohum v6_6_train_foundation ile birebir · val 734 hasta",
+    "smoke": false,
+    "warm_history": [
+      {
+        "epoch": 1,
+        "loss": 13.35515,
+        "seconds": 71.2,
+        "bn": "frozen"
+      },
+      {
+        "epoch": 2,
+        "loss": 2.22571,
+        "seconds": 68.1,
+        "bn": "frozen"
+      },
+      {
+        "epoch": 3,
+        "loss": 2.10008,
+        "seconds": 67.6,
+        "bn": "frozen"
+      },
+      {
+        "epoch": 4,
+        "loss": 1.96103,
+        "seconds": 68.7,
+        "bn": "frozen"
+      },
+      {
+        "epoch": 5,
+        "loss": 1.87481,
+        "seconds": 67.5,
+        "bn": "frozen"
+      }
+    ],
+    "warm_only": {
+      "recall_at_K": {
+        "10": 0.9437,
+        "20": 0.9654,
+        "30": 0.987,
+        "50": 0.9913
+      },
+      "froc": {
+        "0.5": 0.7792,
+        "1": 0.8398,
+        "2": 0.8701,
+        "4": 0.9091
+      },
+      "patient_auc": {
+        "top1": 0.9275,
+        "top3": 0.9385,
+        "noisyor": 0.9416
+      },
+      "n_patients": 734,
+      "n_lesions": 231
+    },
+    "final_18ep": {
+      "recall_at_K": {
+        "10": 0.9481,
+        "20": 0.9827,
+        "30": 0.9827,
+        "50": 0.9913
+      },
+      "froc": {
+        "0.5": 0.8312,
+        "1": 0.8658,
+        "2": 0.9264,
+        "4": 0.9524
+      },
+      "patient_auc": {
+        "top1": 0.9595,
+        "top3": 0.9669,
+        "noisyor": 0.9702
+      },
+      "n_patients": 734,
+      "n_lesions": 231
+    },
+    "delta_final_minus_warm": {
+      "recall_K20": 0.0173,
+      "recall_K50": 0.0,
+      "froc_0.5": 0.052,
+      "froc_4": 0.0433,
+      "auc_noisyor": 0.0286,
+      "auc_top1": 0.032
+    },
+    "warm_ckpt": "submission_fulldata/M5_foundation_warm_probe.pt (teşhis, bilimsel değil)",
+    "caveat": "Δ(final−warm) faz-2'nin TOPLAM katkısıdır (13 ek epoch + üst blokların açılması). Bunu tek başına 'unutma-önleme katkısı' saymak fazla iddia olurdu → --task bn kolu BN dondurmanın payını ayrı ölçer."
+  },
+  "radius_head_fix": {
+    "weight1_gauss_posmask": {
+      "question": "Yarıçap kafası onarılırsa (ağırlık 0,1 → 1,0) sabit 56 px kutuyu geçer mi?",
+      "protocol": "omurga DONUK, yalnız 2 katmanlı yarıçap kafası (fuse özelliği, 256x256), smooth-L1 ağırlık 1,0, 6 epoch · değerlendirme: çok ölçekli TTA + NMS 8px, resmî IoU>0,2 · val 734 hasta",
+      "smoke": false,
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 0.0076,
+          "seconds": 55.8
+        },
+        {
+          "epoch": 2,
+          "loss": 0.00744,
+          "seconds": 54.0
+        },
+        {
+          "epoch": 3,
+          "loss": 0.0074,
+          "seconds": 54.9
+        },
+        {
+          "epoch": 4,
+          "loss": 0.00741,
+          "seconds": 55.9
+        },
+        {
+          "epoch": 5,
+          "loss": 0.00721,
+          "seconds": 55.7
+        },
+        {
+          "epoch": 6,
+          "loss": 0.00729,
+          "seconds": 56.6
+        }
+      ],
+      "results": {
+        "fixed_48px": {
+          "sens": {
+            "0.125": 0.671,
+            "0.25": 0.7403,
+            "0.5": 0.7922,
+            "1": 0.8268,
+            "2": 0.8701,
+            "4": 0.8961
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.7345,
+          "rank_metric": 0.9109
+        },
+        "fixed_56px": {
+          "sens": {
+            "0.125": 0.671,
+            "0.25": 0.7489,
+            "0.5": 0.8009,
+            "1": 0.8355,
+            "2": 0.8788,
+            "4": 0.9091
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.7403,
+          "rank_metric": 0.9131
+        },
+        "fixed_64px": {
+          "sens": {
+            "0.125": 0.6537,
+            "0.25": 0.7273,
+            "0.5": 0.7879,
+            "1": 0.8225,
+            "2": 0.8701,
+            "4": 0.9004
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.723,
+          "rank_metric": 0.9077
+        },
+        "learned_radius": {
+          "sens": {
+            "0.125": 0.0,
+            "0.25": 0.0,
+            "0.5": 0.0,
+            "1": 0.0,
+            "2": 0.0,
+            "4": 0.0
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.0,
+          "rank_metric": 0.7258
+        }
+      },
+      "best_fixed": "fixed_56px",
+      "predicted_r1024": {
+        "10": 0.01,
+        "50": 0.02,
+        "90": 0.03
+      },
+      "old_radius_head_control": "V6.6.7: R ≈ 0,01–0,04 → Sens@0,25 = 0,000 (kutu ~0,1 px); v6_6_optimization_audit.json → radius_head_control",
+      "verdict": "sabit kutu hâlâ daha iyi",
+      "caveat": "Yarıçap kafası omurgayı eğitmez (donuk özellik probu) ⇒ kazanç yalnız kutu geometrisinden gelir; ısı haritası/sıralama değişmez (AUC sabit kalır).",
+      "supervision": "kayıp ağırlığı 1,0 · maske=Y>0 (tüm Gaussian bölgesi)"
+    },
+    "weight1_center_only": {
+      "question": "Yarıçap kafası onarılırsa (ağırlık 0,1 → 1,0) sabit 56 px kutuyu geçer mi?",
+      "supervision": "kayıp ağırlığı 1,0 · maske=R>0 (yalnız merkez pikseli)",
+      "protocol": "omurga DONUK, yalnız 2 katmanlı yarıçap kafası (fuse özelliği, 256x256), smooth-L1 ağırlık 1,0, 6 epoch · değerlendirme: çok ölçekli TTA + NMS 8px, resmî IoU>0,2 · val 734 hasta",
+      "smoke": false,
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 2.09231,
+          "seconds": 55.5
+        },
+        {
+          "epoch": 2,
+          "loss": 1.52422,
+          "seconds": 53.4
+        },
+        {
+          "epoch": 3,
+          "loss": 1.3174,
+          "seconds": 54.6
+        },
+        {
+          "epoch": 4,
+          "loss": 1.19624,
+          "seconds": 55.6
+        },
+        {
+          "epoch": 5,
+          "loss": 1.07367,
+          "seconds": 53.5
+        },
+        {
+          "epoch": 6,
+          "loss": 1.15405,
+          "seconds": 55.7
+        }
+      ],
+      "results": {
+        "fixed_48px": {
+          "sens": {
+            "0.125": 0.671,
+            "0.25": 0.7403,
+            "0.5": 0.7922,
+            "1": 0.8268,
+            "2": 0.8701,
+            "4": 0.8961
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.7345,
+          "rank_metric": 0.9109
+        },
+        "fixed_56px": {
+          "sens": {
+            "0.125": 0.671,
+            "0.25": 0.7489,
+            "0.5": 0.8009,
+            "1": 0.8355,
+            "2": 0.8788,
+            "4": 0.9091
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.7403,
+          "rank_metric": 0.9131
+        },
+        "fixed_64px": {
+          "sens": {
+            "0.125": 0.6537,
+            "0.25": 0.7273,
+            "0.5": 0.7879,
+            "1": 0.8225,
+            "2": 0.8701,
+            "4": 0.9004
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.723,
+          "rank_metric": 0.9077
+        },
+        "learned_radius": {
+          "sens": {
+            "0.125": 0.697,
+            "0.25": 0.7706,
+            "0.5": 0.8312,
+            "1": 0.8658,
+            "2": 0.9134,
+            "4": 0.9437
+          },
+          "auc": 0.9678,
+          "froc_mean_3pt": 0.7663,
+          "rank_metric": 0.9185
+        }
+      },
+      "best_fixed": "fixed_56px",
+      "predicted_r1024": {
+        "10": 26.09,
+        "50": 33.34,
+        "90": 47.4
+      },
+      "old_radius_head_control": "V6.6.7: R ≈ 0,01–0,04 → Sens@0,25 = 0,000 (kutu ~0,1 px); v6_6_optimization_audit.json → radius_head_control",
+      "verdict": "öğrenilmiş yarıçap üstün",
+      "caveat": "Yarıçap kafası omurgayı eğitmez (donuk özellik probu) ⇒ kazanç yalnız kutu geometrisinden gelir; ısı haritası/sıralama değişmez (AUC sabit kalır)."
+    }
+  },
+  "bn_unfrozen_ablation": {
+    "question": "BN dondurma (unutma-önleme) gerçekten koruyor mu?",
+    "protocol": "aynı 18 epoch takvimi; tek fark 2. fazda BN running istatistikleri güncellenir (batch=4) · val 734 hasta",
+    "smoke": false,
+    "phase2_history": [
+      {
+        "epoch": 6,
+        "loss": 1.97302,
+        "seconds": 115.2,
+        "bn": "train"
+      },
+      {
+        "epoch": 7,
+        "loss": 1.76183,
+        "seconds": 115.2,
+        "bn": "train"
+      },
+      {
+        "epoch": 8,
+        "loss": 1.7144,
+        "seconds": 112.6,
+        "bn": "train"
+      },
+      {
+        "epoch": 9,
+        "loss": 1.62824,
+        "seconds": 110.5,
+        "bn": "train"
+      },
+      {
+        "epoch": 10,
+        "loss": 1.56103,
+        "seconds": 107.9,
+        "bn": "train"
+      },
+      {
+        "epoch": 11,
+        "loss": 1.54511,
+        "seconds": 109.8,
+        "bn": "train"
+      },
+      {
+        "epoch": 12,
+        "loss": 1.48096,
+        "seconds": 117.0,
+        "bn": "train"
+      },
+      {
+        "epoch": 13,
+        "loss": 1.38773,
+        "seconds": 112.4,
+        "bn": "train"
+      },
+      {
+        "epoch": 14,
+        "loss": 1.33137,
+        "seconds": 109.6,
+        "bn": "train"
+      },
+      {
+        "epoch": 15,
+        "loss": 1.29282,
+        "seconds": 109.7,
+        "bn": "train"
+      },
+      {
+        "epoch": 16,
+        "loss": 1.22989,
+        "seconds": 110.0,
+        "bn": "train"
+      },
+      {
+        "epoch": 17,
+        "loss": 1.17618,
+        "seconds": 112.5,
+        "bn": "train"
+      },
+      {
+        "epoch": 18,
+        "loss": 1.15771,
+        "seconds": 110.8,
+        "bn": "train"
+      }
+    ],
+    "bn_open": {
+      "recall_at_K": {
+        "10": 0.9697,
+        "20": 0.9913,
+        "30": 0.9957,
+        "50": 0.9957
+      },
+      "froc": {
+        "0.5": 0.8442,
+        "1": 0.8918,
+        "2": 0.9264,
+        "4": 0.9524
+      },
+      "patient_auc": {
+        "top1": 0.9646,
+        "top3": 0.9685,
+        "noisyor": 0.9699
+      },
+      "n_patients": 734,
+      "n_lesions": 231
+    },
+    "final_bn_frozen": {
+      "recall_at_K": {
+        "10": 0.9481,
+        "20": 0.9827,
+        "30": 0.9827,
+        "50": 0.9913
+      },
+      "froc": {
+        "0.5": 0.8312,
+        "1": 0.8658,
+        "2": 0.9264,
+        "4": 0.9524
+      },
+      "patient_auc": {
+        "top1": 0.9595,
+        "top3": 0.9669,
+        "noisyor": 0.9702
+      },
+      "n_patients": 734,
+      "n_lesions": 231
+    },
+    "delta_bn_open_minus_final": {
+      "recall_K20": 0.0086,
+      "recall_K50": 0.0044,
+      "froc_0.5": 0.013,
+      "froc_4": 0.0,
+      "auc_noisyor": -0.0003
+    },
+    "caveat": "Δ<0 ⇒ BN dondurma koruyor (unutma-önleme kanıtı). Δ≈0 ⇒ etkisiz. Δ>0 ⇒ dondurma zararlı. Tek fark BN'dir; veri/takvim/tohum aynıdır."
+  }
+}

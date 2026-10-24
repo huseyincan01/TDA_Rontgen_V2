@@ -633,6 +633,7 @@ Aynı VinDr kohortu, aynı `M5_centernet` adayları, **tek fark AdaBN** (donduru
 | **V6.6 yalnız Aşama-1 (K30/50)** | 0,970 | **0,831** | **0,926** | **0,952** |
 
 * 🔑 Füzyon hâlâ katkı veriyor: 0,970 → **0,988** (noisy-OR).
+  * ⚠️ **Tuzak B kaydı:** bu satırlar **in-sample s1 ile uydurulmuş LR füzyonundan** gelir (val dürüst, katsayılar hafif iyimser olabilir). **Sızıntısız** alternatif sabit ağırlıktır: **w=0,55 → nOR 0,9886 · FROC@0,5 0,8355 · FROC@4 0,9307** (bkz. §14.5, [STORY.md §12.2](STORY.md)).
 * 🚨 **Ama FROC'ta 2. aşama artık ZARARLI:** Aşama-1 tek başına **0,831** → füzyon **0,749**. ⇒ **FROC-optimal (lezyon bulma) dağıtımda 2. aşama atlanmalı; AUC-optimal (hasta triyajı) dağıtımda tutulmalı.**
 
 ### 14.4 VinDr-CXR (400 görüntü) — dış transfer
@@ -666,10 +667,13 @@ Aynı VinDr kohortu, aynı `M5_centernet` adayları, **tek fark AdaBN** (donduru
 | **0,70 (FROC@4 garantili)** | 0,8312 | **0,9524** | 0,9827 | 0,9689 |
 | 0,90 (**FROC-optimal**) | **0,8442** | 0,9524 | 0,9732 | 0,9622 |
 | 1,00 (yalnız Aşama-1) | 0,8312 | 0,9524 | 0,9692 | 0,9595 |
-| **REF: `e_fusion_tda` (miras LR)** | 0,7446 | 0,8788 | 0,9737 | 0,9722 |
+| **REF: `e_fusion_tda` (miras LR)** | 0,7446 | 0,8788 | 0,9879 | 0,9722 |
+
+> 🐛 **Düzeltme (çift sigmoid):** Bu satırın noisy-OR'u önceki sürümde **0,9737** yazıyordu — hatalıydı. Nedeni: LR çıktısı **zaten [0,1] olasılığı** iken üzerine bir kez daha sigmoid uygulanmıştı (noisy-OR sıralamaya duyarlı olduğu için bozuldu; FROC ve top1 sıralamaya bağlı olduğundan etkilenmedi). Düzeltilmiş değer **0,9879** ve V6.6.4'ün bağımsız ölçtüğü 0,988 ile tutarlı. Betik güncellendi ([v6_6_fusion_calibration.py](pipelines/v6_two_stage/v6_6_fusion_calibration.py)).
 
 * 🔴 **Kapı üçlüsü (AUC ≥ 0,985 · FROC@0,5 ≥ 0,831 · FROC@4 ≥ 0,950) SAĞLANAMAZ — kesişim boş.** FROC@4 ≥ 0,950 yalnız **w ≥ 0,70**'te, AUC ≥ 0,985 yalnız **w ≤ 0,60**'ta sağlanır. Bu bir **AUC–FROC ödünleşimi**dir; eşikler "en iyi AUC'li" ile "en iyi FROC'lu" modelin aynı olmasını istiyordu.
-* ✅ **Ama kalibrasyon miras alınan LR katsayılarını DOMİNE ediyor:** **w ∈ [0,35 … 0,60]** dört metrikte de ≥. **w = 0,55**: FROC@0,5 0,745 → **0,836**, FROC@4 0,879 → **0,931**, AUC nOR 0,974 → **0,989**, top1 0,972 → **0,975** (hiçbir eksende gerileme yok).
+* ✅ **Ama kalibrasyon miras alınan LR katsayılarını DOMİNE ediyor:** **w ∈ [0,35 … 0,55]** dört metrikte de ≥. **w = 0,55**: FROC@0,5 0,745 → **0,836** (+0,091), FROC@4 0,879 → **0,931** (+0,052), AUC nOR 0,9879 → **0,9886** (+0,0007), top1 0,972 → **0,975** (+0,002). ⚠️ **Dürüst okuma:** kazanç **FROC'ta büyük, AUC'de marjinal** — noisy-OR farkı yalnız +0,0007'dir.
+* 🔴 **TUZAK B (düzeltildi ama kaydı burada):** V6.1/V6.3'te füzyon LR'ı, 1. aşamanın **kendi eğitim bölmesindeki (in-sample) skorlarıyla** uydurulmuştu. Val değerlendirmesi dürüsttür (M5 val'i görmedi), ama katsayılar aşırı özgüvenli bir dağılıma göre ayarlandığı için **hafif iyimserlik riski** taşır. Bu bölümdeki **sabit w** füzyonu bu riski **taşımaz**; V6.7'nin gönderim modeli de Tuzak B'yi yapısal olarak kapatmıştır (s1 matrise girmez + w kilitli).
 * ⚖️ **Önerilen işletim noktaları:** **w\* = 0,55** (varsayılan, regresyonsuz) · **w = 0,70** (FROC@4 ≥ 0,950 zorunluysa; AUC 0,9827) · w = 0,45 (triyaj, en yüksek AUC) · w = 0,90 (en yüksek FROC@0,5).
 * 🎯 Kalibrasyon ödünleşmeyi **kaldırmıyor**, frontier'ı miras noktasının **tamamının üstüne taşıyor** — V6.5b/V6.5c'nin dış-merkez bulgusunun kurum içi karşılığı.
 
@@ -783,4 +787,66 @@ Resmî `node21challenge/node21_detection_baseline/process.py` → `format_to_GC`
 * ⚠️ **Resmî test seti skoru YOK** — verimiz halka açık eğitim seti (Kural 9).
 * ⚠️ NODE21 detection track **"Now Closed"** ⇒ bu paket sıralama değil, **Algoritma sayfası / tekrar üretilebilirlik** amaçlıdır.
 * ⚠️ GPU'suz çıkarım **~26 s/katman**; T4'te ~1–2 s/katman beklenir. Büyük yığınlarda CPU süre riski.
+
+---
+
+## 16. V6.8 — Kanıt Boşluklarının Kapatılması
+
+Betik: [v6_8_fix_checks.py](pipelines/v6_two_stage/v6_8_fix_checks.py) · Kayıt: `artifacts/v6_two_stage/v6_8_fix_checks.json` · Eğitim **yalnız train split**, değerlendirme **yalnız val** (734 hasta / 231 lezyon) · bilimsel checkpoint'ler **değişmedi**.
+
+### 16.1 Isınma (warm) ablasyonu — V6.6'da silinen kanıtın yeniden üretimi
+
+Isınma fazı **aynı tohum/takvim/augmentasyon/kayıpla** yeniden koşuldu (train 1:1 = 1.580 örnek, 5 epoch donuk omurga) ve kayıtlı `M5_foundation.pt` (18 epoch) ile kıyaslandı:
+
+| Ölçüm (val) | Isınma (5 ep, donuk) | **Final (18 ep, iki fazlı)** | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K20 | 0,9654 | **0,9827** | +0,0173 |
+| Recall@K50 | 0,9913 | 0,9913 | 0,0000 |
+| FROC@0,5 | 0,7792 | **0,8312** | **+0,0520** |
+| FROC@4 | 0,9091 | **0,9524** | **+0,0433** |
+| Hasta AUC (noisy-OR) | 0,9416 | **0,9702** | **+0,0286** |
+| Hasta AUC (top1) | 0,9275 | **0,9595** | **+0,0320** |
+
+* ✅ **2. fazın katkısı ölçüldü: FROC@0,5 +0,052 · FROC@4 +0,043 · AUC nOR +0,029.** K50'de katkı **sıfır** (tavan ısınmada yakalanıyor) ⇒ kazanç **düşük-FP bölgesinde**.
+* 🔒 Final kolunun metrikleri V6.6'nın yayımlanmış sayılarıyla **birebir** (K20 0,9827 · FROC@0,5 0,8312 · @4 0,9524 · top1 0,9595) ⇒ karşılaştırma geçerli.
+* ⚠️ Bu, 2. fazın **toplam** katkısıdır (13 ek epoch + üst blokların açılması); **BN dondurmanın** payı ayrı kolda ölçülür.
+
+### 16.2 Yarıçap kafası onarımı — çökmenin nedeni ağırlık değil, kayıp maskesi
+
+V6.6.7 çökmeyi *"kayıp ağırlığı 0,1 (focal 1–13)"* ile açıklamıştı. V6.8 bunu test etti: **ağırlık 1,0** (10×) ile kafa **yine çöktü** (r₁₀₂₄ medyanı 0,02 px). Gerçek neden: V6.6'nın kaybı ısı haritasının **tüm pozitif bölgesi** (`Y>0`, **961 piksel**) üzerinde ortalanıyordu ama yarıçap hedefi `R` yalnız **tek merkez pikselinde** dolu ⇒ ölçüldü: süpervizyonun **%0,11**'i hedef taşır, **%99,9'u "0 tahmin et"** der; kaybın minimumu **sabit 0**.
+
+**Kontrollü ablasyon** (tek fark: maske · omurga donuk, aynı kafa, aynı ağırlık 1,0, aynı 6 epoch/veri/tohum, val 734 hasta / 231 lezyon, resmî IoU>0,2):
+
+| Kol | Kayıp maskesi | Eğitim kaybı (ep1→ep6) | Tahmin r₁₀₂₄ (medyan) | rank_metric | S@0,125 | S@0,25 | S@0,5 |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A (V6.6'nın yaptığı) | `Y > 0` | 0,0076 → 0,0073 | **0,02** | 0,7258 | 0,000 | 0,000 | 0,000 |
+| **B (onarım)** | **`R > 0`** | 2,09 → **1,07** | **33,3** | **0,9185** | **0,6970** | **0,7706** | **0,8312** |
+| REF sabit 48 px | — | — | — | 0,9109 | 0,6710 | 0,7403 | 0,7922 |
+| **REF sabit 56 px** | — | — | — | 0,9131 | 0,6710 | 0,7489 | 0,8009 |
+| REF sabit 64 px | — | — | — | 0,9077 | 0,6537 | 0,7273 | 0,7879 |
+
+* ✅ **Onarılan kafa sabit kutuyu geçiyor:** **0,9131 → 0,9185** (rank_metric) ve **üç duyarlılık noktasının üçünde de** artış (+0,026 / +0,022 / +0,030). Yarıçap kafası **ilk kez** resmî metrikte işe yarar hâle geldi.
+* 🔒 **AUC her satırda 0,9678** — kutu geometrisi sıralamayı değiştirmez ⇒ kazanç tamamen **IoU tabanlı eşleştirmeden**.
+* ⚠️ Kafa, GT aralığının (17,5–59,5 px) ortasına **sıkışıyor** (p10 26 / medyan 33 / p90 47) ⇒ kalibre değil, **regresyona-ortalama**; yine de sabit kutuyu geçiyor.
+* ⚠️ Bu **dondurulmuş özellik probu**dur (omurga eğitilmedi) ⇒ uçtan uca eğitilmiş bir yarıçap dalının tavanı değil.
+* ⚠️ **Gönderim sözleşmesi değişmedi:** `submission_config.json` kilitli **sabit 56 px** (Tuzak A) — onarılan kafayı gönderime almak ayrı bir sürüm kararıdır (tam-veri modelinin yarıçap dalının aynı maske düzeltmesiyle yeniden eğitilmesi gerekir).
+
+### 16.3 Unutma-önleme (BN dondurma) — ölçüldü, fayda **gösterilemedi**
+
+Aynı 18 epoch takvimi, aynı veri/tohum; **tek fark:** 2. fazda BN running istatistikleri **güncellenir** (batch=4).
+
+| Ölçüm (val 734/231) | 2. faz BN **AÇIK** | Final (BN **donuk**) | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K20 | **0,9913** | 0,9827 | +0,0086 |
+| Recall@K50 | **0,9957** | 0,9913 | +0,0044 |
+| FROC@0,5 | **0,8442** | 0,8312 | +0,0130 |
+| FROC@1 | **0,8918** | 0,8658 | +0,0260 |
+| FROC@4 | 0,9524 | 0,9524 | 0,0000 |
+| Hasta AUC (top1) | **0,9646** | 0,9595 | +0,0051 |
+| Hasta AUC (noisy-OR) | 0,9699 | **0,9702** | −0,0003 |
+| Eğitim kaybı (ep 18) | **1,158** | 1,257 | −0,099 |
+
+* 🔴 **"BN donuk = unutma-önleme" gerekçesi ölçümle DOĞRULANMADI:** 8 metrikten 7'sinde BN açık en az onun kadar iyi; tek fark AUC nOR'da **−0,0003** (gürültü).
+* ⚠️ **Ters yönde kanıt da değil:** 231 lezyonda FROC@0,5'in SE'si ≈ **0,024** ⇒ 0,013 ≈ **0,5 SE**; tek tohum/tek bölme. Doğru ifade: *"ölçülebilir fayda yok, zarar da yok."*
+* 🎯 Hipotezin asıl sınavı **alan dışı transferdir** (BN istatistikleri transfer edilen şeyin parçası; V6.6.3 AdaBN'in vakıf modelini bozduğunu gösterdi) — bu kol onu **test etmez**.
 * ⚠️ İki fazlı eğitimin unutma-önleme katkısı **izole edilmedi** (ısınma checkpoint'i silindi).
