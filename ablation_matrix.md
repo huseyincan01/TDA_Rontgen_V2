@@ -693,3 +693,94 @@ Resmî protokol ([Details](https://node21.grand-challenge.org/Details/)): eşle�
 * ⚪ **NEGATİF: NMS yarıçapı (8…28 px) ve tepe penceresi (3×3/5×5) ETKİSİZ** — rank 0,9131 sabit. Resmî protokol aynı referansa çakışan 2.+ tahmini zaten IGNORE ettiği için "çift kutu" riski bu kurulumda **gerçekleşmiyor**.
 * **En iyi:** çok ölçekli {0,9, 1,0, 1,1} + flip · tepe 3×3 · NMS 8 px · **56×56 kutu** → **rank_metric 0,9131**.
 * ⚠️ **Kural 9:** verimiz NODE21'in halka açık **eğitim** seti; resmî test setleri özel ⇒ leaderboard sıralaması **ölçülemez**.
+
+---
+
+## 15. V6.7 — %100 Tam Veri Gönderim Modeli + Grand-Challenge Paketi
+
+**Kod:** [`v6_7_train_fulldata.py`](pipelines/v6_two_stage/v6_7_train_fulldata.py) · [`v6_7_build_fulldata_stage2.py`](pipelines/v6_two_stage/v6_7_build_fulldata_stage2.py) · [`v6_7_submission_infer.py`](pipelines/v6_two_stage/v6_7_submission_infer.py) · [`v6_7_freeze_config.py`](pipelines/v6_two_stage/v6_7_freeze_config.py) · [`submission_docker/`](submission_docker/) · **Sözleşme:** `submission_config.json` · ayrıntı: [experiments.md §11](experiments.md)
+
+> ⚠️ **Bu bölümün sayıları makale tablolarından farklı bir statüdedir.** Tam-veri modeli
+> **tüm NODE21 verisiyle** eğitildiği için **kendi kendini değerlendiremez**; buradaki
+> performans referansları `M5_foundation` (tam-veri olmayan) modelle alınmıştır.
+
+### 15.1 Bilimsel checkpoint koruması (değişmez kural)
+
+| Artifact | Rol | Durum |
+| :--- | :--- | :--- |
+| `M5_centernet.pt` | V6.0/V6.2 Aşama-1 (makale tabloları) | **değişmedi** (SHA-256 teyitli) |
+| `M6_fcos.pt` | V6.0 FCOS yardımcı dedektör | **değişmedi** |
+| `M5_foundation.pt` | V6.6 vakıf omurga (§14 tabloları) | **değişmedi** |
+| `stage2_final_tda_hgb.joblib` | V6.3 nihai 2. aşama | **değişmedi** |
+| `M5_domain_gen.pt` | V6.4 KILL edilen varyant (kanıt) | **değişmedi** |
+
+Gönderim modelleri ayrı dizine yazılır: `submission_fulldata/M5_foundation_fulldata.pt` ·
+`submission_fulldata/stage2_tda_hgb_fulldata.joblib`
+
+### 15.2 Tuzak A — sabit takvimle tam veri eğitimi
+
+| | |
+| :--- | :--- |
+| Veri | **4.882 hastanın tamamı** (train+val+test): 1.134 nodüllü + **1.134** dengeli temiz kontrol = **2.268 görüntü** |
+| Takvim | **hiperparametre araması YOK** — V6.6'da doğrulanmış 18 epoch (5 donuk + 13 diferansiyel), BN donuk, Cosine |
+| Eğitim kaybı | **19,31 → 1,22** |
+| Yarıçap kafası | `radius_detach=True` — gradyanı gövdeye/ısı haritasına **hiç akmadı** |
+
+### 15.3 Tuzak B — sızıntısız 2. aşama
+
+| | |
+| :--- | :--- |
+| Adaylar | **235.446** aday / 4.882 hasta (kilitli standart) |
+| Matris | **(235.446, 1604)** = 1600 PI + 4 uzamsal · **1.808 pozitif (%0,77)** |
+| **Koruma 1** | HGB matrisinde **1. aşama skoru (s1) YOK** ⇒ `stage1_score_included = False` (assert) |
+| **Koruma 2** | Füzyon **w = 0,55 kilitli**, hiçbir veri üzerinde **yeniden uydurulmadı** |
+| HGB eğitimi | 58 s |
+
+* **Neden bu yeterli:** HGB s1'i görmediği için 1. aşama ezberi ona sızamaz; füzyon sabit olduğu için hiçbir veriye uyum sağlayamaz ⇒ yığma-uyumu (stacking overfit) **yapısal olarak imkânsız**.
+
+### 15.4 Kilitli çıkarım standardı (V6.6.6/V6.6.7 tarafından sabitlendi)
+
+`scales = [0.9, 1.0, 1.1]` · flip TTA · `peak_window = 3` · `nms_px = 8` · `top_k = 50`
+· **`box_px = 56`** (sabit) · füzyon `S = sigmoid(0.55·z(s1) + 0.45·z(p_tda))`
+
+**Performans referansı** (M5_foundation ile, kendi val bölmemizde):
+
+| Metrik | Değer |
+| :--- | ---: |
+| `rank_metric = 0,75·AUC + 0,25·Sens@0,25` | **0,9131** |
+| AUC | 0,9678 |
+| Sens@0,125 / @0,25 / @0,5 | 0,6710 / 0,7489 / 0,8009 |
+| Yalnız Aşama-1 FROC@0,5 / @4 | 0,831 / 0,952 |
+| Yalnız Aşama-1 Recall@K20 / K30 / K50 | 0,9827 / 0,9827 / 0,9913 |
+
+### 15.5 Grand-Challenge konteyner uyumluluğu (kaynaktan doğrulandı)
+
+Resmî `node21challenge/node21_detection_baseline/process.py` → `format_to_GC` ile **birebir**:
+
+| Konu | Resmî baseline | Paket |
+| :--- | :--- | :--- |
+| JSON anahtarları | `{type, boxes, version}` — **`name` YOK** | ✅ |
+| Köşe sırası | **[top_right, top_left, bottom_left, bottom_right]** | ✅ |
+| z koordinatı | **slice indeksi** (mm değil) | ✅ |
+| x/y birimi | **mm = piksel × spacing** (origin yok sayılır) | ✅ |
+| Girdi yolu | `/input/<uuid>.mha` | ✅ **özyinelemeli** — `/input/*.mha` ve `/input/images/chest-x-rays/*.mha` |
+| Kullanıcı | — (GC kuralı: non-root) | ✅ `USER algorithm` (uid 1000), `/output` yazılabilir |
+
+**Doğrulanan testler** (`--network=none`, gerçek konteyner):
+
+| Test | Sonuç |
+| :--- | :--- |
+| 3B `.mha` yığını (1024×1024×3), katman katman | ✅ 150 kutu |
+| Şema + köşe sırası + z = slice indeksi | ✅ |
+| x/y mm ↔ piksel tersinirlik; 56 px → mm | ✅ 8,00 mm (spacing 0,143) |
+| Ağırlık yoksa **sessiz indirme yasağı** | ✅ `exit 1` + açık hata |
+| Deterministiklik | ✅ en yüksek skor yerelde de konteynerde de 0,9938 |
+| CUDA imajı / CPU imajı | 13,9 GB / **3,51 GB**, ikisi de aynı çıktı |
+
+### 15.6 Doğrulanmış sınırlar
+
+* ⚠️ **Tam-veri modeli NODE21'de değerlendirilemez** (tüm veri eğitimde). §15.4 referansları **tam-veri olmayan** modeldendir.
+* ⚠️ **Resmî test seti skoru YOK** — verimiz halka açık eğitim seti (Kural 9).
+* ⚠️ NODE21 detection track **"Now Closed"** ⇒ bu paket sıralama değil, **Algoritma sayfası / tekrar üretilebilirlik** amaçlıdır.
+* ⚠️ GPU'suz çıkarım **~26 s/katman**; T4'te ~1–2 s/katman beklenir. Büyük yığınlarda CPU süre riski.
+* ⚠️ İki fazlı eğitimin unutma-önleme katkısı **izole edilmedi** (ısınma checkpoint'i silindi).
