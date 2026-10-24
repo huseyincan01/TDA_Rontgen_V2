@@ -458,6 +458,15 @@ def task_radius(device, out: Path, limit: int = 0, train_limit: int = 0,
         print(f"    epoch {ep}/{ep_total} | L1(radius) {hist[-1]['loss']:.4f} | "
               f"{time.time() - t0:.0f}s", flush=True)
 
+    label = {"gauss": "weight1_gauss_posmask",
+             "center": "weight1_center_only"}[mask_mode]
+    # KANIT KORUMASI: eğitilen kafa DİSKE yazılır. V6.6'da ısınma checkpoint'i
+    # değerlendirilmeden silinmişti; aynı hatayı tekrarlamıyoruz.
+    head_path = WORK / f"radius_head_{label}.pt"
+    WORK.mkdir(parents=True, exist_ok=True)
+    torch.save(head.state_dict(), head_path)
+    print(f"    yarıçap kafası kaydedildi: {head_path}", flush=True)
+
     old_radius = src.radius
     src.radius = head                            # ısı dalı DEĞİŞMEZ (fuse donuk)
     src.eval()
@@ -510,8 +519,6 @@ def task_radius(device, out: Path, limit: int = 0, train_limit: int = 0,
     if "results" in rhf:                       # eski düz biçim → etiketli yapıya taşı
         rhf = {"weight1_gauss_posmask": {
             **rhf, "supervision": "kayıp ağırlığı 1,0 · maske=Y>0 (tüm Gaussian bölgesi)"}}
-    label = {"gauss": "weight1_gauss_posmask",
-             "center": "weight1_center_only"}[mask_mode]
     rhf[label] = {
         "question": "Yarıçap kafası onarılırsa (ağırlık 0,1 → 1,0) sabit 56 px kutuyu geçer mi?",
         "supervision": (f"kayıp ağırlığı 1,0 · maske="
@@ -522,6 +529,7 @@ def task_radius(device, out: Path, limit: int = 0, train_limit: int = 0,
                      f"val {len(val_pids)} hasta"),
         "smoke": bool(limit or train_limit or epochs),
         "history": hist,
+        "head_ckpt": f"submission_fulldata/{head_path.name} (teşhis; git dışı)",
         "results": res,
         "best_fixed": best_fixed,
         "predicted_r1024": pct,

@@ -262,7 +262,7 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
 | 4 | 🟡 **Çift sigmoid:** V6.6.6'da LR referans satırının noisy-OR'u **0,9737** yazılmıştı (LR çıktısı zaten [0,1] iken bir kez daha sigmoid) | ✅ Düzeltildi → **0,9879**; betik ve artifact yeniden üretildi (arşiv birebir aynı çıktı) |
 | 5 | 🟡 **V6.5 KOL 1 "zero-shot" diye etiketlendi ama AdaBN'liydi** (raporlama hatası) | ✅ V6.5d'de düzeltildi; 0,6439–0,6620 bandının tamamı **transductive** ilan edildi |
 | 6 | 🟡 **`densenet121-res224-all` koşulmadı:** "512 doğal çözünürlük olduğu için ResNet50" savı **ölçümle değil akıl yürütmeyle** duruyor | ⏳ Hâlâ açık (12.5) |
-| 7 | 🟡 **"BN donuk = unutma-önleme" gerekçesi ölçülmemişti** (V6.6/V6.7'de argüman olarak yazıldı, test edilmedi) | ✅ V6.8'de ölçüldü (12.4c): **ölçülebilir fayda yok** (Δ nOR −0,0003; yedi metrikte BN açık ≥) |
+| 7 | 🟡 **"BN donuk = unutma-önleme" gerekçesi ölçülmemişti** (V6.6/V6.7'de argüman olarak yazıldı, test edilmedi) | ✅ V6.8'de ölçüldü (12.4c): **ölçülebilir fayda yok** (dokuz metrikten sekizinde BN açık ≥; Δ nOR −0,0003) |
 
 ### 12.3 Tarihsel hatalar (bulundu ve düzeltildi — kayıtları var)
 
@@ -331,6 +331,10 @@ minimumu **sabit 0**.
 * ⚠️ **Gönderim sözleşmesi değişmedi** (kilitli sabit 56 px, Tuzak A); onarılan kafayı
   gönderime almak tam-veri modelinin yarıçap dalını aynı maske düzeltmesiyle yeniden
   eğitmeyi gerektirir — **ayrı bir sürüm kararı**.
+* 🔒 **Kanıt koruması:** eğitilen kafa **diske yazıldı**
+  (`submission_fulldata/radius_head_weight1_center_only.pt`) ve koşu **bağımsız yeniden
+  üretildi** (ikinci koşu aynı rank_metric · duyarlılıklar · r yüzdelikleri ⇒ tam
+  tekrarlanabilirlik). V6.6'da silinen kanıt hatası burada **tekrarlanmadı**.
 
 **(c) Unutma-önleme kolu — BN dondurma ölçüldü ve faydası GÖSTERİLEMEDİ.**
 V6.6/V6.7'nin gerekçesi *"BN `.eval()` — 800k röntgenlik istatistik bozulmasın"* idi;
@@ -347,8 +351,8 @@ running istatistikleri **açık**. Sonuç tasarım beklentisinin **tersine**:
 | Hasta AUC (top1) | **0,9646** | 0,9595 | +0,0051 |
 | Hasta AUC (noisy-OR) | 0,9699 | **0,9702** | −0,0003 |
 
-* 🔴 **Ölçülebilir fayda yok:** sekiz metrikten yedisinde BN açık en az onun kadar iyi;
-  tek "kayıp" noisy-OR'da **−0,0003** (gürültü).
+* 🔴 **Ölçülebilir fayda yok:** dokuz metrikten **yedisinde BN açık daha iyi**, birinde
+  (**FROC@4**) **eşit**, birinde ise **−0,0003** (AUC noisy-OR; gürültü).
 * ⚠️ **Ters yönde kanıt da değil:** 231 lezyonda FROC@0,5'in standart hatası ≈ **0,024**
   ⇒ 0,013 ≈ **0,5 SE**; tek tohum, tek val bölmesi. Doğru cümle:
   *"BN dondurma ölçülebilir bir unutma-önleme faydası göstermedi; zarar da vermedi."*

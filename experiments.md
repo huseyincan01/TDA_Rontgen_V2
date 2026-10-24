@@ -1675,6 +1675,7 @@ YAZILDI /output/nodules.json — 150 kutu
 * ⚠️ **Dürüst okuma — dağılım daralması:** eğitilen kafa, GT aralığının (17,5–59,5 px) **ortasına doğru sıkışıyor** (p10 26, medyan 33, p90 47) — yani mükemmel kalibre değil, **regresyona-ortalama** yapıyor. Yine de sabit kutuyu geçiyor ⇒ kazanç "her nodüle kendi boyutu" fikrinden geliyor, kalibrasyondan değil.
 * ⚠️ **Kapsam:** bu kafa **dondurulmuş özellik probudur** (omurga eğitilmedi) — ucuz (~6 dk) ve nedensel olarak temiz, ama uçtan uca eğitilmiş bir yarıçap dalının **tavanı** değildir.
 * ⚠️ **Gönderim sözleşmesi DEĞİŞMEDİ:** `submission_config.json` kilitli **sabit 56 px** kullanır (Tuzak A: yeni hiperparametre aranmaz). Onarılan kafayı gönderime almak **ayrı bir sürüm kararıdır** ve tam-veri modelinin yarıçap dalının aynı maske düzeltmesiyle yeniden eğitilmesini gerektirir.
+* 🔒 **Kanıt koruması (V6.6 hatasının tekrarı değil):** eğitilen kafa **diske yazılır** — `submission_fulldata/radius_head_weight1_center_only.pt` (77 KB; git dışı). Ayrıca koşu **bağımsız olarak yeniden üretildi**: ikinci koşu **aynı** rank_metric (0,9185), aynı duyarlılıklar ve aynı r yüzdeliklerini verdi.
 
 ### V6.8.3 Unutma-önleme kolu — BN dondurmanın payı ölçüldü (**beklenmedik sonuç**)
 
@@ -1693,7 +1694,7 @@ V6.6/V6.7'nin tasarım gerekçesi şuydu: *"BN `.eval()` — 800k röntgenlik `r
 | Hasta AUC (noisy-OR) | 0,9699 | **0,9702** | −0,0003 |
 | Eğitim kaybı (ep 18) | **1,158** | 1,257 | −0,099 |
 
-* 🔴 **BN dondurmanın ölçülebilir bir faydası YOK.** Sekiz metrikten yedisinde **BN açık** en az onun kadar iyi; tek "kayıp" AUC noisy-OR'da **−0,0003**'tür (gürültü).
+* 🔴 **BN dondurmanın ölçülebilir bir faydası YOK.** Dokuz metrikten **yedisinde BN açık daha iyi**, birinde (**FROC@4**) **eşit**, birinde ise **−0,0003** (AUC noisy-OR, gürültü).
 * ⚠️ **Ama bu bir "BN açık daha iyi" kanıtı da DEĞİL:** 231 lezyonla FROC@0,5'in standart hatası ≈ **0,024** ⇒ 0,013'lük fark **~0,5 SE**. Tek tohum, tek val bölmesi. **Doğru dürüst ifade:** *"BN dondurma kurum içi val'de ölçülebilir bir unutma-önleme faydası göstermedi; zarar da vermedi."*
 * 🎯 **Gerekçe hipotez olarak kalıyor ve asıl sınavı alan dışıdır:** BN running istatistikleri **transfer edilen şeyin parçasıdır**; V6.6.3'te AdaBN'in vakıf modelini **her konfigürasyonda bozduğu** (−0,065…−0,089) ölçülmüştü ⇒ istatistiklerin hassas olduğuna dair **dolaylı** kanıt var. V6.8.3 bu hipotezi **test etmez** (yalnız in-domain val).
 * ⚠️ BN açık kolun eğitim kaybı daha düşüktür (1,158 vs 1,257) — yani model eğitim verisine daha iyi oturuyor; buna rağmen val'de gerilemediği için burada bir aşırı uyum işareti yok.

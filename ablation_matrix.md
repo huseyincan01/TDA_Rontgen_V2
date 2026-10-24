@@ -830,6 +830,7 @@ V6.6.7 çökmeyi *"kayıp ağırlığı 0,1 (focal 1–13)"* ile açıklamışt�
 * ⚠️ Kafa, GT aralığının (17,5–59,5 px) ortasına **sıkışıyor** (p10 26 / medyan 33 / p90 47) ⇒ kalibre değil, **regresyona-ortalama**; yine de sabit kutuyu geçiyor.
 * ⚠️ Bu **dondurulmuş özellik probu**dur (omurga eğitilmedi) ⇒ uçtan uca eğitilmiş bir yarıçap dalının tavanı değil.
 * ⚠️ **Gönderim sözleşmesi değişmedi:** `submission_config.json` kilitli **sabit 56 px** (Tuzak A) — onarılan kafayı gönderime almak ayrı bir sürüm kararıdır (tam-veri modelinin yarıçap dalının aynı maske düzeltmesiyle yeniden eğitilmesi gerekir).
+* 🔒 **Kanıt koruması:** eğitilen kafa diske yazılır (`submission_fulldata/radius_head_weight1_center_only.pt`) ve koşu **bağımsız yeniden üretildi** (ikinci koşu aynı rank_metric/duyarlılık/r yüzdelikleri).
 
 ### 16.3 Unutma-önleme (BN dondurma) — ölçüldü, fayda **gösterilemedi**
 
@@ -846,7 +847,7 @@ Aynı 18 epoch takvimi, aynı veri/tohum; **tek fark:** 2. fazda BN running ista
 | Hasta AUC (noisy-OR) | 0,9699 | **0,9702** | −0,0003 |
 | Eğitim kaybı (ep 18) | **1,158** | 1,257 | −0,099 |
 
-* 🔴 **"BN donuk = unutma-önleme" gerekçesi ölçümle DOĞRULANMADI:** 8 metrikten 7'sinde BN açık en az onun kadar iyi; tek fark AUC nOR'da **−0,0003** (gürültü).
+* 🔴 **"BN donuk = unutma-önleme" gerekçesi ölçümle DOĞRULANMADI:** 9 metrikten 8'inde BN açık ≥ (7'sinde daha iyi, FROC@4'te eşit); tek fark AUC nOR'da **−0,0003** (gürültü).
 * ⚠️ **Ters yönde kanıt da değil:** 231 lezyonda FROC@0,5'in SE'si ≈ **0,024** ⇒ 0,013 ≈ **0,5 SE**; tek tohum/tek bölme. Doğru ifade: *"ölçülebilir fayda yok, zarar da yok."*
 * 🎯 Hipotezin asıl sınavı **alan dışı transferdir** (BN istatistikleri transfer edilen şeyin parçası; V6.6.3 AdaBN'in vakıf modelini bozduğunu gösterdi) — bu kol onu **test etmez**.
 * ⚠️ İki fazlı eğitimin unutma-önleme katkısı **izole edilmedi** (ısınma checkpoint'i silindi).
