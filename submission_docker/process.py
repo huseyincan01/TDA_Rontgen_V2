@@ -83,7 +83,16 @@ def build_pipeline():
 
 
 def process_file(path: Path, pipe, cfg) -> list:
-    """Bir .mha dosyasını (2B veya 3B yığın) işler → kutu listesi."""
+    """Bir .mha dosyasını (2B veya 3B yığın) işler → kutu listesi.
+
+    Resmî baseline (`node21challenge/node21_detection_baseline/process.py`) ile
+    BİREBİR uyum:
+      * x, y → **mm** (piksel × spacing; NODE21'de origin=(0,0) olduğu için
+        TransformContinuousIndexToPhysicalPoint ile aynı sonucu verir),
+      * z → **slice indeksi** (baseline `np_prediction['slice'][i]` kullanır),
+      * köşe SIRASI → **[top_right, top_left, bottom_left, bottom_right]**,
+      * koordinatlar **2 ondalığa** yuvarlanır.
+    """
     import SimpleITK as sitk
 
     img = sitk.ReadImage(str(path))
@@ -92,7 +101,13 @@ def process_file(path: Path, pipe, cfg) -> list:
         arr = arr[None, ...]
     nz, H, W = arr.shape
     dim = img.GetDimension()
-    _log(f"{path.name}: yığın {nz} katman, {H}x{W}, ITK boyut={dim}")
+    spacing = img.GetSpacing()
+    origin = img.GetOrigin()
+    _log(f"{path.name}: yığın {nz} katman, {H}x{W}, ITK boyut={dim}, "
+         f"spacing={tuple(round(s, 4) for s in spacing)}, origin={origin}")
+    if any(abs(o) > 1e-6 for o in origin):
+        _log("  ⚠ origin ≠ 0 — resmî baseline origin'i YOK SAYAR (piksel×spacing); "
+             "transform değeri ile fark olabilir, x/y transform'dan alınıyor")
 
     seg = None
     boxes = []
@@ -104,17 +119,26 @@ def process_file(path: Path, pipe, cfg) -> list:
         dets = pipe.predict_image(img2d, seg=seg)
         _log(f"  z={z}: {len(dets)} aday")
         for d in dets:
-            # Piksel köşeleri (x, y, z) — TransformContinuousIndex için (col,row,slice)
-            px = [[d["x1"], d["y1"], z], [d["x1"], d["y2"], z],
-                  [d["x2"], d["y2"], z], [d["x2"], d["y1"], z]]
-            if dim == 2:
-                mm = [img.TransformContinuousIndexToPhysicalPoint([float(p[0]), float(p[1])])
-                      for p in px]
-            else:
-                mm = [img.TransformContinuousIndexToPhysicalPoint(
-                    [float(p[0]), float(p[1]), float(p[2])]) for p in px]
-            boxes.append({"corners": [[float(c) for c in p] for p in mm],
-                          "probability": float(d["score"])})
+            x_min, y_min = float(d["x1"]), float(d["y1"])
+            x_max, y_max = float(d["x2"]), float(d["y2"])
+            # --- köşeler: resmî baseline sırası (TR, TL, BL, BR) ---
+            px = {"top_right": (x_max, y_max), "top_left": (x_min, y_max),
+                  "bottom_left": (x_min, y_min), "bottom_right": (x_max, y_min)}
+            corners = []
+            for nm in ("top_right", "top_left", "bottom_left", "bottom_right"):
+                xi, yi = px[nm]
+                if dim == 2:
+                    pt = img.TransformContinuousIndexToPhysicalPoint([xi, yi])
+                else:
+                    pt = img.TransformContinuousIndexToPhysicalPoint([xi, yi, float(z)])
+                # Resmî baseline mm'yi `piksel × spacing` olarak üretir (origin'i YOK SAYAR).
+                # Transform'u kullanıp origin'i çıkararak baseline ile BİREBİR eşitliyoruz.
+                x_mm = float(pt[0]) - float(origin[0])
+                y_mm = float(pt[1]) - float(origin[1])
+                # z = SLICE İNDEKSİ (baseline `np_prediction['slice']` sözleşmesi)
+                corners.append([round(x_mm, 2), round(y_mm, 2), float(z)])
+            boxes.append({"corners": corners,
+                          "probability": round(float(d["score"]), 4)})
     boxes.sort(key=lambda b: -b["probability"])
     return boxes
 
@@ -137,11 +161,17 @@ def main() -> None:
 
     pipe, cfg = build_pipeline()
 
-    files = sorted((INPUT_DIR / "images" / "chest-x-rays").glob("*")) \
-        if (INPUT_DIR / "images" / "chest-x-rays").is_dir() \
-        else sorted(INPUT_DIR.rglob("*.mha"))
-    files = [f for f in files if f.is_file()]
-    _log(f"{len(files)} girdi dosyası")
+    # --- ESNEK GİRDİ YOLU ---
+    # Resmî baseline `/input/<uuid>.mha` bekler; yeni GC arayüzleri
+    # `/input/images/chest-x-rays/<uuid>.mha` kullanır. RECURSIVE tarama ikisini de bulur.
+    files = [f for f in sorted(INPUT_DIR.rglob("*.mha")) if f.is_file()]
+    if not files:
+        exts = (".mha", ".mhd", ".nrrd", ".nii", ".nii.gz")
+        files = [f for f in sorted(INPUT_DIR.rglob("*"))
+                 if f.is_file() and f.name.lower().endswith(exts)]
+    _log(f"{len(files)} girdi dosyası (kök: {INPUT_DIR}, özyinelemeli tarama)")
+    for f in files:
+        _log(f"  girdi: {f}")
 
     all_boxes = []
     for f in files:
@@ -150,8 +180,8 @@ def main() -> None:
         except Exception as exc:                       # tek dosya hatası tümünü düşürmesin
             _log(f"  !! {f.name}: {type(exc).__name__}: {exc}")
 
+    # --- ÇIKTI: resmî baseline ile BİREBİR (name alanı YOK) ---
     payload = {
-        "name": "Regions of interest",
         "type": "Multiple 2D bounding boxes",
         "boxes": all_boxes,
         "version": {"major": 1, "minor": 0},

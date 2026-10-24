@@ -1,0 +1,59 @@
+# NODE21 gönderim konteyneri — CPU VARYANTI (küçük imaj, yavaş çıkarım)
+#
+# Ne zaman kullanılır?
+#   CUDA tabanlı `Dockerfile` ~14 GB açılmış boyuttadır; Grand Challenge yükleme
+#   sınırını aşıyorsa bu varyant (~1.5 GB) kullanılabilir.
+#   Bedeli: GPU yok ⇒ ~26 s/katman (T4'te ~1–2 s). Büyük yığınlarda süre sınırı riski.
+#
+# Build:
+#   docker build -f submission_docker/Dockerfile.cpu -t node21-detection:v6.7-cpu .
+
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    XRV_CACHE_DIR=/opt/xrv_weights \
+    MPLCONFIGDIR=/tmp/matplotlib \
+    TORCH_HOME=/tmp/torch_home \
+    MPLBACKEND=Agg
+
+WORKDIR /opt/app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libgl1 libglib2.0-0 libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
+
+# CPU torch (resmî CPU indeksi — CUDA paketlerini çekmez ⇒ imaj küçük kalır)
+RUN pip install --no-cache-dir \
+      torch==2.4.0 torchvision==0.19.0 \
+      --index-url https://download.pytorch.org/whl/cpu
+
+COPY submission_docker/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt \
+ && rm -rf /root/.cache /tmp/requirements.txt
+
+COPY src/ /opt/app/src/
+COPY pipelines/ /opt/app/pipelines/
+COPY artifacts/v6_two_stage/submission_config.json /opt/app/artifacts/v6_two_stage/submission_config.json
+COPY artifacts/v6_two_stage/submission_fulldata/ /opt/app/artifacts/v6_two_stage/submission_fulldata/
+COPY submission_docker/weights/ /opt/xrv_weights/
+COPY submission_docker/process.py /opt/app/process.py
+
+RUN useradd -m -u 1000 -s /bin/bash algorithm \
+ && mkdir -p /output /tmp/matplotlib /tmp/torch_home \
+ && chmod -R a+rX /opt/xrv_weights /opt/app \
+ && chown -R algorithm:algorithm /output /tmp/matplotlib /tmp/torch_home
+
+RUN python - <<'PY'
+import os, pathlib
+need = ["pc-nih-rsna-siim-vin-resnet50-test512-e400-state.pt",
+        "pspnet_chestxray_best_model_4.pth"]
+for n in need:
+    p = pathlib.Path(os.environ["XRV_CACHE_DIR"]) / n
+    assert p.exists() and os.access(p, os.R_OK), f"AĞIRLIK SORUNU: {p}"
+    print("OK", n, round(p.stat().st_size / 1e6, 1), "MB")
+PY
+
+USER algorithm
+
+CMD ["python", "/opt/app/process.py"]

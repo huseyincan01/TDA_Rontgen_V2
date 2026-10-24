@@ -50,47 +50,75 @@ def build_stack(pids, out_path: Path) -> None:
 
 
 def check_output(out_json: Path) -> dict:
-    import SimpleITK as sitk
-    print("\n[3] Çıktı sözleşmesi denetimi...")
+    print("\n[3] Çıktı sözleşmesi denetimi (resmî baseline şeması)...")
     assert out_json.exists(), f"nodules.json YOK: {out_json}"
     d = json.loads(out_json.read_text(encoding="utf-8"))
 
-    assert d["name"] == "Regions of interest", d.get("name")
+    # Resmî baseline format_to_GC: {"type", "boxes", "version"} — `name` ALANI YOK
+    assert "name" not in d, "resmî baseline'da `name` alanı YOK"
     assert d["type"] == "Multiple 2D bounding boxes", d.get("type")
     assert d["version"] == {"major": 1, "minor": 0}, d.get("version")
+    assert set(d.keys()) == {"type", "boxes", "version"}, d.keys()
     assert isinstance(d["boxes"], list) and d["boxes"], "boxes boş!"
-    print(f"  ✓ şema: name/type/version doğru · {len(d['boxes'])} kutu")
+    print(f"  ✓ şema: type/version doğru, `name` yok · {len(d['boxes'])} kutu")
 
+    # Köşe SIRASI: [top_right, top_left, bottom_left, bottom_right]
+    #   = [(x_max,y_max), (x_min,y_max), (x_min,y_min), (x_max,y_min)]
     for i, b in enumerate(d["boxes"]):
         assert set(b.keys()) == {"corners", "probability"}, b.keys()
-        assert len(b["corners"]) == 4, f"kutu {i}: 4 köşe bekleniyor"
-        assert all(len(c) == 3 for c in b["corners"]), f"kutu {i}: köşe 3B olmalı (x,y,z)"
+        c = b["corners"]
+        assert len(c) == 4, f"kutu {i}: 4 köşe bekleniyor"
+        assert all(len(p) == 3 for p in c), f"kutu {i}: köşe 3B olmalı (x,y,z)"
+        xmax, xmin = c[0][0], c[1][0]
+        ymax, ymin = c[0][1], c[2][1]
+        assert abs(c[3][0] - xmax) < 1e-6 and abs(c[2][0] - xmin) < 1e-6, \
+            f"kutu {i}: x köşe sırası hatalı"
+        assert abs(c[1][1] - ymax) < 1e-6 and abs(c[3][1] - ymin) < 1e-6, \
+            f"kutu {i}: y köşe sırası hatalı"
+        assert xmax > xmin and ymax > ymin, f"kutu {i}: dejenere kutu"
+        assert len({p[2] for p in c}) == 1, f"kutu {i}: köşeler farklı z'de"
         assert 0.0 <= b["probability"] <= 1.0, f"kutu {i}: olasılık aralık dışı"
+    print("  ✓ köşe sırası = [top_right, top_left, bottom_left, bottom_right]")
     print("  ✓ her kutuda 4 köşe × 3 koordinat, olasılık ∈ [0,1]")
     probs = [b["probability"] for b in d["boxes"]]
     assert probs == sorted(probs, reverse=True), "olasılıklar azalan değil"
     print("  ✓ olasılıklar azalan sırada")
-
-    # mm koordinatları: fiziksel = origin + index * spacing (eksen sırası ITK: x,y,z)
-    zs = sorted({round(b["corners"][0][2], 6) for b in d["boxes"]})
-    print(f"  ✓ görülen z (mm) düzlemleri: {zs}")
+    zs = sorted({b["corners"][0][2] for b in d["boxes"]})
+    print(f"  ✓ z = SLICE İNDEKSİ (baseline sözleşmesi): {zs}")
     return d
 
 
 def roundtrip_check(stack_path: Path, d: dict) -> None:
-    """mm → piksel ters dönüşümü, köşelerin izgara üzerinde olduğunu doğrular."""
+    """x/y: mm ↔ piksel tersinirliği; z: slice indeksi ile tutarlılık.
+
+    process.py mm'yi baseline sözleşmesiyle (`piksel × spacing`, origin yok sayılır)
+    üretir. Ters dönüşüm için fiziksel nokta = mm + origin.
+    """
     import SimpleITK as sitk
     img = sitk.ReadImage(str(stack_path))
+    sp = img.GetSpacing()
+    orig = img.GetOrigin()
+    nz = img.GetSize()[-1]
     ok = 0
     for b in d["boxes"][:5]:
         for c in b["corners"]:
-            idx = img.TransformPhysicalPointToContinuousIndex([float(v) for v in c])
-            # mm = origin + idx*spacing ⇒ idx = (mm - origin)/spacing
-            exp = [(c[k] - ORIGIN[k]) / SPACING[k] for k in range(3)]
-            if all(abs(idx[k] - exp[k]) < 1e-3 for k in range(3)):
+            x_px = c[0] / sp[0]          # baseline: mm = piksel*spacing ⇒ piksel = mm/spacing
+            y_px = c[1] / sp[1]
+            # fiziksel nokta = mm + origin (transform origin'i bekler)
+            idx = img.TransformPhysicalPointToContinuousIndex(
+                [float(c[0] + orig[0]), float(c[1] + orig[1]), 0.0])
+            if abs(idx[0] - x_px) < 1e-2 and abs(idx[1] - y_px) < 1e-2:
                 ok += 1
+            assert 0 <= c[2] < nz, f"z indeksi aralık dışı: {c[2]}"
     assert ok > 0, "mm→piksel ters dönüşümü tutarsız!"
-    print(f"  ✓ mm→piksel ters dönüşümü doğrulandı ({ok} köşe)")
+    print(f"  ✓ x/y mm→piksel ters dönüşümü doğrulandı ({ok} köşe), z ∈ [0,{nz - 1}]")
+    # kutu fiziksel boyutu = 56 px * spacing olmalı
+    b0 = d["boxes"][0]["corners"]
+    dx = abs(b0[0][0] - b0[1][0])
+    dy = abs(b0[0][1] - b0[2][1])
+    assert abs(dx - 56 * sp[0]) < 0.05, f"kutu genişliği mm yanlış: {dx:.3f}"
+    assert abs(dy - 56 * sp[1]) < 0.05, f"kutu yüksekliği mm yanlış: {dy:.3f}"
+    print(f"  ✓ 56 px kutu → mm: {dx:.2f} × {dy:.2f} (spacing {sp[0]:.3f}/{sp[1]:.3f})")
 
 
 def main() -> None:
@@ -147,6 +175,27 @@ def main() -> None:
     ok = r2.returncode != 0 and "GÖMÜLÜ AĞIRLIK YOK" in (r2.stdout + r2.stderr)
     print(f"  exit={r2.returncode} · beklenen hata mesajı: {'BULUNDU ✓' if ok else 'YOK ✗'}")
     assert ok, "boş önbellekte sessizce devam etti — --network=none ihlali!"
+
+    # ---- ESNEK GİRDİ YOLU TESTİ: .mha doğrudan /input/ altında (baseline düzeni)
+    print("\n[5] ESNEK GİRDİ YOLU: .mha doğrudan /input/ altında (baseline düzeni)...")
+    inp2 = tmp / "input_direct"
+    out2 = tmp / "output_direct"
+    inp2.mkdir(parents=True, exist_ok=True)
+    direct = inp2 / "smoke_stack.mha"
+    import shutil
+    shutil.copy2(stack, direct)
+    env3 = dict(env)
+    env3.update({"INPUT_DIR": str(inp2), "OUTPUT_DIR": str(out2)})
+    r3 = subprocess.run([sys.executable, str(ROOT / "submission_docker" / "process.py")],
+                        env=env3, cwd=str(ROOT), capture_output=True, text=True,
+                        encoding="utf-8", errors="replace")
+    if r3.returncode != 0:
+        print(r3.stdout[-1500:], r3.stderr[-1500:])
+        raise SystemExit("doğrudan /input/*.mha düzeni BAŞARISIZ")
+    d3 = json.loads((out2 / "nodules.json").read_text(encoding="utf-8"))
+    assert len(d3["boxes"]) == len(d["boxes"]), "doğrudan düzende kutu sayısı farklı"
+    print(f"  ✓ /input/*.mha bulundu ve işlendi ({len(d3['boxes'])} kutu)")
+    print(f"  ✓ /input/images/chest-x-rays/*.mha da çalışıyor ({len(d['boxes'])} kutu)")
 
     print(f"\n✅ TÜM DENETİMLER GEÇTİ\n   çıktı: {out / 'nodules.json'}\n   geçici dizin: {tmp}")
 

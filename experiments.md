@@ -1571,3 +1571,39 @@ YAZILDI /output/nodules.json — 150 kutu
 
 * **Betikler:** [`v6_7_train_fulldata.py`](pipelines/v6_two_stage/v6_7_train_fulldata.py) · [`v6_7_build_fulldata_stage2.py`](pipelines/v6_two_stage/v6_7_build_fulldata_stage2.py) · [`v6_7_submission_infer.py`](pipelines/v6_two_stage/v6_7_submission_infer.py) · [`v6_7_freeze_config.py`](pipelines/v6_two_stage/v6_7_freeze_config.py) · [`submission_docker/process.py`](submission_docker/process.py) · [`submission_docker/smoke_test.py`](submission_docker/smoke_test.py)
 * **Sözleşme:** `artifacts/v6_two_stage/submission_config.json`
+
+### V6.7.5 — Resmî baseline uyumluluk rötuşu (3 düzeltme)
+
+Resmî `node21challenge/node21_detection_baseline/process.py` **kaynaktan** okundu ([ham dosya](https://raw.githubusercontent.com/node21challenge/node21_detection_baseline/main/process.py)) ve `format_to_GC` fonksiyonuna göre **üç gerçek uyumsuzluk** bulunup düzeltildi:
+
+| # | Bulgu (baseline ne yapıyor) | Önceki hâlimiz | Düzeltme |
+| :-: | :--- | :--- | :--- |
+| **1** | JSON `{type, boxes, version}` — **`name` alanı YOK** | `"name": "Regions of interest"` ekliyorduk | `name` **kaldırıldı** |
+| **2** | Köşe sırası **[top_right, top_left, bottom_left, bottom_right]** = `[(xmax,ymax),(xmin,ymax),(xmin,ymin),(xmax,ymin)]` | `[(xmin,ymin),(xmin,ymax),(xmax,ymax),(xmax,ymin)]` (BL,TL,TR,BR) — **farklı sıra** | baseline sırasına çevrildi |
+| **3** | **z = slice İNDEKSİ** (`np_prediction['slice']`), x/y = **piksel × spacing** (origin **yok sayılır**) | z fiziksel mm; x/y transform (origin dahil) | z **slice indeksi**; x/y = `transform − origin` ⇒ baseline ile birebir |
+
+**Neden fark etmiyordu ama önemliydi:** NODE21 `.mha` dosyalarının **origin'i (0,0,0)** olduğu için x/y'de transform ≡ `piksel×spacing`; ama *köşe sırası* ve *`name` alanı* gerçek sözleşme farklarıydı ve katı bir doğrulayıcıda reddedilebilirdi.
+
+**Ek uyumluluk (Grand-Challenge güvenlik kuralı):**
+* **`USER algorithm`** (uid 1000, non-root) — doğrulandı: `whoami → algorithm`, `id → uid=1000(algorithm)`.
+* `/output` yazılabilir (chown algorithm) — doğrulandı: `touch /output/test.txt` başarılı.
+* Ağırlıklar `a+rX` (okunabilir); `TORCH_HOME`/`MPLCONFIGDIR` kullanıcı-yazılabilir dizinlere taşındı.
+* **`matplotlib` bağımlılığı tamamen kaldırıldı:** `node21_tda/preprocessing/__init__.py` **tembel import**'a (PEP 562) çevrildi ⇒ `zones` (matplotlib) yüklenmez. Bu, daha önce konteyneri çökerten `ModuleNotFoundError: matplotlib`'in de kök nedenini ortadan kaldırır.
+* **`Dockerfile.cpu`** eklendi: CUDA tabanı ~14 GB iken CPU tabanı **~1,5 GB** (yükleme limiti için; bedeli ~26 s/katman).
+
+**Esnek girdi yolu:** `process.py` artık `/input` altını **özyinelemeli** tarar (`rglob("*.mha")`) ⇒ hem baseline'ın `/input/<uuid>.mha` hem yeni GC'nin `/input/images/chest-x-rays/<uuid>.mha` düzeni çalışır. Yerel testte **ikisi de** doğrulandı (aynı 100/150 kutu).
+
+**Yeniden doğrulama (gerçek konteyner, `--network=none`):**
+```
+algorithm                                  ← non-root ✓
+uid=1000(algorithm) gid=1000(algorithm)    ← ✓
+output YAZILABILIR ✓  drwxr-xr-x algorithm
+girdi: /input/stack.mha                    ← esnek yol ✓
+stack.mha: yığın 3 katman, 1024x1024       ← 3B ✓
+YAZILDI /output/nodules.json — 150 kutu
+```
+* Çıktı anahtarları: **`['boxes','type','version']`** (`name` yok) ✓
+* Köşe sırası TR,TL,BL,BR ✓ · olasılık **0,9938** (yerelle aynı) · z ∈ {0,1,2} **slice indeksi** ✓
+* Origin düzeltmesi kanıtı: eski kutu `[101,81; 75,77]` → yeni `[91,81; 55,77]` = **origin (10,20) çıkarılmış**, tam olarak baseline sözleşmesi ✓
+
+* **Kayıt:** `submission_docker/README.md` (uyumluluk tablosu) · [Dockerfile](submission_docker/Dockerfile) · [Dockerfile.cpu](submission_docker/Dockerfile.cpu) · [process.py](submission_docker/process.py) · [smoke_test.py](submission_docker/smoke_test.py)

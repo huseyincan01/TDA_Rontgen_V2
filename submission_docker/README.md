@@ -3,6 +3,24 @@
 Kilitli çıkarım standardı `artifacts/v6_two_stage/submission_config.json` içinde
 dondurulmuştur. Bu paket o sözleşmeyi sunucuda birebir uygular.
 
+## Resmî uyumluluk (`node21challenge/node21_detection_baseline`)
+
+Resmî baseline `process.py`'nin `format_to_GC` fonksiyonu **kaynaktan** incelendi ve
+şu üç noktada birebir eşitlendi:
+
+| Konu | Resmî baseline | Bu paket |
+| :--- | :--- | :--- |
+| JSON anahtarları | `{type, boxes, version}` — **`name` YOK** | ✅ aynı |
+| **Köşe sırası** | `[top_right, top_left, bottom_left, bottom_right]` = `[(xmax,ymax), (xmin,ymax), (xmin,ymin), (xmax,ymin)]` | ✅ aynı |
+| **z koordinatı** | **slice indeksi** (`np_prediction['slice']`), mm değil | ✅ aynı |
+| x/y birimi | **mm = piksel × spacing** (origin **yok sayılır**) | ✅ aynı (transform − origin) |
+| Girdi yolu | `/input/<uuid>.mha` (evalutils) | ✅ **özyinelemeli** `rglob("*.mha")` — `/input/*.mha` **ve** `/input/images/chest-x-rays/*.mha` |
+| Konteyner kullanıcısı | — (GC güvenlik kuralı: non-root) | ✅ `USER algorithm` (uid 1000), `/output` yazılabilir |
+
+> Baseline kaynağı: <https://raw.githubusercontent.com/node21challenge/node21_detection_baseline/main/process.py>
+> ⚠️ Baseline `probability`'yi 2 ondalığa yuvarlar; burada **4 ondalık** kullanılır
+> (eşitlik/AUC sıralamasında tie üretmemek için). Koordinatlar baseline gibi **2 ondalık**.
+
 ## Boru hattı (tek görüntü)
 
 ```
@@ -23,51 +41,51 @@ ham CXR
 
 | | |
 | :--- | :--- |
-| Girdi | `/input/images/chest-x-rays/<ad>.mha` — 2B `(H,W)` **veya** 3B `(N_z,H,W)` yığın |
-| 3B kural | Her `z` katmanı **tek tek** işlenir; köşelere `z` indeksi yazılır |
+| Girdi | `/input/images/chest-x-rays/<ad>.mha` **veya** `/input/<ad>.mha` — 2B `(H,W)` ya da 3B `(N_z,H,W)` |
+| 3B kural | Her `z` katmanı **tek tek** işlenir; köşelere **`z` slice indeksi** yazılır |
 | Çıktı | `/output/nodules.json` |
-| Şema | `{"name":"Regions of interest","type":"Multiple 2D bounding boxes","boxes":[{"corners":[[x1,y1,z],[x1,y2,z],[x2,y2,z],[x2,y1,z]],"probability":f}],"version":{"major":1,"minor":0}}` |
-| Koordinat | `sitk_image.TransformContinuousIndexToPhysicalPoint([x_px, y_px, z])` → **fiziksel mm** |
+| Şema | `{"type":"Multiple 2D bounding boxes","boxes":[{"corners":[[xmax,ymax,z],[xmin,ymax,z],[xmin,ymin,z],[xmax,ymin,z]],"probability":f}],"version":{"major":1,"minor":0}}` |
+| Koordinat | x/y **mm** (`piksel × spacing`, 2 ondalık) · z **slice indeksi** |
 
 ## `--network=none` güvenliği
 
-1. **İndirme yasağı:** omurga (`pc-nih-rsna-siim-vin-resnet50-test512-e400-state.pt`,
-   90 MB) ve PSPNet (`pspnet_chestxray_best_model_4.pth`, 260 MB) ağırlıkları
-   imaja **gömülüdür** (`submission_docker/weights/` → `/opt/xrv_weights`,
-   `XRV_CACHE_DIR`). Dosyalar mevcutsa torchxrayvision indirme yapmaz; ayrıca
-   `xrv.utils.download` çalışma anında **engellenir** (sessiz indirme imkânsız).
-2. **Canlı maske:** akciğer maskesi çalışma anında PSPNet ile ham röntgenden
-   üretilir (sunucudan hazır maske gelmez).
+1. **İndirme yasağı:** omurga (`…resnet50-test512-e400-state.pt`, 90 MB) ve PSPNet
+   (`pspnet_chestxray_best_model_4.pth`, 260 MB) imaja **gömülüdür**
+   (`/opt/xrv_weights`, `XRV_CACHE_DIR`). Dosya eksikse `xrv.utils.download`
+   **engellenir** ⇒ sessiz indirme imkânsız, açık hata.
+2. **Canlı maske:** akciğer maskesi çalışma anında PSPNet ile ham röntgenden üretilir.
 
 ## Build & test
 
 ```bash
-# 1) İmaj
+# CUDA (T4 için, ~14 GB açılmış)
 docker build -f submission_docker/Dockerfile -t node21-detection:v6.7 .
 
-# 2) Ağsız uçtan uca (3B yığın)
-docker run --rm --network=none \
-  -v /path/to/input:/input:ro -v /path/to/output:/output \
-  node21-detection:v6.7
+# CPU (küçük imaj ~1.5 GB, yavaş)
+docker build -f submission_docker/Dockerfile.cpu -t node21-detection:v6.7-cpu .
+
+# Ağsız uçtan uca
+docker run --rm --network=none -v <girdi>:/input:ro -v <cikti>:/output node21-detection:v6.7
 ```
 
-**Yerel (Docker'sız) doğrulama:**
+**Yerel (Docker'sız) doğrulama — 5 denetim:**
 
 ```bash
 python submission_docker/smoke_test.py --n 3
 ```
-
-Bu betik: gerçek val görüntülerinden bilinen spacing/origin ile 3B `.mha` yığını
-üretir, `process.py`'yi koşar, JSON şemasını + mm dönüşümünün tersinirliğini
-doğrular ve **negatif test** yapar (boş ağırlık önbelleği → sessiz indirme değil,
-açık hata).
+1. JSON şeması (`name` yok, `type`/`version` doğru)
+2. **Köşe sırası** [TR, TL, BL, BR]
+3. x/y mm ↔ piksel tersinirlik + 56 px → mm dönüşümü
+4. **Negatif test:** boş ağırlık önbelleği → açık hata (sessiz indirme yasak)
+5. **Her iki girdi düzeni** (`/input/*.mha` ve `/input/images/chest-x-rays/*.mha`)
 
 ## Sınırlar (dürüstçe)
 
 * **Rule 9:** eğitim verimiz NODE21'in **halka açık eğitim setidir**; resmî test
   setleri özeldir ⇒ leaderboard sıralaması bu depodan **ölçülemez**.
+* NODE21 yarışması "Now Closed"; paket ileriye dönük **Algoritma** yüklemesi /
+  tekrar üretilebilirlik için hazırdır.
 * `submission_config.json` içindeki `metric.validated_values`, **M5_foundation**
   (tam-veri değil) ile NODE21 val'de ölçülmüştür; tam-veri modeli NODE21'de
-  değerlendirilemez (tüm veri eğitimde kullanıldı). Bu sayılar boru hattının
-  **beklenen davranış referansıdır**, tam-veri modelinin performans iddiası değil.
-* Zaman bütçesi: ≈2 s / görüntü (PSPNet ~0.1 s + omurga ~0.3 s + 50 aday TDA ~1.6 s).
+  değerlendirilemez (tüm veri eğitimde kullanıldı).
+* Zaman: GPU'da ~1–2 s/katman; **GPU'suz ~26 s/katman** (CPU varyantı da aynı).
