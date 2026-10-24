@@ -1,0 +1,127 @@
+{
+  "version": "v6.7-fulldata-1.0",
+  "stage1": {
+    "checkpoint": "M5_foundation_fulldata",
+    "path": "artifacts/v6_two_stage/submission_fulldata/M5_foundation_fulldata.pt",
+    "backbone": "resnet50-res512-all (torchxrayvision, 800k+ CXR)",
+    "input": {
+      "size": 512,
+      "channels": 1,
+      "range": [
+        -1024,
+        1024
+      ],
+      "note": "xrv.utils.normalize(img, maxval=255)"
+    },
+    "sha256": "cb3bb0c182808dbbcc99c703e6c6ed93a9920b7443ed3facee7c544bd40912d4"
+  },
+  "stage2": {
+    "bundle": "artifacts/v6_two_stage/submission_fulldata/stage2_tda_hgb_fulldata.joblib",
+    "features": "1600 PI (32/64 c_lungref, yerel min-max YOK) + 4 uzamsal",
+    "stage1_score_included": false,
+    "sha256": "88b6598b1a13285ad4529cdbac9e6d6e363fbc2e36322dc13e5dab3fb32d9456"
+  },
+  "inference": {
+    "scales": [
+      0.9,
+      1.0,
+      1.1
+    ],
+    "flip_tta": true,
+    "peak_window": 3,
+    "nms_px": 8,
+    "top_k": 50,
+    "box_px": 56,
+    "note": "V6.6.7 denetimiyle sabitlendi (56x56 sabit kutu; yarıçap kafası resmî IoU>0.2 için kullanılamaz)"
+  },
+  "fusion": {
+    "w": 0.55,
+    "formula": "S = sigmoid(w·z(s1) + (1−w)·z(p_tda)); z sabit referansla",
+    "reference": {
+      "s1_mean": 0.027897529304027557,
+      "s1_std": 0.040271732956171036,
+      "tda_mean": 0.21042005621516044,
+      "tda_std": 0.21514158444373793
+    },
+    "locked": true,
+    "why": "Tuzak B: füzyon HİÇBİR veri üzerinde yeniden uydurulmadı; V6.6.6'da val üzerinde doğrulanmış sabit nokta."
+  },
+  "metric": {
+    "official": "rank_metric = 0.75·AUC + 0.25·Sens@0.25 FP/görüntü",
+    "matching": "IoU > 0.2; aynı referansa çakışan 2.+ tahmin ne TP ne FP",
+    "froc_points": [
+      0.125,
+      0.25,
+      0.5
+    ],
+    "validated_on": "NODE21 val (M5_foundation ile; tam-veri modeli NODE21'de DEĞERLENDİRİLEMEZ çünkü tüm veri eğitimde kullanıldı)",
+    "validated_values": {
+      "rank_metric": 0.9131,
+      "auc": 0.9678,
+      "sens_at_0.125": 0.671,
+      "sens_at_0.25": 0.7489,
+      "sens_at_0.5": 0.8009
+    }
+  },
+  "trap_a": {
+    "protection": "Doğrulanmış SABİT takvim yeniden kullanıldı (hiperparametre aramasi YOK): 5 epoch donuk ısınma + 13 epoch diferansiyel FT, BN donuk, Cosine Annealing, aynı augmentasyon/kayıp.",
+    "data": "4.882 hasta (train+val+test): 1.134 nodül + 1.134 temiz kontrol (1:1)",
+    "radius_head": "radius_detach=True — yarıçap kafası detach edilmiş özelliklerden eğitildi, omurga ağırlıkları %100 korundu"
+  },
+  "trap_b": {
+    "protection": "HGB matrisinde s1 YOK (yalnız 1600 PI + 4 uzamsal); füzyon ağırlığı hiçbir veri üzerinde yeniden uydurulmadı.",
+    "verification": "bundle meta.stage1_score_included == False"
+  },
+  "rule9": "Verimiz NODE21'in HALK AÇIK EĞİTİM setidir; resmî test setleri özeldir ⇒ leaderboard sıralaması ölçülemez. Bu boru hattı ileriye dönük gönderim/dağıtım içindir, sıralama iddiası değildir.",
+  "protected_scientific_artifacts": [
+    {
+      "name": "M5_centernet.pt",
+      "desc": "V6.0/V6.2 1. aşama (makale tabloları)",
+      "sha256": "2645375a49bc7feb18350f04d0171a76b8daa1d9f7050deaad5206866de5db87",
+      "bytes": 3191049,
+      "mtime": 1792394903
+    },
+    {
+      "name": "M6_fcos.pt",
+      "desc": "V6.0/V6.2 FCOS yardımcı dedektör",
+      "sha256": "b0237489e2f35646e0b905a41c2e7dd070d64476684d15d8ce12f5fb37239c77",
+      "bytes": 3190871,
+      "mtime": 1792412055
+    },
+    {
+      "name": "M5_foundation.pt",
+      "desc": "V6.6 vakıf omurga (V6.6.2–V6.6.5 tabloları)",
+      "sha256": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+      "bytes": 108882303,
+      "mtime": 1792780398
+    },
+    {
+      "name": "stage2_final_tda_hgb.joblib",
+      "desc": "V6.3 nihai 2. aşama bundle'ı",
+      "sha256": "976afc1f414ce38fd77e945093f96820b9bf1b5a4138542f567960e5abb819b5",
+      "bytes": 1751548,
+      "mtime": 1792426441
+    },
+    {
+      "name": "M5_domain_gen.pt",
+      "desc": "V6.4 KILL edilen domain-gen varyantı (kanıt)",
+      "sha256": "34d70f057dd56dafb823f19b1513547b95a428ae6eaa0fc6fd26d283b6b50308",
+      "bytes": 3191123,
+      "mtime": 1792432160
+    }
+  ],
+  "submission_artifacts": [
+    {
+      "name": "M5_foundation_fulldata.pt",
+      "desc": "V6.7 tam-veri 1. aşama",
+      "sha256": "cb3bb0c182808dbbcc99c703e6c6ed93a9920b7443ed3facee7c544bd40912d4",
+      "bytes": 108881509
+    },
+    {
+      "name": "stage2_tda_hgb_fulldata.joblib",
+      "desc": "V6.7 tam-veri 2. aşama (Tuzak B korumalı)",
+      "sha256": "88b6598b1a13285ad4529cdbac9e6d6e363fbc2e36322dc13e5dab3fb32d9456",
+      "bytes": 1875374
+    }
+  ]
+}

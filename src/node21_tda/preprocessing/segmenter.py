@@ -65,12 +65,16 @@ ZONE_METADATA = {
 class PSPNet5ZoneSegmenter:
     """TorchXRayVision PSPNet tabanlı 5-Bölge Akciğer Segmentasyon Motoru."""
 
-    def __init__(self, device: Optional[str] = None, threshold: float = 0.5):
+    def __init__(self, device: Optional[str] = None, threshold: float = 0.5,
+                 cache_dir: Optional[str] = None):
         """Segmentasyon modelini GPU (veya CPU) üzerinde başlatır.
-        
+
         Args:
             device: 'cuda' veya 'cpu'. Belirtilmezse otomatik seçilir.
             threshold: Akciğer olasılık maskeleri için eşik değeri (> 0.5).
+            cache_dir: PSPNet ağırlık önbelleği. Docker'da imaja gömülü dizine
+                (ör. /opt/xrv_weights) işaret edilir ⇒ --network=none altında
+                indirme denenmez; dosya yoksa açık hata verir.
         """
         if device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,7 +82,8 @@ class PSPNet5ZoneSegmenter:
             self.device = torch.device(device)
 
         # TorchXRayVision PSPNet modeli
-        self.model = xrv.baseline_models.chestx_det.PSPNet().to(self.device)
+        self.model = xrv.baseline_models.chestx_det.PSPNet(
+            cache_dir=cache_dir).to(self.device)
         self.model.eval()
         self.threshold = threshold
 

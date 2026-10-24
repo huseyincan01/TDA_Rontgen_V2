@@ -1,0 +1,25 @@
+# Docker build context'ini küçük tut (venv/dataset GB'larca tutar, imaja girmemeli)
+.git
+.gitignore
+venv
+dataset_node21
+data
+notebooks
+scratch
+tests
+**/__pycache__
+**/*.pyc
+*.md.bak
+
+# Bilimsel checkpoint'ler imaja GİRMEZ (gönderim modelleri submission_fulldata'da)
+artifacts/v6_two_stage/checkpoints
+artifacts/v6_two_stage/*.npz
+artifacts/figures
+artifacts/models
+artifacts/runs
+artifacts/scalers
+artifacts/thresholds
+
+# Gönderim imajında gerekmeyen eğitim/deney betikleri dışındaki büyük dizinler
+configs
+app

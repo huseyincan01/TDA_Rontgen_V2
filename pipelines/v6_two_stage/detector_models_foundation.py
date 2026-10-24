@@ -153,17 +153,19 @@ class FoundationCenterNet(nn.Module):
     """CXR vakıf omurgası + FPN/ASPP + CenterNet kafası (M5 ile aynı çıktı ölçeği)."""
 
     def __init__(self, weights: str = "resnet50-res512-all", fpn_ch: int = 256,
-                 head_ch: int = 64):
+                 head_ch: int = 64, cache_dir: str = None):
+        """cache_dir: xrv ağırlık önbelleği. Docker'da imaja gömülü dizine
+        (ör. /opt/xrv_weights) işaret edilir ⇒ --network=none altında İNDİRME OLMAZ."""
         super().__init__()
         import torchxrayvision as xrv
 
         if weights.startswith("resnet50"):
-            self.bb = xrv.models.ResNet(weights=weights).model
+            self.bb = xrv.models.ResNet(weights=weights, cache_dir=cache_dir).model
             self.fpn = FPNNeck((256, 512, 1024, 2048), fpn_ch)
             self._top_blocks = ("layer3", "layer4")
             self.is_densenet = False
         else:
-            self.bb = xrv.models.DenseNet(weights=weights)
+            self.bb = xrv.models.DenseNet(weights=weights, cache_dir=cache_dir)
             self.fpn = FPNNeck((256, 512, 1024, 1024), fpn_ch)
             self._top_blocks = ("denseblock3", "denseblock4")
             self.is_densenet = True
@@ -173,6 +175,10 @@ class FoundationCenterNet(nn.Module):
             nn.BatchNorm2d(head_ch), nn.ReLU(inplace=True))
         self.heat = nn.Conv2d(head_ch, 1, 1)
         self.radius = nn.Conv2d(head_ch, 1, 1)
+        # True ise yarıçap kafası DETACH edilmiş özelliklerden öğrenir ⇒ gradyanı
+        # paylaşılan gövdeye / ısı haritası dalına ASLA geri akmaz (V6.6 denetimi:
+        # radius kaybı ağırlığı 0,1 iken kafa çöküyordu; bu bayrak omurgayı korur).
+        self.radius_detach = False
 
         # Kafa sıfır-bias başlangıcı (CenterNet pratiği): ısı haritası prior'u düşük
         nn.init.constant_(self.heat.bias, -2.19)
@@ -204,7 +210,8 @@ class FoundationCenterNet(nn.Module):
         p2, _, _, _ = self.fpn(c2, c3, c4, c5)          # 1/4 → 128x128 @512
         f = self.fuse(p2)
         f = F.interpolate(f, scale_factor=2, mode="bilinear", align_corners=False)
-        return self.heat(f), self.radius(f)             # 256x256
+        fr = f.detach() if self.radius_detach else f
+        return self.heat(f), self.radius(fr)            # 256x256
 
     # ------------------------------------------------- forgetting koruması
     def set_bn_eval(self):

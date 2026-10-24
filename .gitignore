@@ -103,3 +103,8 @@ artifacts/thresholds/*
 artifacts/v6_two_stage/checkpoints/
 # Türetilmiş önbellek (yeniden üretilebilir: --recompute) → takip edilmez
 artifacts/v6_two_stage/*.npz
+# V6.7 gönderim modelleri (~105 MB + joblib) ve gömülü xrv ağırlıkları (~350 MB)
+artifacts/v6_two_stage/submission_fulldata/
+submission_docker/weights/
+# Deney/geçici çıktılar ve konteyner duman testi artefaktları
+scratch/

@@ -52,9 +52,15 @@ FND_KEY = "FND_heatTTA"
 # --------------------------------------------------------------------------- #
 # yardımcılar
 # --------------------------------------------------------------------------- #
-def load_foundation(tag: str, device):
-    m = FoundationCenterNet(weights="resnet50-res512-all").to(device)
-    m.load_state_dict(torch.load(CKPT / f"{tag}.pt", map_location=device))
+def load_foundation(tag: str, device, subdir: bool = False, cache_dir: str = None):
+    """tag.pt'yi yükler. subdir=True → artifacts/v6_two_stage/submission_fulldata/.
+
+    cache_dir: xrv omurga ağırlık önbelleği (Docker'da imaja gömülü dizin ⇒ ağsız).
+    """
+    m = FoundationCenterNet(weights="resnet50-res512-all", cache_dir=cache_dir).to(device)
+    base = (PROJECT_ROOT / "artifacts" / "v6_two_stage" / "submission_fulldata") \
+        if subdir else CKPT
+    m.load_state_dict(torch.load(base / f"{tag}.pt", map_location=device))
     m.eval()
     return m
 

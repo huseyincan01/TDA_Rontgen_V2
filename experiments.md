@@ -1481,3 +1481,93 @@ NMS Δd ∈ {8, 12, 16, 20, 24, 28} ve tepe penceresi {3×3, 5×5} → rank **0,
 
 > ⚠️ **Kural 9 (değişmez):** Verimiz NODE21'in **halka açık eğitim setidir**; resmî test setleri (281 + 298) **özeldir**. Bu tablo yalnız kendi val bölmemizde resmî protokolün **simülasyonudur** — leaderboard'a gönderim veya sıralama karşılaştırması **mümkün değildir**. "1. sıraya çıkmak" bu veriyle ölçülemez.
 > 📌 Resmî Sens@0,5 (0,8009) ile eski `hit_criterion1` FROC@0,5 (0,831) arasındaki fark, **eşleştirme kuralından** (IoU>0,2 vs merkez mesafesi) gelir; resmî ölçüt daha sıkıdır.
+
+---
+
+## 11. V6.7 — %100 Tam Veri Gönderim Eğitimi + Grand-Challenge Paketi
+
+> **Amaç.** Kilitli standart (V6.6.7) resmî gönderime hazırlanır: 1. ve 2. aşama **4.882 hastanın tamamıyla** yeniden eğitilir ve Grand-Challenge `--network=none` sözleşmesine uygun bir konteyner paketlenir.
+
+### V6.7.0 — 🔒 Değişmez kural: bilimsel checkpoint'ler korunur
+
+Makale tablolarını üreten ağırlıklara **dokunulmadı**; SHA-256'ları `submission_config.json` içine kaydedildi. Tam-veri modelleri ayrı dizine yazılır:
+
+| Rol | Yol | Durum |
+| :--- | :--- | :--- |
+| Bilimsel (V6.0–V6.6) | `checkpoints/M5_centernet.pt` · `M6_fcos.pt` · `M5_foundation.pt` · `stage2_final_tda_hgb.joblib` · `M5_domain_gen.pt` | **değişmedi** (mtime'lar aynı) |
+| Gönderim (V6.7) | `submission_fulldata/M5_foundation_fulldata.pt` · `stage2_tda_hgb_fulldata.joblib` | yeni |
+
+### V6.7.1 — 🛡️ TUZAK A koruması: sabit takvimle tam veri eğitimi
+
+**Hiperparametre araması YOK** — V6.6'da doğrulanmış takvim birebir yeniden kullanıldı: 5 epoch donuk ısınma + 13 epoch diferansiyel fine-tune (18 epoch), BN donuk, Cosine Annealing, aynı augmentasyon (flip + γ∈[0,8;1,25] + ölçek±%20) ve aynı kayıp.
+
+| | |
+| :--- | :--- |
+| Veri | **4.882 hastanın tamamı** (train + val + test): 1.134 nodüllü + **1.134** temiz kontrol (1:1) = **2.268** görüntü |
+| Omurga | `xrv resnet50-res512-all` (800k+ CXR) + ASPP/FPN |
+| Eğitim kaybı | **19,31 → 1,22** |
+| Süre | ~31 dk (RTX 4050 6 GB) |
+| **Yarıçap kafası** | `radius_detach=True` — yarıçap kanalı **detach edilmiş özelliklerden** eğitildi ⇒ gradyanı paylaşılan gövdeye/ısı haritasına **hiç akmadı**, ana ısı haritası keskinliği %100 korundu (ve çıkarımda zaten sabit 56×56 kutu kullanılıyor) |
+
+> ⚠️ Tam-veri modeli **NODE21'de değerlendirilemez** (tüm veri eğitimde). Aşağıdaki referans sayılar `M5_foundation` ile val'de ölçülmüştür ve boru hattının *beklenen davranış* referansıdır, tam-veri performans iddiası değildir.
+
+### V6.7.2 — 🛡️ TUZAK B koruması: sızıntısız 2. aşama birleştirmesi
+
+**Sorun (Stacking Overfitting).** 2. aşama modelini, 1. aşamanın **kendi eğitim verisi** üzerinde ürettiği şişirilmiş skorlarla eğitmek yığma-uyumu yaratır. Koruma iki katmanlı:
+
+1. **HGB matrisinde 1. aşama skoru (s1) YOK.** Girdi yalnız **1600 PI (32/64 px, c_lungref) + 4 uzamsal öncül**'dür. 1. aşamanın ezberlediği bilgi bu matrise **fiziksel olarak giremez** (bundle meta'sında `stage1_score_included: false` olarak doğrulanır).
+2. **Füzyon ağırlığı HİÇBİR veri üzerinde yeniden uydurulmadı.** V6.6.6'da val'de doğrulanmış ve miras alınan LR katsayılarını dört metrikte domine eden **sabit w = 0,55** kilitlendi:
+   `S = sigmoid(0,55·z(s1) + 0,45·z(p_tda))`, z-skor sabitleri tam-veri aday havuzundan bir kez hesaplanıp donduruldu.
+
+**Neden bu yeterli:** HGB s1'i görmediği için 1. aşama ezberi HGB'ye sızamaz; füzyon ise *sabit* olduğu için hiçbir veriye uyum sağlayamaz. Tuzak B yapısal olarak imkânsız hale gelir.
+
+### V6.7.3 — Grand-Challenge gönderim paketi (`submission_docker/`)
+
+| Dosya | İçerik |
+| :--- | :--- |
+| `process.py` | GC arayüzü: `/input/images/chest-x-rays/*.mha` → `/output/nodules.json` |
+| `Dockerfile` | CUDA runtime taban + **gömülü ağırlıklar** (`/opt/xrv_weights`) |
+| `requirements.txt` · `README.md` | bağımlılıklar + sözleşme |
+| `smoke_test.py` | yerel ağsız uçtan uca doğrulama |
+| `weights/` | omurga (90 MB) + PSPNet (260 MB) — **gitignore** |
+
+**3B yığın desteği:** NODE21 sunucusu birden fazla 1024×1024 röntgeni tek bir `(N_z, H, W)` `.mha` olarak verebilir. `process.py` her `z` katmanını **tek tek** işler ve köşelere `z` indeksini yazar.
+
+**Koordinat zinciri:** ısı haritası 256×256 → kanonik 512×512 → **orijinal piksel** (x_px, y_px) → `sitk.TransformContinuousIndexToPhysicalPoint([x_px, y_px, z])` → **fiziksel mm**. Kutu, merkez etrafında sabit **56×56 px** olarak kurulur (yarıçap kafası resmî IoU>0,2 için kullanılamaz — V6.6.7 Bulgu 1).
+
+**Çıktı şeması:** `{"name":"Regions of interest","type":"Multiple 2D bounding boxes","boxes":[{"corners":[[x1,y1,z],[x1,y2,z],[x2,y2,z],[x2,y1,z]],"probability":f}],"version":{"major":1,"minor":0}}`
+
+**`--network=none` (iki tuzak):**
+1. **Omurga indirme yasağı:** ağırlıklar imaja gömülü; `XRV_CACHE_DIR=/opt/xrv_weights`. Ayrıca `xrv.utils.download` çalışma anında **engellenir** ⇒ dosya eksikse *sessiz indirme* yerine açık hata.
+2. **Canlı PSPNet maskesi:** sunucudan hazır maske gelmez; akciğer maskesi **çalışma anında** PSPNet ile ham röntgenden üretilir (ağırlıkları da imaja gömülü), ardından 15 px dilasyon + c_lungref (p1–p99) kanonikleştirmesi ve 4 uzamsal öncül bu canlı maske üzerinden hesaplanır.
+
+### V6.7.4 — Denetimler
+
+| Denetim | Yöntem | Sonuç |
+| :--- | :--- | :--- |
+| Bilimsel checkpoint korunması | SHA-256 + mtime | ✅ değişmedi |
+| Tuzak B | `bundle.meta.stage1_score_included == false` (assert) | ✅ s1 matrise girmiyor |
+| Çevrimdışı model yükleme | `xrv.utils.download` monkeypatch ile yükleme | ✅ ağ çağrısı yok |
+| 3B yığın + mm dönüşümü | `smoke_test.py` (gerçek val görüntülerinden 1024×1024×3 `.mha`) | ✅ şema + tersinir mm |
+| Sessiz indirme yasağı | boş `XRV_CACHE_DIR` ile negatif test | ✅ açık hata (`exit 1`) |
+| **Gerçek konteyner, `--network=none`** | `docker run --network=none -v .../input:/input:ro -v .../output:/output` | ✅ **150 kutu / 3 katman** |
+
+**Konteyner çıktısı (birebir, `--network=none`):**
+
+```
+✓ ağırlık: pc-nih-rsna-siim-vin-resnet50-test512-e400-state.pt (94.5 MB)
+✓ ağırlık: pspnet_chestxray_best_model_4.pth (273.0 MB)
+indirme koruması AKTİF (xrv.utils.download engellendi)
+sözleşme v6.7-fulldata-1.0 | w=0.55 (kilitli)
+stack.mha: yığın 3 katman, 1024x1024, ITK boyut=3
+  z=0: 50 aday · z=1: 50 aday · z=2: 50 aday
+YAZILDI /output/nodules.json — 150 kutu
+```
+
+* Şema doğrulandı: `name="Regions of interest"`, `type="Multiple 2D bounding boxes"`, `version={1,0}`, her kutuda **4 köşe × 3 koordinat (mm)**, olasılık 0,3549–**0,9938** azalan sırada.
+* **mm↔piksel tersinirlik:** köşe `[101,81; 75,77; 0,0]` mm → `[642,0; 390,0; 0,0]` px; `642,0 · 0,143 + 10,0 = 101,81` ✓
+* **Deterministiklik:** n0004'ün en yüksek skoru yerel testte de konteynerde de **0,9938**.
+* ⏱️ **Konteyner GPU'suz koşuldu → ~26 s/katman.** Grand-Challenge NVIDIA T4 verdiğinde (imaj CUDA tabanlı) ~1–2 s/katman beklenir; CPU'da büyük yığınlarda süre sınırı riski vardır, bu yüzden T4 kullanımı önerilir.
+
+* **Betikler:** [`v6_7_train_fulldata.py`](pipelines/v6_two_stage/v6_7_train_fulldata.py) · [`v6_7_build_fulldata_stage2.py`](pipelines/v6_two_stage/v6_7_build_fulldata_stage2.py) · [`v6_7_submission_infer.py`](pipelines/v6_two_stage/v6_7_submission_infer.py) · [`v6_7_freeze_config.py`](pipelines/v6_two_stage/v6_7_freeze_config.py) · [`submission_docker/process.py`](submission_docker/process.py) · [`submission_docker/smoke_test.py`](submission_docker/smoke_test.py)
+* **Sözleşme:** `artifacts/v6_two_stage/submission_config.json`
