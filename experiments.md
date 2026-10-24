@@ -1445,3 +1445,39 @@ V6.5 şablonunun üç protokolü, foundation adaylarıyla (23.028 strict / 21.92
 
 * **Kayıt:** `artifacts/v6_two_stage/v6_6_fusion_calibration.json` (21 ağırlığın tam eğrisi + Pareto cephesi + öneri bloğu) · ana rapora `fusion_froc_calibration` anahtarıyla işlendi.
 * **Önbellek:** `v6_6_val_candidate_scores.npz` (yalnız skaler skorlar; görüntü/kırpıntı YOK) ⇒ tarama yeniden koşulabilir.
+
+### V6.6.7 — Resmî NODE21 detection metriği denetimi (eğitim YOK)
+
+**Protokol düzeltmesi.** Resmî detection değerlendirmesi ([node21.grand-challenge.org/Details](https://node21.grand-challenge.org/Details/)) bizim eski protokolümüzden **farklı**:
+
+| | Bizim eski protokolümüz | **Resmî NODE21** |
+| :--- | :--- | :--- |
+| FROC noktaları | @0,5 / 1 / 2 / 4 FP | **@1/8 (0,125) · 1/4 (0,25) · 1/2 (0,5)** FP/**görüntü** |
+| Eşleştirme | `hit_criterion1` (merkez / 16 px) | **IoU > 0,2** (kutu–kutu) |
+| Çakışan 2.+ tahmin | duplikasyon IGNORE (`hit` indeksine göre) | aynı referansa IoU>0,2 çakışanlar arasında **yalnız en yüksek skorlu** tutulur |
+| Sıralama | — | **`rank_metric = 0,75·AUC + 0,25·Sens@0,25`** |
+
+Betik: [`v6_6_optimization_audit.py`](pipelines/v6_two_stage/v6_6_optimization_audit.py) · Kayıt: `v6_6_optimization_audit.json` · 734 hasta / 231 lezyon · 296 değerlendirme (37 varyant × 8 kutu boyutu).
+
+**🔴 Bulgu 1 — YARIÇAP KAFASI KULLANILAMAZ (gerçek hata).**
+GT nodül boyutları **35–119 px** iken model ısı tepelerinde **R ≈ 0,01–0,04** tahmin ediyor ⇒ yarıçap kutusu kenarı **~0,1 px**. Neden: radius kaybının ağırlığı `0,1`, focal kayıp mertebesi ise 1–13 ⇒ kafa **çökmüş**. Resmî IoU>0,2 eşleştirmesinde yarıçap kutusu **S@0,25 = 0,000** (rank 0,7196) verir. ⇒ **Gönderim SABİT kare kutu kullanmak zorundadır.**
+
+**🔴 Bulgu 2 — Kutu boyutu kritik; mevcut 64 px optimal değil.** Tüm ölçek setlerinde optimum **56×56 px**.
+
+**🟢 Bulgu 3 — Çok ölçekli TTA monoton kazandırıyor (eğitim YOK).**
+
+| Ölçek seti (+ yatay çevirme TTA) | AUC | Sens@0,25 | FROC₃ (resmî ort.) | **rank_metric** |
+| :--- | ---: | ---: | ---: | ---: |
+| single 1,0 | 0,9595 | 0,7186 | 0,7143 | 0,8993 |
+| 0,9 + 1,0 | 0,9658 | 0,7403 | 0,7302 | 0,9094 |
+| **0,9 + 1,0 + 1,1** | **0,9678** | **0,7489** | **0,7403** | **0,9131** |
+
+Δ(single → üçlü) = **+0,0138 rank_metric · +0,0083 AUC · +0,0303 Sens@0,25 · +0,0260 FROC₃** — hepsi **sıfır eğitimle**.
+
+**⚪ Bulgu 4 (NEGATİF) — NMS yarıçapı ve tepe penceresi etkisiz.**
+NMS Δd ∈ {8, 12, 16, 20, 24, 28} ve tepe penceresi {3×3, 5×5} → rank **0,9131 SABİT** (tüm kombinasyonlarda). Görüntü başına aday 46,2 → 44,6 arasında değişiyor ama metrik değişmiyor. **Neden:** resmî protokol, aynı referansa IoU>0,2 çakışan 2.+ tahmini **zaten IGNORE ediyor**; 8 px'lik NMS bile yeterli. ⇒ *"Çift kutu FROC'u düşürür"* hipotezi **bu kurulumda doğrulanmadı**.
+
+**En iyi konfigürasyon (resmî metrik):** çok ölçekli **{0,9, 1,0, 1,1}** + yatay çevirme TTA · tepe **3×3** · NMS **8 px** · **56×56 sabit kutu** → **rank_metric 0,9131** (AUC **0,9678** · Sens@0,125 **0,6710** · Sens@0,25 **0,7489** · Sens@0,5 **0,8009** · Sens@1 0,8355 · Sens@4 0,9091).
+
+> ⚠️ **Kural 9 (değişmez):** Verimiz NODE21'in **halka açık eğitim setidir**; resmî test setleri (281 + 298) **özeldir**. Bu tablo yalnız kendi val bölmemizde resmî protokolün **simülasyonudur** — leaderboard'a gönderim veya sıralama karşılaştırması **mümkün değildir**. "1. sıraya çıkmak" bu veriyle ölçülemez.
+> 📌 Resmî Sens@0,5 (0,8009) ile eski `hit_criterion1` FROC@0,5 (0,831) arasındaki fark, **eşleştirme kuralından** (IoU>0,2 vs merkez mesafesi) gelir; resmî ölçüt daha sıkıdır.

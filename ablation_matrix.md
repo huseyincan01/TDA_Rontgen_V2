@@ -674,3 +674,22 @@ Aynı VinDr kohortu, aynı `M5_centernet` adayları, **tek fark AdaBN** (donduru
 * 🎯 Kalibrasyon ödünleşmeyi **kaldırmıyor**, frontier'ı miras noktasının **tamamının üstüne taşıyor** — V6.5b/V6.5c'nin dış-merkez bulgusunun kurum içi karşılığı.
 
 > **📌 V6.6 KAPANIŞ:** Yeni omurga + FROC kalibrasyonu ile **hasta triyajı için w=0,55** (AUC 0,9886 · FROC@0,5 0,8355 · FROC@4 0,9307), **lezyon bulma için w=0,70** (FROC@4 0,9524) veya **2. aşamasız yalnız Aşama-1** (FROC@0,5 **0,831**, FROC@4 **0,952**, AUC 0,970) önerilir. Deney fazı bu noktada mühürlenmiştir.
+
+### 14.6 Resmî NODE21 detection metriği denetimi (eğitim YOK)
+
+Resmî protokol ([Details](https://node21.grand-challenge.org/Details/)): eşleştirme **IoU > 0,2**; FROC **@1/8 · 1/4 · 1/2** FP/görüntü; **`rank_metric = 0,75·AUC + 0,25·Sens@0,25`**. Betik: [v6_6_optimization_audit.py](pipelines/v6_two_stage/v6_6_optimization_audit.py) · kayıt: `v6_6_optimization_audit.json` · 734 hasta / 231 lezyon · 296 değerlendirme.
+
+| Ölçek seti (+ flip TTA) | AUC | Sens@0,125 | Sens@0,25 | Sens@0,5 | FROC₃ | **rank_metric** |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| single 1,0 | 0,9595 | 0,6364 | 0,7186 | 0,7879 | 0,7143 | 0,8993 |
+| 0,9 + 1,0 | 0,9658 | 0,6623 | 0,7403 | 0,7879 | 0,7302 | 0,9094 |
+| **0,9 + 1,0 + 1,1** | **0,9678** | **0,6710** | **0,7489** | **0,8009** | **0,7403** | **0,9131** |
+
+*(Hepsi 56×56 sabit kutu ile; her ölçek setinin kendi en iyi NMS/tepe ayarında.)*
+
+* 🔴 **Yarıçap kafası KULLANILAMAZ:** GT boyutları 35–119 px iken model R ≈ 0,01–0,04 (kutu ~0,1 px) ⇒ resmî IoU>0,2'de **Sens@0,25 = 0,000** (rank 0,7196). Neden: radius kaybı ağırlığı 0,1 iken focal kayıp mertebesi 1–13 ⇒ kafa çökmüş. **Gönderim sabit kare kutu kullanmalı.**
+* 🔴 **Optimum kutu 56×56 px** — mevcut 64×64 optimal değil (tüm ölçek setlerinde 56 kazanıyor).
+* 🟢 **Çok ölçekli TTA monoton kazandırıyor:** single → {0,9,1,0,1,1} = **+0,0138 rank_metric** (eğitim yok).
+* ⚪ **NEGATİF: NMS yarıçapı (8…28 px) ve tepe penceresi (3×3/5×5) ETKİSİZ** — rank 0,9131 sabit. Resmî protokol aynı referansa çakışan 2.+ tahmini zaten IGNORE ettiği için "çift kutu" riski bu kurulumda **gerçekleşmiyor**.
+* **En iyi:** çok ölçekli {0,9, 1,0, 1,1} + flip · tepe 3×3 · NMS 8 px · **56×56 kutu** → **rank_metric 0,9131**.
+* ⚠️ **Kural 9:** verimiz NODE21'in halka açık **eğitim** seti; resmî test setleri özel ⇒ leaderboard sıralaması **ölçülemez**.
