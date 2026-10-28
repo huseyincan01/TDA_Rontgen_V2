@@ -645,7 +645,9 @@ Aynı VinDr kohortu, aynı `M5_centernet` adayları, **tek fark AdaBN** (donduru
 > ⇒ 0,6469 / 0,6593 / 0,6637 / 0,7344 satırları **"zero-shot" değildir** ve dış-merkez
 > genelleme kanıtı sayılamaz. Kanıt: [LEAK_AUDIT.md](LEAK_AUDIT.md) §3. **M5 (ImageNet)
 > satırları temizdir** (0,5599 / 0,6332 / 0,6181 / 0,6283 / 0,7243).
-> Temiz omurgayla yeniden ölçüm açık iştir.
+> ✅ **Etkisi ölçüldü (§17.1):** VinDr'yi görmemiş omurgayla aynı mertebe elde edildi
+> (0,6663 nOR) ⇒ sayılar kontaminasyon artefaktı değil; yine de yayında **temiz omurga**
+> değeri kullanılmalıdır.
 
 | Sistem / protokol | Hasta AUC | Kaynak |
 | :--- | ---: | :--- |
@@ -887,3 +889,20 @@ V6.1–V6.8'de tüm seçimler **val**'de yapılıp **val**'de raporlandı (kutu 
 * 🔄 **Hüküm değişti:** val'de "FROC için 2. aşamayı atla" denmişti; test'te **füzyon 3/4 metrikte üstün** (rank 0,8970 · AUC 0,9645 · S@0,5 0,7729) ⇒ o öneri val'e özgüydü.
 * ❌ `legacy_fusion.patient_auc.noisyor` (0,6432) **geçersiz** (z-skoru üzerinden noisy-OR); geçerli değer `A2a_fusion_tda.auc` = 0,9645.
 * 🟡 **Beyan:** test bölmesi ikinci kez görüldü (ilki V6.4 mührü, 0,9876); sonraki hiçbir karar test'e bakılarak alınmadı.
+
+### 17.1 Kontaminasyonun ölçümü — temiz omurga deneyi (V6.9c)
+
+VinDr sayılarının ön-eğitim kontaminasyonundan şişip şişmediği **doğrudan test edildi**: aynı tarif (omurga donuk, 5 epoch, aynı veri/tohum), **tek değişken omurganın gördüğü veri**.
+
+| Satır | Omurga | VinDr ön-eğitimde? | NODE21 val nOR | VinDr top1 | VinDr nOR |
+| :-: | :--- | :---: | ---: | ---: | ---: |
+| A | `resnet50-res512-all` (mevcut) | **var** | 0,9466 | 0,6479 | 0,6414 |
+| B | `densenet121-res224-all` | **var** | 0,9440 | 0,6406 | 0,6534 |
+| **C** | `densenet121-res224-nih` | **yok** | 0,8650 | **0,6369** | **0,6663** |
+| | **B − C** | | **+0,0790** | +0,0037 | −0,0129 |
+
+* ✅ **Şişme yok:** temiz omurga VinDr'de en az kontamine olanlar kadar iyi (Δ top1 +0,004; nOR'da **daha iyi**, −0,013). 150 pozitifte AUC SE ≈ 0,04 ⇒ farklar gürültü bandında. ⇒ "kontaminasyon sayesinde yüksek" iddiası **desteklenmiyor**.
+* 🔑 **VinDr ön-eğitimi hedef göreve yarıyor, teste değil:** B−C NODE21'de **+0,079**, VinDr'de ~0.
+* ⚠️ **Confound:** B ile C toplam korpus büyüklüğünde de ayrışır ⇒ +0,079 NODE21 farkı VinDr'ye özgü sayılamaz.
+* 🎯 **Yayın:** VinDr sayısı **C satırıyla** (0,6663 nOR / 0,6369 top1) verilmeli; A/B "kontamine üst sınır" dipnotu.
+* 🔁 **İç tutarlılık:** A satırı V6.6.3'ün 0,6469'unu 0,6479 olarak yeniden üretti.

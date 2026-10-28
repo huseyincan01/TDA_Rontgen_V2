@@ -37,7 +37,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 | **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9645** (füzyon) / **0,9446** (1. aşama) · rank_metric **0,8970** / **0,8842** (V6.9, ön-kayıtlı tek atım) |
 | **Val'de ölçülen (seçilmiş) sonuç** | Füzyon AUC **0,9879** · rank_metric **0,9131** (56 px) · **0,9185** (onarılmış yarıçap, V6.8) — val'de 296 değerlendirme yapıldı ⇒ **hafif iyimser** |
 | **Lokalizasyon (V6.6, val)** | Yalnız Aşama-1: Recall@K20/K30 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
-| **Harici (VinDr-CXR)** | ⚠️ **Kontamine**: 400/400 görüntü omuranın ön-eğitim listesinde ⇒ "zero-shot" iddiası **geçersiz** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §3). Temiz omurgayla yeniden ölçüm açık iş |
+| **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
 | **Gönderim modeli** | 4.882 hastanın tamamıyla eğitildi → **NODE21'de değerlendirilemez** |
 | **Konteyner** | `submission_docker/` · çevrimdışı (`--network=none`) test edildi · non-root · CUDA 13,9 GB / CPU 3,51 GB |
 

@@ -242,8 +242,8 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
   (füzyonla); onarılmış yarıçap kafasıyla val'de 0,9185. Val'in 0,9131'i seçim yanlılığı
   taşıyor (V6.9: −0,029).
 * **TDA'nın gerçek katkısı global/arka plan topolojisinde**; lokal nodül topolojisinde
-  değil (E3.6: 0,6866). Dış merkez iddiası **zayıfladı**: VinDr ölçümü kontamine
-  (bkz. 12.6 ve [LEAK_AUDIT.md](LEAK_AUDIT.md) §3).
+  değil (E3.6: 0,6866). Dış merkez iddiası **ölçüldü ve sınırlı**: VinDr AUC 0,64–0,67
+  bandında (temiz omurgayla **0,6663**); kontaminasyon şişmesi **yok** (12.6b′).
 
 ### 12.1 Bilinemez / ölçülemez (⚪ hata değil)
 
@@ -264,9 +264,9 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
 | 3 | 🔴 **Tuzak B — füzyon LR'ı in-sample s1 ile uyduruldu:** V6.1–V6.4'te 2. aşamanın LR'ı, 1. aşamanın *kendi eğitim bölmesindeki* skorlarıyla eğitildi. Val dürüsttür (M5 val'i görmedi) ama katsayılar aşırı özgüvenli dağılıma göre seçildi ⇒ hafif iyimserlik riski | ✅ V6.7'de **yapısal olarak kapatıldı** (s1 matrise girmez + w kilitli); V6.2'nin 0,955'i ve V6.6.4'ün 0,988'i artık **"referans"**, sızıntısız eşdeğeri sabit **w=0,55 → 0,9886** (V6.6.6) |
 | 4 | 🟡 **Çift sigmoid:** V6.6.6'da LR referans satırının noisy-OR'u **0,9737** yazılmıştı (LR çıktısı zaten [0,1] iken bir kez daha sigmoid) | ✅ Düzeltildi → **0,9879**; betik ve artifact yeniden üretildi (arşiv birebir aynı çıktı) |
 | 5 | 🟡 **V6.5 KOL 1 "zero-shot" diye etiketlendi ama AdaBN'liydi** (raporlama hatası) | ✅ V6.5d'de düzeltildi; 0,6439–0,6620 bandının tamamı **transductive** ilan edildi |
-| 6 | 🟡 **`densenet121-res224-all` koşulmadı:** "512 doğal çözünürlük olduğu için ResNet50" savı **ölçümle değil akıl yürütmeyle** duruyor | ⏳ Hâlâ açık (12.5) |
+| 6 | 🟡 **`densenet121-res224-all` koşulmadı:** "512 doğal çözünürlük olduğu için ResNet50" savı **ölçümle değil akıl yürütmeyle** duruyor | ✅ V6.9c'de **iki varyant koşuldu** (`-all`, `-nih`): in-domain nOR 0,9440 vs 0,9466 ⇒ sav artık ölçüme dayanıyor |
 | 7 | 🟡 **"BN donuk = unutma-önleme" gerekçesi ölçülmemişti** (V6.6/V6.7'de argüman olarak yazıldı, test edilmedi) | ✅ V6.8'de ölçüldü (12.4c): **ölçülebilir fayda yok** (dokuz metrikten sekizinde BN açık ≥; Δ nOR −0,0003) |
-| 8 | 🔴 **VinDr "zero-shot" dış doğrulaması kontamineydi:** değerlendirdiğimiz 400 görüntünün **%100'ü**, omuranın (`resnet50-res512-all`) ön-eğitim listesindeydi (pc-nih-rsna-siim-**vin**) | 🟡 V6.9 denetiminde bulundu (12.6b); "zero-shot" etiketi **kaldırıldı**. Kalıcı çözüm temiz omurgayla yeniden ölçüm — **açık** |
+| 8 | 🔴 **VinDr "zero-shot" dış doğrulaması kontamineydi:** değerlendirdiğimiz 400 görüntünün **%100'ü**, omuranın (`resnet50-res512-all`) ön-eğitim listesindeydi (pc-nih-rsna-siim-**vin**) | ✅ V6.9'da bulundu, V6.9c'de **ölçüldü** (12.6b′): temiz omurgayla da aynı mertebe (0,6663) ⇒ **şişme yok**; yayın sayısı artık temiz omurganınki |
 | 9 | 🟠 **Val'de seçip val'de raporladık:** 296 resmî-metrik değerlendirmesi + 19 w noktası aynı 231 lezyonluk bölmede | ✅ V6.9 mührü bedelini ölçtü (12.6a): **−0,029** rank_metric; dürüst sayılar artık test sütununda |
 
 ### 12.3 Tarihsel hatalar (bulundu ve düzeltildi — kayıtları var)
@@ -370,12 +370,13 @@ running istatistikleri **açık**. Sonuç tasarım beklentisinin **tersine**:
 
 ### 12.5 Hâlâ açık
 
-* **VinDr'yi görmemiş omurgayla dış doğrulama** (12.6b) — "zero-shot" iddiasının tek
-  geçerli yolu (~40 dk iş). Bu koşu yapılmadan VinDr sayıları **kontamine** etiketiyle durur.
-* **`densenet121-res224-*`** omurga yolları kodda var, **koşulmadı** — "512 doğal
-  çözünürlük" savı ölçümle desteklenmedi; aynı koşu 12.6b'yi de çözer.
+* ~~VinDr'yi görmemiş omurgayla dış doğrulama~~ — ✅ **yapıldı** (12.6b′): kontaminasyonun
+  **ölçülebilir bir şişme üretmediği** bulundu; temiz omurga 0,6663 (nOR).
+* ~~`densenet121-res224-*` omurga yolu koşulmadı~~ — ✅ **koşuldu** (V6.9c): iki varyant
+  (`-all`, `-nih`). "512 doğal çözünürlük" savı hâlâ ölçümle değil, ama artık **mimari
+  karşılaştırması** var (ResNet50-512 ≈ DenseNet121-224 in-domain: 0,9466 vs 0,9440).
 * **BN dondurmanın alan-dışı payı** — in-domain val'de fark yok (12.4c); hipotezin sınavı
-  transferde yapılmalı (ama temiz omurgayla).
+  transferde yapılmalı (artık temiz omurga mevcut).
 * **Onarılan yarıçap dalının gönderime alınması** (12.4b) — mühendislik kararı.
 * **Çok tohum** — tüm ana sayılar tek tohum (V6.8: aynı protokol ±0,02 kayıyor).
 * **AUC–FROC ödünleşimi** (12.1) — çözülmüş değil, yönetiliyor.
@@ -406,14 +407,29 @@ değiştirmeden** dokunulmamış test bölmesinde bir kez koştu:
 Omurga `resnet50-res512-all`, torchxrayvision'da *"trained on pc-nih-rsna-siim-**vin**"*
 olarak tanımlı; xrv'nin VinDr sınıfı da bizim etiket aldığımız **aynı CSV**'yi okuyor.
 Ölçüm: kohortun **400/400 görüntüsü (%100)** omuranın 15.000 görüntülük ön-eğitim
-listesinde. ⇒ 0,6469 / 0,6637 / 0,7344 sayıları "sıfır-atış" değildir; "zero-shot"
-etiketi kaldırıldı ve temiz omurgayla yeniden ölçüm açık iş olarak yazıldı.
+listesinde. ⇒ "zero-shot" etiketi kaldırıldı.
 *Dürüst sınır:* xrv'nin eğitim anındaki tam dosya listesi dağıtılmıyor; kanıt "deklare
 edilen liste 400'ün tamamını içeriyor" düzeyinde — iddiayı çürütmeye yeter, kanıtlamaya yetmez.
+
+**(b′) Ama korktuğumuz şey çıkmadı — kontaminasyonun etkisi ölçüldü ve bulunamadı.**
+Aynı tarifle üç omurga eğitildi, tek değişken omurganın gördüğü veri:
+
+| Omurga | VinDr gördü? | VinDr AUC (top1 / nOR) | NODE21 val nOR |
+| :--- | :---: | ---: | ---: |
+| resnet50-res512-all | evet | 0,6479 / 0,6414 | 0,9466 |
+| densenet121-res224-all | evet | 0,6406 / 0,6534 | 0,9440 |
+| **densenet121-res224-nih** | **hayır** | **0,6369 / 0,6663** | 0,8650 |
+
+VinDr'yi **hiç görmemiş** omurga, VinDr'de en az kontamine olanlar kadar iyi (top1 farkı
++0,004; nOR'da daha iyi). ⇒ *"0,647 kontaminasyon sayesinde yüksek"* **doğru değil**:
+sayı, ~0,64–0,67'lik bir **transfer tavanı**. VinDr ön-eğitiminin gerçek faydası
+**hedef görevde** (+0,079 NODE21) — ama o fark toplam korpus büyüklüğüyle karışık.
+Yayında VinDr sayısı **temiz omurga** ile (0,6663) verilecek.
 
 **(c) Test bölmesi iki kez görüldü.** İlki V6.4 mührü (0,9876, farklı model ailesi).
 V6.4'ten sonraki hiçbir karar test'e bakılarak alınmadı; yine de beyan edildi:
 üçüncü bir "mühür" artık mühür sayılmaz.
+
 
 
 

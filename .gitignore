@@ -108,3 +108,6 @@ artifacts/v6_two_stage/submission_fulldata/
 submission_docker/weights/
 # Deney/geçici çıktılar ve konteyner duman testi artefaktları
 scratch/
+
+# xrv agirlik onbellegi (workspace ici; ~150 MB)
+artifacts/xrv_weights/

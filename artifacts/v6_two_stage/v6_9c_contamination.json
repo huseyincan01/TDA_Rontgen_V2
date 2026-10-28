@@ -1,0 +1,220 @@
+{
+  "experiment": "V6.9c-vindr-contamination",
+  "question": "VinDr 'zero-shot' sayıları ön-eğitim kontaminasyonundan ne kadar şişmiş? Aynı tarif, yalnız omurganın gördüğü veri değişiyor.",
+  "protocol": "omurga DONUK · 5 epoch · lr_head 1e-3 · BN donuk · seed 42 · train 1:1",
+  "rows": {
+    "A_resnet50_512_all_VINDR": {
+      "weights": "resnet50-res512-all",
+      "vindr_in_pretraining": true,
+      "description": "VinDr VAR (mevcut omurga)",
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 13.3818,
+          "seconds": 69.3
+        },
+        {
+          "epoch": 2,
+          "loss": 2.2107,
+          "seconds": 68.8
+        },
+        {
+          "epoch": 3,
+          "loss": 2.0977,
+          "seconds": 68.3
+        },
+        {
+          "epoch": 4,
+          "loss": 1.9378,
+          "seconds": 68.8
+        },
+        {
+          "epoch": 5,
+          "loss": 1.8511,
+          "seconds": 68.9
+        }
+      ],
+      "node21_val": {
+        "n_patients": 734,
+        "n_lesions": 231,
+        "recall_at_K": {
+          "10": 0.9481,
+          "20": 0.974,
+          "50": 0.9913
+        },
+        "froc": {
+          "0.5": 0.7662,
+          "1": 0.8398,
+          "2": 0.8831,
+          "4": 0.9177
+        },
+        "patient_auc": {
+          "top1": 0.9328,
+          "top3": 0.9438,
+          "noisyor": 0.9466
+        }
+      },
+      "vindr_strict": {
+        "n_images": 400,
+        "n_positive": 150,
+        "patient_auc": {
+          "top1": 0.6479,
+          "top3": 0.643,
+          "noisyor": 0.6414
+        },
+        "bbox_recall": {
+          "K30": 0.8132,
+          "K50": 0.8369
+        }
+      },
+      "checkpoint": "submission_fulldata/contam_probe_A_resnet50_512_all_VINDR.pt (teşhis; git dışı)",
+      "seconds": 464.2,
+      "smoke": false
+    },
+    "B_densenet121_224_all_VINDR": {
+      "weights": "densenet121-res224-all",
+      "vindr_in_pretraining": true,
+      "description": "VinDr VAR (mimari kontrolü)",
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 9.6966,
+          "seconds": 69.0
+        },
+        {
+          "epoch": 2,
+          "loss": 2.2632,
+          "seconds": 69.0
+        },
+        {
+          "epoch": 3,
+          "loss": 2.1587,
+          "seconds": 68.8
+        },
+        {
+          "epoch": 4,
+          "loss": 2.0406,
+          "seconds": 69.1
+        },
+        {
+          "epoch": 5,
+          "loss": 1.9621,
+          "seconds": 69.0
+        }
+      ],
+      "node21_val": {
+        "n_patients": 734,
+        "n_lesions": 231,
+        "recall_at_K": {
+          "10": 0.9048,
+          "20": 0.9567,
+          "50": 0.9827
+        },
+        "froc": {
+          "0.5": 0.7446,
+          "1": 0.7965,
+          "2": 0.8398,
+          "4": 0.8831
+        },
+        "patient_auc": {
+          "top1": 0.9333,
+          "top3": 0.9414,
+          "noisyor": 0.944
+        }
+      },
+      "vindr_strict": {
+        "n_images": 400,
+        "n_positive": 150,
+        "patient_auc": {
+          "top1": 0.6406,
+          "top3": 0.6493,
+          "noisyor": 0.6534
+        },
+        "bbox_recall": {
+          "K30": 0.8109,
+          "K50": 0.8416
+        }
+      },
+      "checkpoint": "submission_fulldata/contam_probe_B_densenet121_224_all_VINDR.pt (teşhis; git dışı)",
+      "seconds": 542.4,
+      "smoke": false
+    },
+    "C_densenet121_224_nih_CLEAN": {
+      "weights": "densenet121-res224-nih",
+      "vindr_in_pretraining": false,
+      "description": "VinDr YOK (temiz omurga)",
+      "history": [
+        {
+          "epoch": 1,
+          "loss": 10.2149,
+          "seconds": 68.4
+        },
+        {
+          "epoch": 2,
+          "loss": 2.6502,
+          "seconds": 67.7
+        },
+        {
+          "epoch": 3,
+          "loss": 2.5338,
+          "seconds": 66.7
+        },
+        {
+          "epoch": 4,
+          "loss": 2.3481,
+          "seconds": 69.0
+        },
+        {
+          "epoch": 5,
+          "loss": 2.2956,
+          "seconds": 69.6
+        }
+      ],
+      "node21_val": {
+        "n_patients": 734,
+        "n_lesions": 231,
+        "recall_at_K": {
+          "10": 0.8442,
+          "20": 0.9091,
+          "50": 0.974
+        },
+        "froc": {
+          "0.5": 0.5714,
+          "1": 0.658,
+          "2": 0.7359,
+          "4": 0.8095
+        },
+        "patient_auc": {
+          "top1": 0.8627,
+          "top3": 0.8659,
+          "noisyor": 0.865
+        }
+      },
+      "vindr_strict": {
+        "n_images": 400,
+        "n_positive": 150,
+        "patient_auc": {
+          "top1": 0.6369,
+          "top3": 0.6557,
+          "noisyor": 0.6663
+        },
+        "bbox_recall": {
+          "K30": 0.7778,
+          "K50": 0.8298
+        }
+      },
+      "checkpoint": "submission_fulldata/contam_probe_C_densenet121_224_nih_CLEAN.pt (teşhis; git dışı)",
+      "seconds": 542.7,
+      "smoke": false
+    }
+  },
+  "verdict": {
+    "delta_vindr_top1_B_minus_C": 0.0037,
+    "delta_vindr_top3_B_minus_C": -0.0064,
+    "delta_vindr_noisyor_B_minus_C": -0.0129,
+    "delta_node21_nor_B_minus_C": 0.079,
+    "delta_node21_k20_B_minus_C": 0.0476,
+    "interpretation": "VinDr farklari gurultu bandinda (150 pozitif => AUC SE ~0,04) ama NODE21 farki buyuk (+0,079) => VinDr on-egitimi hedef goreve yariyor, VinDr test performansini SISIRMIYOR (olculebilir kanit yok).",
+    "confound": "B ve C yalniz VinDr ile degil, toplam korpus buyukluguyle de ayrisir (all = nih+pc+chex+mimic+google+openi+kaggle vs nih). NODE21 farki bu yuzden VinDrye ozgu sayilamaz."
+  }
+}

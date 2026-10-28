@@ -1331,7 +1331,9 @@ Kriter 2 (kapsama, IoBB ≥ 0,50 veya IoU ≥ 0,15) tablosu `v6_6_foundation_sta
 > (`vinbigdata-train.csv.gz`) okur ve kohortun **400/400 görüntüsü (%100)** o listenin
 > içindedir. ⇒ "strict zero-shot" ifadesi **geçersizdir**; 0,6469 / 0,5711 sayıları
 > VinDr'yi görmüş bir kodlayıcıyla üretilmiştir. Ayrıntı ve kanıt:
-> [LEAK_AUDIT.md](LEAK_AUDIT.md) §3. Temiz omurgayla yeniden ölçüm **açık iştir**.
+> [LEAK_AUDIT.md](LEAK_AUDIT.md) §3. **Temiz omurgayla ölçüm yapıldı (V6.9.5) ve
+> kontaminasyon ölçülebilir bir şişme üretmedi:** VinDr'yi görmemiş omurga 0,6369 (top1) /
+> 0,6663 (nOR) — yani bu satırdaki 0,6469 bir kontaminasyon artefaktı değil.
 > (Aşağıdaki metin düzeltilmeden bırakıldı — tarihsel kayıt; doğru okuma bu uyarıyla yapılır.)
 
 | Model | **Strict** (AdaBN yok — saf sıfır-öğrenme) | AdaBN'li | bbox Recall@K30 / K50 |
@@ -1382,8 +1384,13 @@ Foundation adayları üzerinde **değişmemiş** V6.3 2. aşaması (c_lungref + 
 > 🔴 **V6.9 DENETİM DÜZELTMESİ — kontamine.** Bu bölümün tamamı `resnet50-res512-all`
 > (pc-nih-rsna-siim-**vin**) ile üretildi ve değerlendirme görüntülerinin %100'ü o omuranın
 > ön-eğitim listesinde ([LEAK_AUDIT.md](LEAK_AUDIT.md) §3). 0,6593 / 0,6637 / 0,7344 gibi
-> sayılar **sıfır-atış değildir**; "few-shot 0,7344" dahil hiçbiri dış-merkez genelleme
+> sayılar **sıfır-atış değildir**; few-shot 0,7344 dahil hiçbiri dış-merkez genelleme
 > kanıtı olarak kullanılamaz. Tarihsel kayıt olarak korunmuştur.
+>
+> ✅ **Ama etkisi ölçüldü ve bulunamadı (V6.9.5):** VinDr'yi hiç görmemiş omurgayla
+> (`densenet121-res224-nih`) aynı tarif 0,6369 top1 / **0,6663 nOR** veriyor ⇒ bu
+> bölümdeki mertebe **kontaminasyon artefaktı değil**, ~0,64–0,67'lik transfer tavanıdır.
+> Yine de yayında **temiz omurga** sayısı kullanılmalıdır.
 
 V6.5 şablonunun üç protokolü, foundation adaylarıyla (23.028 strict / 21.924 AdaBN aday):
 
@@ -1773,6 +1780,24 @@ Eğitim **yalnız train split**'te yapılmış `M5_foundation` kullanıldı (val
 ### V6.9.4 Yayın için sonuç
 
 > Ana tabloda **test sütunu** (0,8842 / 0,8970 / 0,9446 / 0,9645) dürüst dış-değerdir; val sütunu **"seçilmiş"** etiketiyle verilmelidir. VinDr dış doğrulaması ise **kontamine**dir (bkz. [LEAK_AUDIT.md](LEAK_AUDIT.md) §3: 400/400 görüntü omuranın ön-eğitim listesinde) — "zero-shot" ifadesi kullanılamaz.
+
+### V6.9.5 Kontaminasyonun ÖLÇÜLMESİ — temiz omurga deneyi (V6.9c)
+
+Denetim (§3) kontaminasyonun **varlığını** kanıtladı; bu alt bölüm **etkisini** ölçer. Tek değişken omurganın gördüğü veridir; tarif V6.8 ısınmasıyla aynıdır (omurga donuk, 5 epoch, lr_head 1e-3, BN donuk, seed 42, train 1:1 = 1.580).
+
+| Satır | Omurga | VinDr ön-eğitimde? | NODE21 val nOR | NODE21 K20 | VinDr AUC top1 | VinDr nOR | VinDr bbox K50 |
+| :-: | :--- | :---: | ---: | ---: | ---: | ---: | ---: |
+| A | `resnet50-res512-all` (mevcut) | **var** | 0,9466 | 0,9740 | 0,6479 | 0,6414 | 0,8369 |
+| B | `densenet121-res224-all` | **var** | 0,9440 | 0,9567 | 0,6406 | 0,6534 | 0,8416 |
+| **C** | `densenet121-res224-nih` | **yok** | 0,8650 | 0,9091 | **0,6369** | **0,6663** | 0,8298 |
+| | **B − C** | | **+0,0790** | +0,0476 | +0,0037 | **−0,0129** | +0,0118 |
+
+* ✅ **Şişme bulunamadı.** VinDr'yi hiç görmemiş omurga, VinDr'de kontamine olanlar kadar iyi: top1 farkı **+0,004**, noisy-OR'da temiz omurga **daha iyi** (−0,013). 150 pozitif görüntüde AUC SE ≈ 0,04 ⇒ farklar **gürültü bandında**. ⇒ *"0,6469 kontaminasyon sayesinde yüksek"* iddiası **desteklenmiyor**.
+* 🔑 **VinDr ön-eğitimi hedef göreve yarıyor, teste değil.** B−C farkı NODE21'de **+0,079** (büyük), VinDr'de ~0 ⇒ CXR ön-eğitimi daha iyi dedektör üretiyor; VinDr testi ise ~0,64–0,67'lik bir **transfer tavanına** dayanmış.
+* ⚠️ **Karıştırıcı:** B ve C yalnız VinDr'de değil **toplam korpus büyüklüğünde** de ayrışır (`all` = nih+pc+chex+mimic+google+openi+kaggle vs yalnız `nih`) ⇒ +0,079'luk NODE21 farkı **VinDr'ye özgü sayılamaz**.
+* 🎯 **Yayın kararı:** VinDr sayısı **C satırıyla** raporlanmalı (0,6663 nOR / 0,6369 top1); A satırı "kontamine üst sınır" olarak dipnotta kalır. Dürüst cümle: *"VinDr transferi ~0,64–0,67 bandında tavan gösteriyor; bu tavan, VinDr'yi görmemiş omurgada da aynı."*
+* 🔁 **İç tutarlılık:** A satırı, V6.6.3'ün yayımlanmış strict değerini (0,6469) aynı tarifle 0,6479 olarak yeniden üretti ⇒ ölçüm hattı sağlam.
+* **Betik:** [v6_9c_contamination.py](pipelines/v6_two_stage/v6_9c_contamination.py) · **Kayıt:** `artifacts/v6_two_stage/v6_9c_contamination.json` · omurga ağırlıkları `artifacts/xrv_weights/` (git dışı).
 
 
 

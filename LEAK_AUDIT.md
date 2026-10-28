@@ -20,7 +20,7 @@
 | :--- | :--- |
 | Klasik sızıntı (hasta/etiket/test) | ✅ **Bulunamadı.** Beş bağımsız kontrol temiz. |
 | Raporlanan sayıların dürüstlüğü | 🟠 **Kısmen iyimser.** Val'de 296 değerlendirme yapılmış; dürüst dış-değer **rank_metric 0,8842** (val'de 0,9131). |
-| Dış doğrulama (VinDr) | 🔴 **Kontamine.** 400 değerlendirme görüntüsünün **%100'ü** omuranın ön-eğitim listesinde. "Zero-shot" iddiası **geçersiz**. |
+| Dış doğrulama (VinDr) | 🔴 Kontamine *ama* **ölçülebilir şişme yok**: 400/400 görüntü ön-eğitim listesinde; temiz omurgayla fark gürültü bandında (Δ top1 +0,004). "Zero-shot" etiketi yine de kullanılamaz — sayı **temiz omurgayla** raporlanmalı (bkz. §8) |
 | Test bölmesi | 🟡 **İki kez görüldü** (V6.4 mührü + V6.9 mührü). Beyan edildi; V6.4 sonrası hiçbir karar test'e bakılarak alınmadı. |
 | Tohum çeşitliliği | 🟡 **Tek tohum.** Aynı protokol ±0,02 kayıyor (V6.8'de ölçüldü). |
 
@@ -71,9 +71,14 @@ VinDr'ye *sıfır-atış* değildir; **öğrenilmiş temsilin hatırlanması** i
 dağıtılmıyor; kanıt "deklare edilen 15k listesi 400'ünün tamamını içeriyor" düzeyindedir.
 Bu, iddiayı **desteklemek için yeterli değil, çürütmek için yeterlidir**.
 
-**Ne yapılmalı:** (a) VinDr'yi görmemiş bir omurgayla (`densenet121-res224-chex` / `-nih`)
-dış doğrulama yeniden koşulmalı; (b) o koşu bitene kadar belgelerdeki "zero-shot"
-etiketleri **kaldırılmalı** ve bu bölümdeki sayılar "kontamine" olarak işaretlenmelidir.
+**Ne yapılmalıydı:** VinDr'yi görmemiş bir omurgayla dış doğrulamayı yeniden koşmak.
+**Yapıldı** (§8): üç omurga, aynı tarif, yalnız ön-eğitim korpusu değişti. Sonuç
+beklediğimizden **daha iyi**: kontaminasyon **ölçülebilir bir şişme üretmiyor**.
+
+> ✅ **Lehte not (bu denetimin en önemli iyi haberi):** NODE21, omuranın ön-eğitim
+> korpuslarının **hiçbirinde yok** (pc · nih · rsna · siim · vin). Yani **kurum içi**
+> sonuçlar (val + mühürlü test) ön-eğitim sızıntısından etkilenmez; kontaminasyon
+> yalnız VinDr dış doğrulamasına aittir.
 
 ---
 
@@ -179,7 +184,46 @@ tamamlanınca §3'teki hüküm "kontamine" yerine "iki omurgayla ölçüldü" ol
 
 ---
 
-## 8. Kayıtlar
+## 8. Kontaminasyonun ölçümü — temiz omurga deneyi (V6.9c)
+
+Kontaminasyonun **varlığı** kanıtlandı (§3); şimdi **etkisini** ölçtük. Aynı tarif
+(omurga donuk, 5 epoch, aynı veri/tohum/augmentasyon/kayıp), yalnız omurganın gördüğü
+veri değişti:
+
+| Satır | Omurga | VinDr ön-eğitimde? | NODE21 val nOR | NODE21 K20 | VinDr AUC top1 | VinDr nOR | VinDr bbox K50 |
+| :-: | :--- | :---: | ---: | ---: | ---: | ---: | ---: |
+| A | `resnet50-res512-all` | **var** | 0,9466 | 0,9740 | 0,6479 | 0,6414 | 0,8369 |
+| B | `densenet121-res224-all` | **var** | 0,9440 | 0,9567 | 0,6406 | 0,6534 | 0,8416 |
+| **C** | `densenet121-res224-nih` | **yok** | 0,8650 | 0,9091 | **0,6369** | **0,6663** | 0,8298 |
+| | **B − C** | | **+0,0790** | +0,0476 | +0,0037 | **−0,0129** | +0,0118 |
+
+**Üç okuma:**
+
+1. ✅ **Şişme yok.** VinDr'yi görmemiş omurga, VinDr'de **en az** kontamine olanlar kadar
+   iyi: top1 farkı +0,004, noisy-OR'da temiz omurga **daha iyi** (−0,013). 150 pozitif
+   görüntüde AUC standart hatası ≈ 0,04 ⇒ bu farklar **gürültü bandında**. Yani
+   "0,6469 kontaminasyon sayesinde yüksek" iddiası **desteklenmiyor**.
+2. 🔑 **VinDr ön-eğitimi *hedef göreve* yarıyor, teste değil.** B−C farkı NODE21'de
+   **+0,079** (büyük), VinDr'de ~0. Yorum: CXR ön-eğitimi daha iyi bir dedektör üretiyor;
+   VinDr testi ise ~0,64–0,67'lik bir **domain-transfer tavanına** dayanmış — encoder'in
+   o görüntüleri görmesi bu tavanı yükseltmiyor.
+3. ⚠️ **Karıştırıcı (confound):** B ile C yalnız VinDr'de değil, **toplam korpus
+   büyüklüğünde** de ayrışır (`all` = nih+pc+chex+mimic+google+openi+kaggle vs yalnız `nih`).
+   Bu yüzden +0,079'luk NODE21 farkı **VinDr'ye özgü sayılamaz**; "daha çok CXR verisi
+   daha iyi dedektör" okuması da aynı derecede geçerlidir.
+
+**Yayın kararı:** VinDr dış doğrulaması **C satırıyla** (temiz omurga: 0,6663 nOR /
+0,6369 top1) raporlanmalı; A satırı "kontamine üst sınır" olarak dipnotta durabilir —
+çünkü fark gürültü bandında olsa da A satırının *hangi* görüntüleri gördüğü
+kanıtlanamaz. Asıl dürüst cümle: *"VinDr transferi ~0,64–0,67 bandında bir tavan
+gösteriyor; bu tavan, VinDr'yi görmemiş bir omurgada da aynı."*
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9c_contamination.json` ·
+[`v6_9c_contamination.py`](pipelines/v6_two_stage/v6_9c_contamination.py)
+
+---
+
+## 9. Kayıtlar
 
 | Dosya | İçerik |
 | :--- | :--- |
@@ -190,3 +234,4 @@ tamamlanınca §3'teki hüküm "kontamine" yerine "iki omurgayla ölçüldü" ol
 | [`pipelines/v6_two_stage/v6_9b_test_seal_ci.py`](pipelines/v6_two_stage/v6_9b_test_seal_ci.py) | Aralık betiği (mühür uyuşmazlığında durur) |
 
 *Son güncelleme: V6.9 (Ekim 2026)*
+
