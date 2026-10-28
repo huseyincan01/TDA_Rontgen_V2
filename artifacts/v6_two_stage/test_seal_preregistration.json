@@ -1,0 +1,85 @@
+{
+  "id": "V6.9-TEST-SEAL",
+  "written_before_running": true,
+  "date": "2026-10-28",
+  "purpose": "Kilitli V6 protokolünün dokunulmamış NODE21 TEST bölmesindeki TEK ATIM ölçümü. Val'de yapılan tüm seçimlerin (kutu boyu, füzyon w, TTA, NMS) dürüst dış-değerini üretir.",
+
+  "why_this_is_needed": {
+    "selection_bias": "V6.1–V6.8'de her tasarım kararı val'de (734 hasta / 231 lezyon) alındı ve aynı bölmede raporlandı. 296 değerlendirmelik (37 varyant × 8 kutu) tarama + w ızgarası ⇒ 0,9131 rank_metric ve 0,988 AUC iyimser olabilir.",
+    "standard_error": "231 lezyonda FROC@0,5 SE ≈ 0,024 ⇒ val–test farkının ±0,02 bandı normal, ±0,05 bandı seçim yanlılığı lehine kanıttır.",
+    "single_seed": "Projede tek tohum var; aynı protokolle yeniden eğitim ±0,02 kayıyor (V6.8, iki bağımsız ısınma koşusu)."
+  },
+
+  "prior_test_set_use": {
+    "count": 1,
+    "where": "V6.4 — `test_seal()`",
+    "model_family": "V6 CenterNet(M5)+FCOS(M6)+lokal TDA(HGB/LR) + V5.2 global ResNet füzyonu",
+    "reported": "V6 lokal 0,9464 · V5.2 global 0,9612 · birleşik 0,9876 hasta AUC (ayar yapılmadı)",
+    "declaration": "Bu, test bölmesinin İKİNCİ kullanımıdır. V6.4'ten SONRAKİ hiçbir tasarım kararı (V6.5 domain genelleştirme, V6.6 vakıf omurga + FROC kalibrasyonu, V6.6.7 resmî metrik, V6.7 tam-veri, V6.8 onarımlar) test sonucundan etkilenmedi — hepsi val'de alındı. Yine de dürüst beyan: bu bölme proje tarihinde iki kez görüldü."
+  },
+
+  "hypotheses": {
+    "H1_stage1_localization": "Kilitli 1. aşama standardı test'te rank_metric ≥ 0,88 üretir (val: 0,9131).",
+    "H2_fusion_triage": "TDA füzyonu (w=0,55) test'te hasta AUC ≥ 0,95 üretir (val: 0,9879).",
+    "H3_gap": "Val→test düşüşü |Δ| ≤ 0,03 ise seçim yanlılığı kabul edilebilir sınırda; |Δ| > 0,05 ise makale val sayılarını 'seçilmiş' olarak işaretlemek zorundadır."
+  },
+
+  "locked_protocol": {
+    "stage1": "M5_foundation (yalnız train split'te eğitildi; val/test görmedi)",
+    "stage2": "stage2_final_tda_hgb.joblib (V6.3 bundle: scaler + HGB + LR + ranges)",
+    "inference": {
+      "scales": [0.9, 1.0, 1.1],
+      "flip_tta": true,
+      "peak_window": 3,
+      "nms_px": 8,
+      "top_k": 50,
+      "box_px": 56,
+      "box_half_1024": 28.0
+    },
+    "fusion": {
+      "w": 0.55,
+      "formula": "S = w·z(s1) + (1−w)·z(p_tda)",
+      "z_reference": "Bu koşuda VAL adaylarından hesaplanıp DONDURULUR; test dağılımından istatistik alınmaz (transductive sızıntı yok). Referans raporda aynen yazılır."
+    },
+    "metric": {
+      "official": "rank_metric = 0.75·AUC + 0.25·Sens@0.25 FP/görüntü",
+      "matching": "IoU > 0.2; aynı referansa çakışan 2.+ tahmin ne TP ne FP",
+      "also_reported": "Sens@0.125/0.25/0.5 + eski protokol FROC@0.5/1/2/4 (yayımlanmış val sayılarıyla kıyas için)"
+    }
+  },
+
+  "sealed_artifacts": {
+    "M5_foundation.pt": {
+      "path": "artifacts/v6_two_stage/checkpoints/M5_foundation.pt",
+      "sha256": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+      "note": "V6.6 bilimsel checkpoint — değişmedi (submission_config.json ile aynı hash)"
+    },
+    "stage2_final_tda_hgb.joblib": {
+      "path": "artifacts/v6_two_stage/checkpoints/stage2_final_tda_hgb.joblib",
+      "sha256": "976afc1f414ce38fd77e945093f96820b9bf1b5a4138542f567960e5abb819b5",
+      "note": "V6.3 nihai 2. aşama bundle'ı — değişmedi"
+    }
+  },
+
+  "sealed_code": {
+    "v6_9_test_seal.py": "13adb3b886acbd7978bfadd811a4fd1107561332f1d49611413a22a5a28323c0"
+  },
+
+  "reporting_rule": [
+    "Sonuç ne olursa olsun OLDUĞU GİBİ raporlanır; test üzerinde hiçbir ayar/yeniden koşu yapılmaz.",
+    "Betik kendi hash'ini bu dosyayla karşılaştırır; uyuşmazsa koşmayı reddeder.",
+    "Kilitli artifact hash'leri de doğrulanır (model/bundle değişmişse mühür geçersiz).",
+    "Test sonucu val sonucundan kötüyse bu, bulgu olarak yazılır — gizlenmez."
+  ],
+
+  "what_would_count_as_failure": {
+    "selection_bias_material": "Test rank_metric, val 0,9131'in 0,05'ten fazla altında (⇒ 296 değerlendirmelik val taraması aşırı uyum üretmiş).",
+    "fusion_harmful": "Test'te füzyon AUC, yalnız 1. aşama AUC'sinin altında (⇒ 2. aşama triyajda zararlı).",
+    "implementation_bug": "Beklenmeyen istisna, NaN, ya da aday sayısının 0 olması."
+  },
+
+  "honest_limits": [
+    "Test bölmesi NODE21'in halka açık eğitim setinin %15'idir; resmî gizli test seti DEĞİLDİR (Kural 9: leaderboard karşılaştırması yapılamaz).",
+    "Tek koşu; tohum/belirlenimsizlik ±0,02'lik bir bant ekler, bu bant raporlanırken akılda tutulmalıdır."
+  ]
+}
