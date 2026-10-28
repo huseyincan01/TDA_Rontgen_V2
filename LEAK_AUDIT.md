@@ -179,8 +179,13 @@ bir "mühür" artık mühür sayılmaz.
 | 5 | **Tek tohum** sınırının açık yazılması (±0,02 bant) | V6.8'de ölçüldü |
 | 6 | Tuzak B beyanı (LR füzyonu in-sample s1 ile uydurulmuştu) | Zaten belgeli; makaleye taşınmalı |
 
-**Açık iş (denetim sonrası):** VinDr'yi görmemiş omurgayla dış doğrulama (≈40 dk) —
-tamamlanınca §3'teki hüküm "kontamine" yerine "iki omurgayla ölçüldü" olur.
+**Uygulama durumu (Ekim 2026):** #2, #3, #4, #5, #6 → **belgelerde uygulandı**
+(`experiments.md §13`, `ablation_matrix.md §17`, `STORY.md §12.6`, `paper_draft.md §4.10 + §6`,
+`README.md`, `progress.md §8`, `roadmap.md §14`, `v4_roadmap.md §7`, `literature.md §5.6`,
+`data/external_vindr/README.md`, `submission_docker/README.md`). #1 → **kısmen**
+(`paper_draft.md §4.10` test tablosu eklendi; ana tablonun tamamı yazım aşamasında).
+**Kalan açık iş:** çok-seed koşusu (hata çubukları için) — §7'nin #5'i yazıldı ama
+sayılar hâlâ tek tohumlu.
 
 ---
 
