@@ -295,11 +295,13 @@ def main() -> None:
                 (o["rank_metric"] or 0) - 0.9131, 4) if o["rank_metric"] else None,
             "vs_val_fusion_auc": round((f["auc"] or 0) - 0.9879, 4) if f["auc"] else None,
         }
+        def f(x):
+            return "n/a" if x is None else f"{x:+.4f}"
+
         print(f"\n  VAL→TEST farkı (1. aşama rank_metric): "
-              f"{rep['verdict']['vs_val_stage1_rank_metric']:+.4f} "
-              f"(val 0,9131)", flush=True)
+              f"{f(rep['verdict']['vs_val_stage1_rank_metric'])} (val 0,9131)", flush=True)
         print(f"  VAL→TEST farkı (füzyon AUC): "
-              f"{rep['verdict']['vs_val_fusion_auc']:+.4f} (val 0,9879)", flush=True)
+              f"{f(rep['verdict']['vs_val_fusion_auc'])} (val 0,9879)", flush=True)
 
     Path(args.out).write_text(json.dumps(rep, indent=2, ensure_ascii=False,
                                          default=str), encoding="utf-8")

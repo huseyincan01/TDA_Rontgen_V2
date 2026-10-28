@@ -62,7 +62,8 @@
   },
 
   "sealed_code": {
-    "v6_9_test_seal.py": "13adb3b886acbd7978bfadd811a4fd1107561332f1d49611413a22a5a28323c0"
+    "v6_9_test_seal.py": "b0c8aa9e25497b0397cad908399c3f0bd1c7cf456fddf196982152ab9125ffbe",
+    "amendment_note": "İlk hash (13adb3b8…) ile 10 hastalık duman koşusu yapıldı ve betik yalnızca None biçimlendirmesinde çöktü; düzeltme sonrası hash güncellendi. Duman koşusu test'in ilk 10 hastasını gördü — bu hastaların TAMAMI lezyonsuz (0/0) olduğu için hiçbir metrik üretmedi (AUC tanımsız, duyarlılık 0/0); test performansı hakkında sıfır bilgi sızdı. Mühür koşusu bu düzeltmeden SONRA, tam 734 hasta üzerinde tek kez yapılır."
   },
 
   "reporting_rule": [
