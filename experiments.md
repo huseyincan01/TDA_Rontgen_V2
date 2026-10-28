@@ -857,6 +857,13 @@ Tüm modeller aynı tarafsız, katı ve sızıntısız protokolle değerlendiril
 
 ## 7. Bağımsız Dış Doğrulama (VinDr-CXR)
 
+> ⚠️ **V6.9 denetim notu — bölümü okumadan önce:** Aşağıdaki VinDr deneylerinin
+> **omurgası** kritik önemdedir. V4 / V5.3 / V6.3 / V6.5 / V6.5d deneyleri **ImageNet**
+> modelleri (`M5_centernet`, ResNet18) kullanır ⇒ temizdir. **V6.6.3 ve V6.6.5** ise
+> `resnet50-res512-all` kullanır; bu omurga VinDr-CXR ile ön-eğitilmiştir ve
+> değerlendirme görüntülerinin **%100'ü** onun ön-eğitim listesindedir ⇒ **kontamine**.
+> Kanıt: [LEAK_AUDIT.md](LEAK_AUDIT.md) §3.
+
 > 🔒 **ZERO-SHOT SINIRI (bölümün tamamı için zorunlu beyan).**
 > VinDr-CXR'ye **CNN fine-tuning'i hiç yapılmadı.** Aşama-1 ağırlıkları (`M5_centernet.pt`, `M6_fcos.pt`) ve 2. aşama bundle'ı her VinDr koşusunda **dondurulmuş** NODE21 modelleridir; NODE21 test mührü (0,9876) VinDr'den **tamamen bağımsızdır**.
 > Ancak VinDr bilgisi **üç ayrı kanaldan** girmiştir. Bu yüzden bu bölümde raporlanan sayılar üç sınıfa ayrılır ve **saf dış doğrulama olarak yalnızca (A) raporlanabilir:**
@@ -1318,6 +1325,15 @@ Kriter 2 (kapsama, IoBB ≥ 0,50 veya IoU ≥ 0,15) tablosu `v6_6_foundation_sta
 
 ### V6.6.3 — VinDr-CXR Aşama-1 (400 görüntü): strict zero-shot vs AdaBN
 
+> 🔴 **V6.9 DENETİM DÜZELTMESİ — bu bölümdeki VinDr sayıları KONTAMİNEDİR.** Kullanılan
+> omurga `resnet50-res512-all`; torchxrayvision'da tanımı *"trained on the datasets
+> pc-nih-rsna-siim-**vin**"*. xrv'nin VinDr sınıfı bizim etiket aldığımız **aynı CSV**'yi
+> (`vinbigdata-train.csv.gz`) okur ve kohortun **400/400 görüntüsü (%100)** o listenin
+> içindedir. ⇒ "strict zero-shot" ifadesi **geçersizdir**; 0,6469 / 0,5711 sayıları
+> VinDr'yi görmüş bir kodlayıcıyla üretilmiştir. Ayrıntı ve kanıt:
+> [LEAK_AUDIT.md](LEAK_AUDIT.md) §3. Temiz omurgayla yeniden ölçüm **açık iştir**.
+> (Aşağıdaki metin düzeltilmeden bırakıldı — tarihsel kayıt; doğru okuma bu uyarıyla yapılır.)
+
 | Model | **Strict** (AdaBN yok — saf sıfır-öğrenme) | AdaBN'li | bbox Recall@K30 / K50 |
 | :--- | ---: | ---: | :---: |
 | M5 (ImageNet) | 0,5599 | **0,6332** ↑ | 0,726 / 0,752 |
@@ -1362,6 +1378,12 @@ Foundation adayları üzerinde **değişmemiş** V6.3 2. aşaması (c_lungref + 
 2. 🚨 **FROC darboğazı YER DEĞİŞTİRDİ.** Aşama-1 tek başına FROC@0,5 = **0,831**; lokal TDA'yı devreye sokmak onu **0,749**'a **düşürüyor** (AUC'yi ise 0,960 → 0,972 yükseltiyor). ⇒ Güçlü bir dedektörün ardından lokal TDA **FROC'a zarar veriyor**. Bu, V6.5b'nin AUC–FROC ödünleşiminin **kurum içi** karşılığıdır ve somut bir tasarım kararı doğurur: **FROC-optimal (lezyon bulma) dağıtımda 2. aşama atlanmalı; AUC-optimal (hasta triyajı) dağıtımda tutulmalı.**
 
 ### V6.6.5 — VinDr-CXR uçtan uca transfer (foundation + lokal TDA, 400 görüntü)
+
+> 🔴 **V6.9 DENETİM DÜZELTMESİ — kontamine.** Bu bölümün tamamı `resnet50-res512-all`
+> (pc-nih-rsna-siim-**vin**) ile üretildi ve değerlendirme görüntülerinin %100'ü o omuranın
+> ön-eğitim listesinde ([LEAK_AUDIT.md](LEAK_AUDIT.md) §3). 0,6593 / 0,6637 / 0,7344 gibi
+> sayılar **sıfır-atış değildir**; "few-shot 0,7344" dahil hiçbiri dış-merkez genelleme
+> kanıtı olarak kullanılamaz. Tarihsel kayıt olarak korunmuştur.
 
 V6.5 şablonunun üç protokolü, foundation adaylarıyla (23.028 strict / 21.924 AdaBN aday):
 
@@ -1700,6 +1722,58 @@ V6.6/V6.7'nin tasarım gerekçesi şuydu: *"BN `.eval()` — 800k röntgenlik `r
 * 🎯 **Gerekçe hipotez olarak kalıyor ve asıl sınavı alan dışıdır:** BN running istatistikleri **transfer edilen şeyin parçasıdır**; V6.6.3'te AdaBN'in vakıf modelini **her konfigürasyonda bozduğu** (−0,065…−0,089) ölçülmüştü ⇒ istatistiklerin hassas olduğuna dair **dolaylı** kanıt var. V6.8.3 bu hipotezi **test etmez** (yalnız in-domain val).
 * ⚠️ BN açık kolun eğitim kaybı daha düşüktür (1,158 vs 1,257) — yani model eğitim verisine daha iyi oturuyor; buna rağmen val'de gerilemediği için burada bir aşırı uyum işareti yok.
 * **Teşhis checkpoint'i:** `submission_fulldata/M5_foundation_bn_unfrozen_probe.pt` (bilimsel değil; git dışı).
+
+## 13. V6.9 — Mühürlü Test Onayı (ön-kayıtlı, tek atım)
+
+**Motivasyon.** V6.1–V6.8'de **her** tasarım kararı NODE21 **val** bölmesinde alındı ve **aynı** bölmede raporlandı: kutu boyu için **296** resmî-metrik değerlendirmesi (37 varyant × 8 kutu), füzyon ağırlığı için **19** nokta (w ∈ 0,00…0,90), 3 TTA ölçek seti, 12 NMS/tepe kombinasyonu. Bu sızıntı değil, **seçim yanlılığı**dır: 231 lezyonda Sens@0,25'in standart hatası ≈ 0,030 olduğu için 296 değerlendirmenin en iyisini seçmek, gerçek değerin ~0,02–0,03 üstünde bir sayı üretmeyi *beklenir* kılar. Bu bölüm o borcu **dokunulmamış test bölmesinde** kapatır.
+
+**Betik:** [v6_9_test_seal.py](pipelines/v6_two_stage/v6_9_test_seal.py) · **Ön-kayıt:** `artifacts/v6_two_stage/test_seal_preregistration.json` (koşudan **önce** commit `deb59ed`) · **Aralık:** [v6_9b_test_seal_ci.py](pipelines/v6_two_stage/v6_9b_test_seal_ci.py) · **Denetim raporu:** [LEAK_AUDIT.md](LEAK_AUDIT.md)
+
+### V6.9.1 Mühür tasarımı (neden "mühür")
+
+| Garanti | Uygulama |
+| :--- | :--- |
+| Kod değişmedi | Betik kendi SHA-256'sını ön-kayıtla karşılaştırır; uyuşmazsa **koşmayı reddeder** (`b0c8aa9e…`) |
+| Model/bundle değişmedi | `M5_foundation.pt` (`fc2775…`) + `stage2_final_tda_hgb.joblib` (`976afc…`) hash doğrulaması |
+| Test'e ayar yapılmadı | Hiperparametre arayan kod yok; tüm değerler ön-kayıtta sabit |
+| Transductive sızıntı yok | z-normalizasyon referansı **val'den** donduruldu (s1 0,02699/0,03850 · tda 0,18936/0,17468); test dağılımından istatistik alınmadı |
+| Sonuç seçilmedi | Ön-kayıtta "ne çıkarsa yazılır" kuralı + başarısızlık tanımı (|Δ|>0,05) önceden yazıldı |
+
+Kilitli protokol: 3 ölçek (0,9/1,0/1,1) + yatay flip TTA · 3×3 tepe · **NMS 8 px** · top-50 · **sabit 56×56 px kutu** · **w = 0,55**.
+
+> ⚠️ **Beyan:** Test bölmesi bu projede **ikinci** kez görüldü. İlki V6.4 `test_seal()` (V6 CenterNet+FCOS+lokal TDA + V5.2 global füzyon → birleşik hasta AUC 0,9876, ayarsız). V6.4'ten **sonraki** hiçbir karar test'e bakılarak alınmadı (hepsi val'de). Üçüncü bir "mühür" artık mühür sayılmaz.
+
+### V6.9.2 Sonuçlar — val (seçim) vs test (mühür)
+
+Eğitim **yalnız train split**'te yapılmış `M5_foundation` kullanıldı (val/test görmedi); tam-veri gönderim modeli NODE21'de değerlendirilemez.
+
+| Ölçüm | Val (734/231) | **Test (734/229)** | Δ | Test %95 GA (bootstrap 1.000) |
+| :--- | ---: | ---: | ---: | :--- |
+| **rank_metric — 1. aşama** | 0,9131 | **0,8842** | **−0,0289** | 0,8559 – 0,9089 |
+| rank_metric — füzyon w=0,55 | 0,9174 | **0,8970** | −0,0204 | 0,8769 – 0,9213 |
+| Hasta AUC — 1. aşama | 0,9678 | **0,9446** | −0,0232 | 0,9237 – 0,9621 |
+| Hasta AUC — füzyon | 0,9793 | **0,9645** | −0,0148 | 0,9491 – 0,9786 |
+| Sens@0,125 — 1. aşama | 0,6710 | **0,6114** | −0,0596 | 0,5250 – 0,6805 |
+| Sens@0,25 — 1. aşama | 0,7489 | **0,7031** | −0,0458 | 0,6250 – 0,7645 |
+| Sens@0,5 — 1. aşama | 0,8009 | **0,7642** | −0,0367 | 0,7110 – 0,8164 |
+| Sens@0,125 — füzyon | 0,6883 | **0,6332** | −0,0551 | 0,5598 – 0,7077 |
+| Sens@0,25 — füzyon | 0,7316 | **0,6943** | −0,0373 | 0,6335 – 0,7668 |
+| Sens@0,5 — füzyon | 0,7879 | **0,7729** | −0,0150 | 0,7186 – 0,8233 |
+
+* ✅ **Ölçüm hattı sağlam — düşüş kod hatası değil.** Mühür koşusu val kolunda V6.6.7'nin yayımlanmış sayılarını **birebir** yeniden üretti (0,9131 · 0,9678 · 0,6710 · 0,7489 · 0,8009). İkinci koşu (aralık betiği) dağıtımı yeniden hesaplayıp mühür kaydıyla **bit düzeyinde** uyuştu ⇒ deterministik.
+* 📉 **Düşüş beklenen büyüklükte:** −0,029 ≈ **1 SE** (0,030). Ön-kayıttaki "|Δ| > 0,05 ⇒ seçim yanlılığı lehine kanıt" eşiği **aşılmadı**.
+* ⚠️ **Ama iyimserlik yok sayılamaz:** val noktası (0,9131) test'in %95 aralığının (üst 0,9089) **az üstünde**; füzyon AUC'de de val (0,9793) aralık üstünün (0,9786) hemen dışında. Doğru cümle: *"val sayıları hafif iyimser; düzeltilmiş dürüst değerler test sütunundakilerdir."*
+* 🔄 **V6.6.4'ün "2. aşamayı atla" önerisi test'te TERSİNE DÖNDÜ.** Val'de yalnız 1. aşama füzyondan FROC'ta üstündü (0,8442 vs 0,8268) ve dağıtım için "2. aşamasız" önerilmişti. Test'te **füzyon dört metrikten üçünde üstün** (rank 0,8970 > 0,8842 · AUC 0,9645 > 0,9446 · Sens@0,5 0,7729 > 0,7642; yalnız Sens@0,25'te geride). ⇒ O öneri **val'e özgüymüş**; mühür tam da bunu yakalamak için vardı.
+
+### V6.9.3 Mühür kaydındaki iki teknik uyarı
+
+* ❌ **`legacy_fusion.patient_auc.noisyor` = 0,6432 GEÇERSİZ.** Eski protokol bloğunda füzyon skoru z-ölçeğinde (negatif olabilir) verildiği için noisy-OR matematiksel olarak anlamsızdır. Geçerli olan **`A2a_fusion_tda.auc` = 0,9645**'tir (orada sigmoid uygulanır). Kayıttaki diğer tüm sayılar geçerlidir.
+* ⚠️ **Yol farkı:** mühür aday üretiminde **resmî-metrik yolunu** (3 ölçek ortalaması + NMS 8 px) kullanır; V6.6.6 tablosu `predict_tta` (NMS 20 px) yolundandır ⇒ val füzyon FROC@0,5 burada 0,8268, orada 0,8355. **Yalnız 1. aşama** sayıları aynı yolu kullandığı için birebir uyuşur — mühür karşılaştırması bu satırda en temizdir.
+
+### V6.9.4 Yayın için sonuç
+
+> Ana tabloda **test sütunu** (0,8842 / 0,8970 / 0,9446 / 0,9645) dürüst dış-değerdir; val sütunu **"seçilmiş"** etiketiyle verilmelidir. VinDr dış doğrulaması ise **kontamine**dir (bkz. [LEAK_AUDIT.md](LEAK_AUDIT.md) §3: 400/400 görüntü omuranın ön-eğitim listesinde) — "zero-shot" ifadesi kullanılamaz.
+
 
 
 

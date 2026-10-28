@@ -235,12 +235,15 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
 > okuyucu "bizim eksiğimiz" ile "yapısal sınır"ı karıştırıyor.
 
 **Bildiğimiz:**
-* Kurum içinde güçlü bir hasta düzeyi triyaj sistemi var (füzyon 0,9516; V6.6 uçtan uca
-  val AUC 0,988 — **sızıntısız** sabit-ağırlık eşdeğeri **0,9886**).
-* Lokalizasyon katmanı çalışıyor (K50 recall 0,991; resmî metrik simülasyonu 0,9131 →
-  **0,9185** onarılmış yarıçap kafasıyla, V6.8).
+* Kurum içinde güçlü bir hasta düzeyi triyaj sistemi var — **dürüst (test) değer: füzyon
+  AUC 0,9645**, yalnız 1. aşama 0,9446. Val'de ölçülen 0,9879/0,9793 **seçilmiş** sayılardır
+  (V6.9 mührü: −0,015…−0,023).
+* Lokalizasyon katmanı çalışıyor: **dürüst rank_metric 0,8842** (1. aşama) / **0,8970**
+  (füzyonla); onarılmış yarıçap kafasıyla val'de 0,9185. Val'in 0,9131'i seçim yanlılığı
+  taşıyor (V6.9: −0,029).
 * **TDA'nın gerçek katkısı global/arka plan topolojisinde**; lokal nodül topolojisinde
-  değil (E3.6: 0,6866). Dış merkezde taşınan kısım sınırlı (VinDr zero-shot 0,647).
+  değil (E3.6: 0,6866). Dış merkez iddiası **zayıfladı**: VinDr ölçümü kontamine
+  (bkz. 12.6 ve [LEAK_AUDIT.md](LEAK_AUDIT.md) §3).
 
 ### 12.1 Bilinemez / ölçülemez (⚪ hata değil)
 
@@ -263,6 +266,8 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
 | 5 | 🟡 **V6.5 KOL 1 "zero-shot" diye etiketlendi ama AdaBN'liydi** (raporlama hatası) | ✅ V6.5d'de düzeltildi; 0,6439–0,6620 bandının tamamı **transductive** ilan edildi |
 | 6 | 🟡 **`densenet121-res224-all` koşulmadı:** "512 doğal çözünürlük olduğu için ResNet50" savı **ölçümle değil akıl yürütmeyle** duruyor | ⏳ Hâlâ açık (12.5) |
 | 7 | 🟡 **"BN donuk = unutma-önleme" gerekçesi ölçülmemişti** (V6.6/V6.7'de argüman olarak yazıldı, test edilmedi) | ✅ V6.8'de ölçüldü (12.4c): **ölçülebilir fayda yok** (dokuz metrikten sekizinde BN açık ≥; Δ nOR −0,0003) |
+| 8 | 🔴 **VinDr "zero-shot" dış doğrulaması kontamineydi:** değerlendirdiğimiz 400 görüntünün **%100'ü**, omuranın (`resnet50-res512-all`) ön-eğitim listesindeydi (pc-nih-rsna-siim-**vin**) | 🟡 V6.9 denetiminde bulundu (12.6b); "zero-shot" etiketi **kaldırıldı**. Kalıcı çözüm temiz omurgayla yeniden ölçüm — **açık** |
+| 9 | 🟠 **Val'de seçip val'de raporladık:** 296 resmî-metrik değerlendirmesi + 19 w noktası aynı 231 lezyonluk bölmede | ✅ V6.9 mührü bedelini ölçtü (12.6a): **−0,029** rank_metric; dürüst sayılar artık test sütununda |
 
 ### 12.3 Tarihsel hatalar (bulundu ve düzeltildi — kayıtları var)
 
@@ -365,17 +370,57 @@ running istatistikleri **açık**. Sonuç tasarım beklentisinin **tersine**:
 
 ### 12.5 Hâlâ açık
 
-* **`densenet121-res224-all`** omurga yolu kodda var, **koşulmadı** — "512 doğal
-  çözünürlük" savı ölçümle desteklenmedi (~30 dk iş).
-* **BN dondurmanın alan-dışı (VinDr) payı** — in-domain val'de fark yok (12.4c);
-  hipotezin sınavı transferde yapılmalı.
+* **VinDr'yi görmemiş omurgayla dış doğrulama** (12.6b) — "zero-shot" iddiasının tek
+  geçerli yolu (~40 dk iş). Bu koşu yapılmadan VinDr sayıları **kontamine** etiketiyle durur.
+* **`densenet121-res224-*`** omurga yolları kodda var, **koşulmadı** — "512 doğal
+  çözünürlük" savı ölçümle desteklenmedi; aynı koşu 12.6b'yi de çözer.
+* **BN dondurmanın alan-dışı payı** — in-domain val'de fark yok (12.4c); hipotezin sınavı
+  transferde yapılmalı (ama temiz omurgayla).
 * **Onarılan yarıçap dalının gönderime alınması** (12.4b) — mühendislik kararı.
+* **Çok tohum** — tüm ana sayılar tek tohum (V6.8: aynı protokol ±0,02 kayıyor).
 * **AUC–FROC ödünleşimi** (12.1) — çözülmüş değil, yönetiliyor.
+
+### 12.6 V6.9 — mühür: "gerçekten dürüst müyüz?" sorusunun cevabı
+
+**(a) Val'de seçtik, val'de ölçtük — mühür bedelini gösterdi.** V6.1–V6.8'de kutu boyu
+için **296** resmî-metrik değerlendirmesi, füzyon ağırlığı için **19** nokta, 3 TTA seti
+denendi; hepsi aynı 231 lezyonluk val'de. Mühür (V6.9) kilitli protokolü **hiç
+değiştirmeden** dokunulmamış test bölmesinde bir kez koştu:
+
+| | Val (seçim) | **Test (mühür)** | Δ |
+| :--- | ---: | ---: | ---: |
+| rank_metric (1. aşama) | 0,9131 | **0,8842** | −0,0289 |
+| rank_metric (füzyon) | 0,9174 | **0,8970** | −0,0204 |
+| Hasta AUC (1. aşama) | 0,9678 | **0,9446** | −0,0232 |
+| Hasta AUC (füzyon) | 0,9793 | **0,9645** | −0,0148 |
+
+* ✅ **Hat sağlam:** mühür, val kolunda V6.6.7'nin sayılarını **birebir** üretti ⇒ fark
+  kod hatası değil, **genelleme farkı**. Düşüş ≈ **1 SE** (0,030) — sınırda iyimserlik,
+  felaket değil.
+* 🔄 **Bir hükmümüz tersine döndü:** "FROC için 2. aşamayı atla" önerisi val'e özgüymüş;
+  test'te füzyon **3/4 metrikte üstün**. Mühür tam da bunu yakalamak için vardı.
+* 🔒 Mühür garantisi: betik kendi hash'ini ön-kayıtla karşılaştırır, uyuşmazsa koşmaz;
+  z referansı val'den dondurulmuştur (transductive sızıntı yok). Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md).
+
+**(b) 🔴 VinDr "zero-shot" dış doğrulaması kontamine — kendi denetimimizde çıktı.**
+Omurga `resnet50-res512-all`, torchxrayvision'da *"trained on pc-nih-rsna-siim-**vin**"*
+olarak tanımlı; xrv'nin VinDr sınıfı da bizim etiket aldığımız **aynı CSV**'yi okuyor.
+Ölçüm: kohortun **400/400 görüntüsü (%100)** omuranın 15.000 görüntülük ön-eğitim
+listesinde. ⇒ 0,6469 / 0,6637 / 0,7344 sayıları "sıfır-atış" değildir; "zero-shot"
+etiketi kaldırıldı ve temiz omurgayla yeniden ölçüm açık iş olarak yazıldı.
+*Dürüst sınır:* xrv'nin eğitim anındaki tam dosya listesi dağıtılmıyor; kanıt "deklare
+edilen liste 400'ün tamamını içeriyor" düzeyinde — iddiayı çürütmeye yeter, kanıtlamaya yetmez.
+
+**(c) Test bölmesi iki kez görüldü.** İlki V6.4 mührü (0,9876, farklı model ailesi).
+V6.4'ten sonraki hiçbir karar test'e bakılarak alınmadı; yine de beyan edildi:
+üçüncü bir "mühür" artık mühür sayılmaz.
+
 
 
 
 ---
 
-*Son güncelleme: V6.8 (Ekim 2026) · Ayrıntı: [experiments.md](experiments.md) (deneyler),
-[ablation_matrix.md](ablation_matrix.md) (tablolar), [progress.md](progress.md) (v1–v3),
+*Son güncelleme: V6.9 (Ekim 2026) · Ayrıntı: [experiments.md](experiments.md) (deneyler),
+[ablation_matrix.md](ablation_matrix.md) (tablolar), [LEAK_AUDIT.md](LEAK_AUDIT.md)
+(sızıntı/geçerlilik denetimi), [progress.md](progress.md) (v1–v3),
 [roadmap.md](roadmap.md) (v3 protokolü), [v4_roadmap.md](v4_roadmap.md) (v4), [paper_draft.md](paper_draft.md) (makale).*

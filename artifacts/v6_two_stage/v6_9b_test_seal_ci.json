@@ -1,0 +1,93 @@
+{
+  "experiment": "V6.9b-test-seal-ci",
+  "seal_record": "artifacts\\v6_two_stage\\v6_9_test_seal.json",
+  "assertion": "yeniden koşulan toplam metrikler mühür kaydıyla birebir aynı",
+  "n_patients": 734,
+  "reps": 1000,
+  "seed": 12345,
+  "frozen_z_reference": {
+    "s1_mean": 0.026985976845026016,
+    "s1_std": 0.038500506430864334,
+    "tda_mean": 0.1893618255853653,
+    "tda_std": 0.17467643320560455
+  },
+  "results": {
+    "s1": {
+      "point": {
+        "auc": 0.9446,
+        "sens": {
+          "0.125": 0.611353711790393,
+          "0.25": 0.7030567685589519,
+          "0.5": 0.7641921397379913
+        },
+        "rank_metric": 0.8842
+      },
+      "ci95": {
+        "rank_metric": {
+          "mean": 0.8817,
+          "lo95": 0.8559,
+          "hi95": 0.9089
+        },
+        "auc": {
+          "mean": 0.9445,
+          "lo95": 0.9237,
+          "hi95": 0.9621
+        },
+        "sens_0.125": {
+          "mean": 0.6043,
+          "lo95": 0.525,
+          "hi95": 0.6805
+        },
+        "sens_0.25": {
+          "mean": 0.6932,
+          "lo95": 0.625,
+          "hi95": 0.7645
+        },
+        "sens_0.5": {
+          "mean": 0.7642,
+          "lo95": 0.711,
+          "hi95": 0.8164
+        }
+      }
+    },
+    "fus": {
+      "point": {
+        "auc": 0.9645,
+        "sens": {
+          "0.125": 0.6331877729257642,
+          "0.25": 0.6943231441048034,
+          "0.5": 0.7729257641921398
+        },
+        "rank_metric": 0.897
+      },
+      "ci95": {
+        "rank_metric": {
+          "mean": 0.8984,
+          "lo95": 0.8769,
+          "hi95": 0.9213
+        },
+        "auc": {
+          "mean": 0.9649,
+          "lo95": 0.9491,
+          "hi95": 0.9786
+        },
+        "sens_0.125": {
+          "mean": 0.6367,
+          "lo95": 0.5598,
+          "hi95": 0.7077
+        },
+        "sens_0.25": {
+          "mean": 0.699,
+          "lo95": 0.6335,
+          "hi95": 0.7668
+        },
+        "sens_0.5": {
+          "mean": 0.7706,
+          "lo95": 0.7186,
+          "hi95": 0.8233
+        }
+      }
+    }
+  },
+  "note": "Hiçbir parametre seçilmedi; yalnız örnekleme belirsizliği ölçüldü. rank_metric = 0,75·AUC + 0,25·Sens@0,25 (resmî NODE21)."
+}

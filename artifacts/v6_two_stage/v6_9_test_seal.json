@@ -1,0 +1,219 @@
+{
+  "experiment": "V6.9-test-seal",
+  "purpose": "Kilitli V6 protokolünün dokunulmamış NODE21 TEST bölmesindeki TEK ATIM ölçümü. Val'de yapılan tüm seçimlerin (kutu boyu, füzyon w, TTA, NMS) dürüst dış-değerini üretir.",
+  "sealed": true,
+  "n_test_patients": 734,
+  "n_test_lesions": 229,
+  "frozen_z_reference": {
+    "s1_mean": 0.026985976845026016,
+    "s1_std": 0.038500506430864334,
+    "tda_mean": 0.1893618255853653,
+    "tda_std": 0.17467643320560455
+  },
+  "locked": {
+    "w_fusion": 0.55,
+    "box_px": 56,
+    "scales": [
+      0.9,
+      1.0,
+      1.1
+    ],
+    "flip_tta": true,
+    "peak_window": 3,
+    "nms_px": 8,
+    "top_k": 50
+  },
+  "artifacts": {
+    "M5_foundation.pt": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+    "stage2_final_tda_hgb.joblib": "976afc1f414ce38fd77e945093f96820b9bf1b5a4138542f567960e5abb819b5"
+  },
+  "val": {
+    "n_patients": 734,
+    "n_lesions": 231,
+    "A1_stage1_only": {
+      "sens": {
+        "0.125": 0.671,
+        "0.25": 0.7489,
+        "0.5": 0.8009,
+        "1": 0.8355,
+        "2": 0.8788,
+        "4": 0.9091
+      },
+      "auc": 0.9678,
+      "froc_mean_3pt": 0.7403,
+      "rank_metric": 0.9131
+    },
+    "A2a_fusion_tda": {
+      "sens": {
+        "0.125": 0.6883,
+        "0.25": 0.7316,
+        "0.5": 0.7879,
+        "1": 0.8268,
+        "2": 0.8528,
+        "4": 0.8745
+      },
+      "auc": 0.9793,
+      "froc_mean_3pt": 0.7359,
+      "rank_metric": 0.9174
+    },
+    "A2b_tda_only": {
+      "sens": {
+        "0.125": 0.0736,
+        "0.25": 0.1126,
+        "0.5": 0.1991,
+        "1": 0.2771,
+        "2": 0.4242,
+        "4": 0.5152
+      },
+      "auc": 0.8773,
+      "froc_mean_3pt": 0.1284,
+      "rank_metric": 0.6861
+    },
+    "legacy_stage1": {
+      "froc": {
+        "0.5": 0.8442,
+        "1": 0.8831,
+        "2": 0.9307,
+        "4": 0.9567
+      },
+      "patient_auc": {
+        "top1": 0.9678,
+        "top3": 0.9731,
+        "noisyor": 0.9758
+      },
+      "hier_froc": {
+        "0.5": 0.8398,
+        "1": 0.8918,
+        "2": 0.9264,
+        "4": 0.961
+      },
+      "hier_auc": {
+        "top1": 0.9736,
+        "top3": 0.9745,
+        "noisyor": 0.9755
+      }
+    },
+    "legacy_fusion": {
+      "froc": {
+        "0.5": 0.8268,
+        "1": 0.8658,
+        "2": 0.9004,
+        "4": 0.9307
+      },
+      "patient_auc": {
+        "top1": 0.9793,
+        "top3": 0.9887,
+        "noisyor": 0.6281
+      },
+      "hier_froc": {
+        "0.5": 0.8268,
+        "1": 0.8658,
+        "2": 0.9004,
+        "4": 0.9307
+      },
+      "hier_auc": {
+        "top1": 0.9794,
+        "top3": 0.9887,
+        "noisyor": 0.6628
+      }
+    }
+  },
+  "test": {
+    "n_patients": 734,
+    "n_lesions": 229,
+    "A1_stage1_only": {
+      "sens": {
+        "0.125": 0.6114,
+        "0.25": 0.7031,
+        "0.5": 0.7642,
+        "1": 0.821,
+        "2": 0.8603,
+        "4": 0.8952
+      },
+      "auc": 0.9446,
+      "froc_mean_3pt": 0.6929,
+      "rank_metric": 0.8842
+    },
+    "A2a_fusion_tda": {
+      "sens": {
+        "0.125": 0.6332,
+        "0.25": 0.6943,
+        "0.5": 0.7729,
+        "1": 0.8341,
+        "2": 0.8515,
+        "4": 0.8865
+      },
+      "auc": 0.9645,
+      "froc_mean_3pt": 0.7001,
+      "rank_metric": 0.897
+    },
+    "A2b_tda_only": {
+      "sens": {
+        "0.125": 0.0786,
+        "0.25": 0.1223,
+        "0.5": 0.1921,
+        "1": 0.2795,
+        "2": 0.4192,
+        "4": 0.5939
+      },
+      "auc": 0.8876,
+      "froc_mean_3pt": 0.131,
+      "rank_metric": 0.6963
+    },
+    "legacy_stage1": {
+      "froc": {
+        "0.5": 0.7817,
+        "1": 0.8341,
+        "2": 0.8734,
+        "4": 0.9083
+      },
+      "patient_auc": {
+        "top1": 0.9446,
+        "top3": 0.9549,
+        "noisyor": 0.9593
+      },
+      "hier_froc": {
+        "0.5": 0.7817,
+        "1": 0.8384,
+        "2": 0.8821,
+        "4": 0.9083
+      },
+      "hier_auc": {
+        "top1": 0.9532,
+        "top3": 0.9572,
+        "noisyor": 0.9592
+      }
+    },
+    "legacy_fusion": {
+      "froc": {
+        "0.5": 0.786,
+        "1": 0.8472,
+        "2": 0.8646,
+        "4": 0.8996
+      },
+      "patient_auc": {
+        "top1": 0.9645,
+        "top3": 0.9748,
+        "noisyor": 0.6432
+      },
+      "hier_froc": {
+        "0.5": 0.786,
+        "1": 0.8472,
+        "2": 0.8646,
+        "4": 0.8996
+      },
+      "hier_auc": {
+        "top1": 0.965,
+        "top3": 0.9751,
+        "noisyor": 0.677
+      }
+    }
+  },
+  "verdict": {
+    "stage1_rank_metric": 0.8842,
+    "fusion_rank_metric": 0.897,
+    "stage1_auc": 0.9446,
+    "vs_val_stage1_rank_metric": -0.0289,
+    "vs_val_fusion_auc": -0.0234
+  }
+}

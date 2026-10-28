@@ -253,6 +253,8 @@ NODE21 üzerinde eğitilen v3 (E0.6) mimarisi, tamamen bağımsız bir dış ver
 
 > 🔒 **Saf zero-shot sınırı.** VinDr'ye **CNN fine-tuning'i yapılmamıştır.** Ancak bu alt bölümdeki sayıların hiçbiri saf zero-shot **değildir**: birinci tablonun taban adayları **AdaBN-M5**'tir (VinDr'in etiketsiz BN istatistikleri ⇒ *transductive*), CORAL satırları ayrıca VinDr özellik kovaryansını kullanır, ikinci tablo ise VinDr **etiketlerini** kullanır. **Saf zero-shot dış doğrulamanın zirvesi V5.3'tür: VinDr AUC 0,6283** (kilitli a = 0,45). Aşağıdaki 0,6439–0,7249 bandı "hedefe hiç dokunulmadan elde edildi" biçiminde raporlanamaz.
 
+> 🔴 **V6.9 denetim notu (bu bölümü de bağlar).** Yukarıdaki sınır, **ImageNet** tabanlı M5 için geçerlidir ve o sayılar temizdir. Ancak **CXR vakıf omurgası** (`resnet50-res512-all`, torchxrayvision) kullanan tüm VinDr sonuçları **kontaminedir**: bu omurga VinDr-CXR ile ön-eğitilmiştir ve değerlendirme görüntülerinin **%100'ü** ön-eğitim listesindedir. ⇒ Makaleye CXR vakıf omurgasıyla üretilmiş bir VinDr sayısı **konulamaz**; temiz omurgayla (VinDr içermeyen ön-eğitim) yeniden ölçüm gerekir. Kanıt ve tam liste: [LEAK_AUDIT.md](LEAK_AUDIT.md) §3.
+
 V5.3'ün (§4.9) 0,6283'ünü temel alarak, **AdaBN ile stabilize edilmiş** M5 adayları üzerinde **etiketsiz** üç fiziksel/istatistiksel düzeltme tek tek ve birlikte sınandı (400 görüntü, 19.955 aday; referans: 200 NODE21 train hastasından 4.000 aday):
 
 | Konfigürasyon (taban: AdaBN-M5 ⇒ *transductive*) | VinDr AUC |

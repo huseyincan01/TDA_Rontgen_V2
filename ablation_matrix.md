@@ -638,18 +638,27 @@ Aynı VinDr kohortu, aynı `M5_centernet` adayları, **tek fark AdaBN** (donduru
 
 ### 14.4 VinDr-CXR (400 görüntü) — dış transfer
 
+> 🔴 **V6.9 DENETİM DÜZELTMESİ — bu tablodaki FND satırları KONTAMİNEDİR.** `FND` =
+> `resnet50-res512-all` = torchxrayvision'da *"trained on pc-nih-rsna-siim-**vin**"*.
+> Kohortun **400/400 görüntüsü (%100)** o omuranın 15.000 görüntülük ön-eğitim listesinde;
+> üstelik etiketlerimizi aldığımız CSV, xrv'nin VinDr sınıfının varsayılan CSV'siyle aynı.
+> ⇒ 0,6469 / 0,6593 / 0,6637 / 0,7344 satırları **"zero-shot" değildir** ve dış-merkez
+> genelleme kanıtı sayılamaz. Kanıt: [LEAK_AUDIT.md](LEAK_AUDIT.md) §3. **M5 (ImageNet)
+> satırları temizdir** (0,5599 / 0,6332 / 0,6181 / 0,6283 / 0,7243).
+> Temiz omurgayla yeniden ölçüm açık iştir.
+
 | Sistem / protokol | Hasta AUC | Kaynak |
 | :--- | ---: | :--- |
 | M5 strict (AdaBN yok) | 0,5599 | V6.6.3 |
 | V5.3 global (eski saf zero-shot zirvesi) | 0,6283 | §7.2 |
 | M5 + AdaBN | 0,6332 | V6.6.3 |
 | Eski en iyi inductive (M5 + ölçek-eşleme) | 0,6181 | V6.5d |
-| **FND strict — yeni saf zero-shot zirvesi** | **0,6469** | V6.6.3 |
-| FND + AdaBN | 0,5711 ↓ | V6.6.3 |
-| **FND inductive uçtan uca (denoise + ölçek)** | **0,6593** | V6.6.5 |
-| FND + CORAL (transductive) | 0,6637 | V6.6.5 |
+| ~~**FND strict — yeni saf zero-shot zirvesi**~~ | ~~**0,6469**~~ 🔴 | V6.6.3 · kontamine |
+| ~~FND + AdaBN~~ | ~~0,5711~~ 🔴 | V6.6.3 · kontamine |
+| ~~**FND inductive uçtan uca (denoise + ölçek)**~~ | ~~**0,6593**~~ 🔴 | V6.6.5 · kontamine |
+| ~~FND + CORAL (transductive)~~ | ~~0,6637~~ 🔴 | V6.6.5 · kontamine |
 | Eski few-shot N=160 | 0,7243 ± 0,051 | V6.5 |
-| **FND few-shot N=160** | **0,7344 ± 0,051** | V6.6.5 |
+| ~~**FND few-shot N=160**~~ | ~~**0,7344**~~ 🔴 | V6.6.5 · kontamine |
 
 * ✅ **Yeni en iyi saf zero-shot: 0,6469** (AdaBN'siz) — hem M5+AdaBN (0,6332) hem V5.3 (0,6283) geçildi.
 * 🔑 **AdaBN'in değeri omurganın CXR-yerliliğiyle TERS orantılı:** ImageNet ResNet18'de **+0,073** · CXR vakıf modelinde **−0,076**. AdaBN bir **yama**dır; daha iyi omurga onu gereksiz *ve zararlı* kılar.
@@ -852,3 +861,29 @@ Aynı 18 epoch takvimi, aynı veri/tohum; **tek fark:** 2. fazda BN running ista
 * ⚠️ **Ters yönde kanıt da değil:** 231 lezyonda FROC@0,5'in SE'si ≈ **0,024** ⇒ 0,013 ≈ **0,5 SE**; tek tohum/tek bölme. Doğru ifade: *"ölçülebilir fayda yok, zarar da yok."*
 * 🎯 Hipotezin asıl sınavı **alan dışı transferdir** (BN istatistikleri transfer edilen şeyin parçası; V6.6.3 AdaBN'in vakıf modelini bozduğunu gösterdi) — bu kol onu **test etmez**.
 * ⚠️ İki fazlı eğitimin unutma-önleme katkısı **izole edilmedi** (ısınma checkpoint'i silindi).
+
+## 17. V6.9 — Mühürlü Test Onayı (val'de seçilen her şeyin dürüst dış-değeri)
+
+V6.1–V6.8'de tüm seçimler **val**'de yapılıp **val**'de raporlandı (kutu boyu: **296** resmî-metrik değerlendirmesi; füzyon w: **19** nokta; 3 TTA seti; 12 NMS/tepe). 231 lezyonda Sens@0,25 SE ≈ 0,030 ⇒ seçim yanlılığı beklenir. Mühür, kilitli protokolü **hiç değiştirmeden** dokunulmamış test bölmesinde (734/229) **bir kez** koşar.
+
+**Ön-kayıt (koşudan önce commit `deb59ed`):** `artifacts/v6_two_stage/test_seal_preregistration.json` · **Kayıt:** `v6_9_test_seal.json` · **Aralık:** `v6_9b_test_seal_ci.json` · **Rapor:** [LEAK_AUDIT.md](LEAK_AUDIT.md)
+
+**Mühür garantileri:** betik kendi SHA-256'sını ön-kayıtla karşılaştırır (uyuşmazsa durur) · model+bundle hash doğrulaması (`fc2775…`, `976afc…`) · z referansı **val'den** donduruldu · hiperparametre arayan kod yok.
+
+| Ölçüm | Val (seçim) | **Test (mühür)** | Δ | Test %95 GA |
+| :--- | ---: | ---: | ---: | :--- |
+| **rank_metric — 1. aşama** | 0,9131 | **0,8842** | −0,0289 | 0,8559 – 0,9089 |
+| rank_metric — füzyon w=0,55 | 0,9174 | **0,8970** | −0,0204 | 0,8769 – 0,9213 |
+| Hasta AUC — 1. aşama | 0,9678 | **0,9446** | −0,0232 | 0,9237 – 0,9621 |
+| Hasta AUC — füzyon | 0,9793 | **0,9645** | −0,0148 | 0,9491 – 0,9786 |
+| Sens@0,125 — 1. aşama | 0,6710 | **0,6114** | −0,0596 | 0,5250 – 0,6805 |
+| Sens@0,25 — 1. aşama | 0,7489 | **0,7031** | −0,0458 | 0,6250 – 0,7645 |
+| Sens@0,5 — 1. aşama | 0,8009 | **0,7642** | −0,0367 | 0,7110 – 0,8164 |
+| Sens@0,5 — füzyon | 0,7879 | **0,7729** | −0,0150 | 0,7186 – 0,8233 |
+
+* ✅ **Hat sağlam:** mühür koşusu val kolunda V6.6.7'nin sayılarını **birebir** üretti (0,9131/0,9678/0,6710/0,7489/0,8009) ⇒ fark kod hatası değil, genelleme farkı.
+* 📉 **Düşüş ≈ 1 SE** (−0,029 vs SE 0,030); ön-kayıttaki 0,05 eşiği aşılmadı ⇒ ölçülebilir ama sınırda iyimserlik.
+* ⚠️ Val noktası test aralığının **az üstünde** (0,9131 > 0,9089) ⇒ "val hafif iyimser" demek gerekir.
+* 🔄 **Hüküm değişti:** val'de "FROC için 2. aşamayı atla" denmişti; test'te **füzyon 3/4 metrikte üstün** (rank 0,8970 · AUC 0,9645 · S@0,5 0,7729) ⇒ o öneri val'e özgüydü.
+* ❌ `legacy_fusion.patient_auc.noisyor` (0,6432) **geçersiz** (z-skoru üzerinden noisy-OR); geçerli değer `A2a_fusion_tda.auc` = 0,9645.
+* 🟡 **Beyan:** test bölmesi ikinci kez görüldü (ilki V6.4 mührü, 0,9876); sonraki hiçbir karar test'e bakılarak alınmadı.
