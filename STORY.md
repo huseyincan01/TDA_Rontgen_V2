@@ -303,6 +303,10 @@ karşı ölçtü:
   kayıtlı train log'uyla örtüşüyor (13,36/2,23/2,10/1,96/1,87 vs 13,35/2,22/2,11/1,97/1,90)
   ve **final kolunun sayıları V6.6'nın yayımlanmış değerlerinin aynısı** (K20 0,9827 ·
   FROC@0,5 0,831 · @4 0,952 · top1 0,960) ⇒ karşılaştırma elmayla elmadır.
+* 🔁 **İkinci bağımsız koşu** (aynı tohum/betik, yeniden eğitim): ısınma kolu ±0,02
+  kayıyor (FROC@0,5 0,7792 → 0,7965 · AUC nOR 0,9416 → 0,9375) ama **hüküm aynı** ⇒
+  Δ FROC@0,5 **+0,035…+0,052**, FROC@4 **+0,035…+0,043**, AUC nOR **+0,029…+0,033**,
+  K50 **iki koşuda da 0,0000**. Etki büyüklüğünü aralık olarak okumak gerekir.
 * ⚠️ **Dürüst sınır:** Δ(final−ısınma) 2. fazın **toplam** katkısıdır (13 ek epoch +
   üst blokların açılması). Bunu tek başına *"unutma-önleme katkısı"* saymak fazla iddia
   olurdu; BN dondurmanın payı ayrı kolda ölçülür (`--task bn`, 12.5).

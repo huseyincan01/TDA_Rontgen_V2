@@ -809,6 +809,7 @@ Isınma fazı **aynı tohum/takvim/augmentasyon/kayıpla** yeniden koşuldu (tra
 
 * ✅ **2. fazın katkısı ölçüldü: FROC@0,5 +0,052 · FROC@4 +0,043 · AUC nOR +0,029.** K50'de katkı **sıfır** (tavan ısınmada yakalanıyor) ⇒ kazanç **düşük-FP bölgesinde**.
 * 🔒 Final kolunun metrikleri V6.6'nın yayımlanmış sayılarıyla **birebir** (K20 0,9827 · FROC@0,5 0,8312 · @4 0,9524 · top1 0,9595) ⇒ karşılaştırma geçerli.
+* 🔁 **İkinci bağımsız koşu** (aynı tohum/betik, yeniden eğitim): ısınma kolu ±0,02 kayıyor (FROC@0,5 0,7792 → 0,7965 · AUC nOR 0,9416 → 0,9375) ama **hüküm aynı** ⇒ Δ FROC@0,5 **+0,035…+0,052**, FROC@4 **+0,035…+0,043**, AUC nOR **+0,029…+0,033**, K50 **her iki koşuda 0,0000**. Etki büyüklüğü **aralık** olarak okunmalı; final kolunun sayıları iki koşuda da birebir.
 * ⚠️ Bu, 2. fazın **toplam** katkısıdır (13 ek epoch + üst blokların açılması); **BN dondurmanın** payı ayrı kolda ölçülür.
 
 ### 16.2 Yarıçap kafası onarımı — çökmenin nedeni ağırlık değil, kayıp maskesi
