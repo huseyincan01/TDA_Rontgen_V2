@@ -409,3 +409,27 @@ Her ikisi de **test bütçesi tükendiği için** 0.9516'lık ana sonuca **eklen
 ### 13.7 Durum
 
 **Test bütçesi 6/6 tükendi** — dondurulmuş test seti **kapalıdır**. Yeni deneyler yalnızca **validation** veya **yeni veri** ile yapılabilir. Program **yayına hazırdır**.
+
+---
+
+## 14. V6.9 sonrası ek (v3 protokolü dondurulmuş, bütçe muhasebesi güncel)
+
+v3 protokolü (§0–§13) **kapalıdır** ve değiştirilmez. Ancak §0.3'teki *test bütçesi*
+muhasebesi, sonraki hatlarla birlikte şöyle okunmalıdır:
+
+| Dönem | Test kullanımı | Ayar | Sonuç |
+| :--- | :--- | :---: | :--- |
+| v3 (E0.2, E3.4, E0.3, E3.1, E3.7, E0.6) | **6/6 bütçe tükendi** | protokol içi | headline 0,9516 |
+| V6.4 | 1 ek mühür | **yok** | birleşik hasta AUC 0,9876 |
+| **V6.9** | 1 ek mühür | **yok** (ön-kayıtlı, hash kilitli) | rank_metric **0,8842** · AUC **0,9645** |
+
+⇒ **Kural:** yeni bir test sonucu ancak **yeni bir veri kümesiyle** üretilebilir; aynı
+bölmede üçüncü bir "mühür" mühür sayılmaz. Ayrıca v3'ün 6/6 bütçesi **protokol içi**
+değerlendirmelerdir; V6'nın iki mührü farklı model ailelerine aittir ve ikisi de
+seçim yapmadan koşulmuştur.
+
+⚠️ **Yöntemsel ders (§13.6'daki derslere ek):** "Val'de seç, val'de raporla" bir sızıntı
+değildir ama **ölçülebilir bir iyimserliktir** — V6'da 296 + 19 + 12 değerlendirme
+yapıldı ve dürüst test değeri **0,029** daha düşük çıktı. Yeni hatlarda **seçim bütçesi
+beyan edilmeli** ve dürüst sayı ayrı bir mühürle üretilmelidir.
+Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) · [experiments.md §13](experiments.md)

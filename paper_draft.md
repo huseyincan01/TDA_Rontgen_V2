@@ -1,8 +1,9 @@
 # NODE21 TDA — Makale Taslağı (E5.2)
 
 > **Durum:** Yapısal taslak. Tüm sayılar [ablation_matrix.md](ablation_matrix.md)'den alınmıştır ve doğrulanmıştır.
-> **Protokol uyumu:** Split beyanı (Kural 9) ✅ · Çok-seed raporlama (Kural 10) ✅ · Ön-kayıtlı eşikler ✅ · Test bütçesi 6/6 (kapalı)
-> **Kaynak belgeler:** [ablation_matrix.md](ablation_matrix.md) · [experiments.md](experiments.md) · [literature.md](literature.md) · [roadmap.md](roadmap.md)
+> **Protokol uyumu:** Split beyanı (Kural 9) ✅ · Çok-seed raporlama: v3 ✅ / **V6 hattı ⚠️ tek tohum** (±0,02 bant, V6.8) · Ön-kayıtlı eşikler ✅ · Test bütçesi: v3 6/6 (kapalı) + **2 ön-kayıtlı mühür** (V6.4, V6.9)
+> **Denetim:** [LEAK_AUDIT.md](LEAK_AUDIT.md) — sızıntı taraması (5 kontrol temiz), **VinDr kontaminasyonu** ve **val seçim yanlılığının** ölçümü. Yayına girmeden okunmalı.
+> **Kaynak belgeler:** [ablation_matrix.md](ablation_matrix.md) · [experiments.md](experiments.md) · [LEAK_AUDIT.md](LEAK_AUDIT.md) · [literature.md](literature.md) · [roadmap.md](roadmap.md)
 
 ---
 
@@ -335,6 +336,19 @@ Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyord
 
 > ⚠️ **Bütçe beyanı:** v3'ün 6/6 test değerlendirmesi kapalıdır. V6, v3 testine dokunmadan val'de geliştirildi ve **tek bir ek, ön-kayıtlı** test mührüyle kapandı; bu, v3 sonucunu değiştirmez. VinDr değerlendirmesi görüntü düzeyindedir (hasta kimliği yok).
 
+#### V6.9 — mühürlü dürüst dış-değer (yayına girecek sayılar)
+
+V6.1–V6.8'de **her** seçim val'de yapıldı ve val'de raporlandı (kutu boyu için **296** resmî-metrik değerlendirmesi, füzyon için **19** nokta). 231 lezyonda Sens@0,25'in SE'si ≈ 0,030 olduğu için bu, yapısal bir iyimserliktir. V6.9 ön-kayıtlı tek atımla (betik kendi hash'ini doğrular; z-normalizasyon val'den dondurulur) kilitli protokolü dokunulmamış test bölmesinde koştu:
+
+| Ölçüm (test: 734 hasta / 229 lezyon) | Val (seçim) | **Test (mühür)** | Δ | %95 GA |
+| :--- | ---: | ---: | ---: | :--- |
+| rank_metric — 1. aşama | 0,9131 | **0,8842** | −0,029 | 0,8559–0,9089 |
+| rank_metric — füzyon (w=0,55) | 0,9174 | **0,8970** | −0,020 | 0,8769–0,9213 |
+| Hasta AUC — 1. aşama | 0,9678 | **0,9446** | −0,023 | 0,9237–0,9621 |
+| Hasta AUC — füzyon | 0,9793 | **0,9645** | −0,015 | 0,9491–0,9786 |
+
+⇒ Makalede **ana sayı test sütunudur**; val sütunu "seçilmiş" etiketiyle verilir. Mühür, val kolunu birebir yeniden ürettiği için fark kod hatası değil, genelleme farkıdır; ayrıca **bir tasarım hükmünü tersine çevirdi**: val'de "FROC için 2. aşamayı atla" denmişti, test'te füzyon 4 metrikten 3'ünde üstün.
+
 ---
 
 ## 5. Tartışma
@@ -370,6 +384,9 @@ Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyord
 15. **AUC–FROC ödünleşimi dış merkezde çözülemedi** (§4.8): görüntü etiketli kalibrasyon AUC'yi, bbox etiketli kalibrasyon FROC'u iyileştiriyor; çift-kafa ikisini aynı anda sağlayamıyor. FROC değerleri ayrıca aday-etiket proxy'sine (görüntü etiketi) duyarlıdır.
 16. **Kaynak/etiket confound'u yapısal (A3):** NODE21'de tüm pozitifler dört dış kaynaktan (chestxray14, padchest, jsrt, openi), tüm negatifler `node21_control` havuzundan gelir ⇒ **kaynak-içi AUC tanımsızdır**. Kaynak-pozitifleri vs ortak kontrol AUC'si dört kaynakta da **0,82–0,94** (makro **0,892**; TDA, ham CNN'in 0,664'ünü geçiyor) ⇒ etki tek kaynağa indirgenemez; ancak aynı kaynaktan kontrol olmadığı için confound **tamamen** dışlanamaz. Bu nedenle birincil genelleme kanıtı **kaynak-dışı (0,81)** ve **VinDr**'dir (0,63–0,66). Ayrıca kontrol ortalama skoru 0,555 ve özgüllük@0,5 = 0,358 ⇒ işletim noktası kaymıştır.
 17. **Persistence Landscape zarf doygunluğu maske sınırı artefaktıdır (A4):** E4.4'teki devasa tepeler (~110 tepe, 180–220 kalıcılık) damar ağacından değil, doku dışı siyah arka plan (0) ile doku (~240) arasındaki yapay segmentasyon maskesi basamağından kaynaklanır (kalıcılığı $\ge 50$ olan H1 döngülerinin %100'ü sınır geçişlidir; saf doku içi kalıcılık en fazla 7'dir). PL fonksiyonel üst zarfı bu sınır sinyali tarafından körleştirilirken, PI $(b, p)$ 2B uzayında artefaktı köşeye izole ederek doku sinyalini korur.
+18. **V6 hattında seçim yanlılığı ölçüldü (§4.10, V6.9):** Kutu boyu, füzyon ağırlığı ve TTA **296 + 19 + 12** değerlendirmeyle val'de seçildi. Dürüst test değerleri val'den **0,015–0,029** düşük (rank_metric 0,9131 → **0,8842**; füzyon AUC 0,9793 → **0,9645**). Düşüş ≈1 SE olup 0,05'lik ön-kayıtlı başarısızlık eşiğinin altındadır; val noktası yine de test'in %95 aralığının az üstünde kaldığı için val sayıları **"seçilmiş"** olarak etiketlenmelidir.
+19. **Ön-eğitim kontaminasyonu (VinDr):** X-ray vakıf omurgası (`resnet50-res512-all`) VinDr-CXR ile ön-eğitilmiştir ve değerlendirme görüntülerimizin **%100'ü** o ön-eğitim listesindedir. **Ölçüldü:** VinDr'yi hiç görmemiş `densenet121-res224-nih` ile aynı mertebe elde edildi (**0,6663** nOR vs 0,6414) ⇒ sayılar **şişmemiştir**; VinDr sonucu ~0,64–0,67'lik bir transfer tavanıdır. Yine de yayında **temiz omurga** satırı kullanılmalı, "zero-shot" ifadesi kontamine satırlar için kullanılmamalıdır ([LEAK_AUDIT.md](LEAK_AUDIT.md) §3, §8).
+20. **V6 hattı tek tohumludur:** Aynı protokolün iki bağımsız koşusu ana metriklerde ±0,02 kayıyor (V6.8). Etki büyüklükleri bu bantla birlikte okunmalıdır; v3 katmanının çok-seed raporlaması bu hattı kapsamaz.
 
 ---
 
@@ -378,8 +395,8 @@ Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyord
 Bu çalışma, göğüs röntgeninde yorumlanabilir topolojik temsillerin **neyi başardığını ve neyi başaramadığını** ön-kayıtlı bir protokolle ölçer. Bulgumuz iki yönlüdür:
 
 - ✅ **Başarı:** TDA temsilleri, güçlü ve **ince ayarlı** bir görüntü modeline bile istatistiksel olarak anlamlı tamamlayıcılık katar (test ROC-AUC **0,9516**, doğruluk **%89,4**; katkı **+0,0232**, CI>0).
-- ⚠️ **Sınır:** Bu katkı **global/arka plan topolojisinden** gelir, lokal nodül yapısından değil. **5-zon TDA temsili lokalize etmez**; lokalizasyon ancak ayrı bir aday üretici + lokal TDA katmanıyla (V6) sağlanır: test hasta AUC **0,9876** (global+lokal), FROC@2FP **0,642**. Yani "lezyon tespiti" iddiası **v3 katmanı** için değil, **V6 katmanı** için kurulabilir.
-- 🌐 **Kapsam sınırı (harici doğrulama):** Kazanç **kurum içi**dir. VinDr-CXR'de **saf zero-shot zirvesi V5.3 füzyonudur (0,6283)**; V6.5'in **0,6620**'si AdaBN tabanlı ***transductive*** bir sonuçtur (fiziksel hizalamanın AdaBN tabanına katkısı +0,018) ve saf dış doğrulama olarak okunamaz. Hedef merkezden 160 **etiketli** görüntüyle few-shot kalibrasyon **0,7243**'e ulaşır (***süpervizli***). Ancak aday düzeyi sıralama taşınmaz ve AUC–FROC ödünleşimi sürer ⇒ sistem, hedef-site kalibrasyonu gerektiren bir **kurum-içi risk triyaj** altyapısıdır.
+- ⚠️ **Sınır:** Bu katkı **global/arka plan topolojisinden** gelir, lokal nodül yapısından değil. **5-zon TDA temsili lokalize etmez**; lokalizasyon ancak ayrı bir aday üretici + lokal TDA katmanıyla (V6) sağlanır: test hasta AUC **0,9876** (global+lokal, V6.4 mührü), FROC@2FP **0,642**. Yani "lezyon tespiti" iddiası **v3 katmanı** için değil, **V6 katmanı** için kurulabilir. ⚠️ **V6 hattının val'de seçilen sayıları hafif iyimserdir:** aynı hattın ikinci, ön-kayıtlı mühründe (V6.9) dürüst değerler **0,8842** (rank_metric) ve **0,9645** (füzyon AUC) çıktı (§4.10).
+- 🌐 **Kapsam sınırı (harici doğrulama):** Kazanç **kurum içi**dir. VinDr-CXR'de **saf zero-shot zirvesi V5.3 füzyonudur (0,6283)**; V6.5'in **0,6620**'si AdaBN tabanlı ***transductive*** bir sonuçtur (fiziksel hizalamanın AdaBN tabanına katkısı +0,018) ve saf dış doğrulama olarak okunamaz. Hedef merkezden 160 **etiketli** görüntüyle few-shot kalibrasyon **0,7243**'e ulaşır (***süpervizli***). ⚠️ **V6.9 denetimi:** CXR vakıf omurgasıyla (`resnet50-res512-all`) üretilen VinDr sayıları **kontaminedir** (görüntülerin %100'ü ön-eğitim listesinde); etkisi ölçüldü ve **şişme bulunmadı** — temiz omurgayla (`densenet121-res224-nih`) **0,6663** nOR / 0,6369 top1. Yayında bu temiz satır kullanılmalıdır ([LEAK_AUDIT.md](LEAK_AUDIT.md) §3, §8). Aday düzeyi sıralama taşınmaz ve AUC–FROC ödünleşimi sürer ⇒ sistem, hedef-site kalibrasyonu gerektiren bir **kurum-içi risk triyaj** altyapısıdır.
 
 PL'nin neden çöktüğünü nicel olarak göstermek (üst-zarf doygunluğu; sınıf sinyali %1–2), alanın bir sonraki adımı için somut bir yön verir: **zarf bastırması değil, zarf-içi sinyal çıkarımı.**
 

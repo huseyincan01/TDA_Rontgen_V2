@@ -88,4 +88,11 @@ python submission_docker/smoke_test.py --n 3
 * `submission_config.json` içindeki `metric.validated_values`, **M5_foundation**
   (tam-veri değil) ile NODE21 val'de ölçülmüştür; tam-veri modeli NODE21'de
   değerlendirilemez (tüm veri eğitimde kullanıldı).
+* ⚠️ **Bu değerler "seçilmiş"tir:** kutu boyu/füzyon/TTA/tepe penceresi aynı val
+  bölmesinde **296 + 19 + 12** değerlendirmeyle seçildi. Aynı kilitli protokolün
+  ön-kayıtlı ikinci mührü (V6.9) dürüst dış-değeri verir: **rank_metric 0,8842**
+  (1. aşama) / **0,8970** (füzyon) · hasta AUC **0,9446** / **0,9645** — yani val
+  sayılarından **0,015–0,029** düşük. Konteynerin çıktısı değişmez (aynı kilitli
+  sözleşme); değişen, o sözleşmenin **beklenen performansıdır**.
+  Ayrıntı: [../LEAK_AUDIT.md](../LEAK_AUDIT.md) §5.
 * Zaman: GPU'da ~1–2 s/katman; **GPU'suz ~26 s/katman** (CPU varyantı da aynı).

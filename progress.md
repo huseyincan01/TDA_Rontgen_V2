@@ -352,3 +352,21 @@ v2.1 benchmark'ının ardından, **yayınlanabilir bir katkı** üretmek için v
 🎯 **Fiziksel imza teşhisi (A2):** pozitif hastalar arasında temsiller hangi cihazdan geldiğini neredeyse hastalığı tanıdığı kadar iyi kodluyor — TDA 0,850 · **ResNet18 0,949** · yalnız meta-veri 0,956. ⇒ Alan kaymasının mimarideki kaynağı **ölçülmüş** durumda; bkz. [ablation_matrix.md §7.3](ablation_matrix.md).
 
 Devam noktası ve öncelik sırası: **[roadmap.md §12](roadmap.md)** (Handoff).
+
+---
+
+## 8. Bu kayıttan sonra (V6.9 itibarıyla) — kayıt dondurulmuş, hükümler güncel
+
+Bu belge **v1 → v3** dönemini anlatır ve **değiştirilmez**. Sonraki hatların (V5.x → V6.9)
+sonuçları buradaki hiçbir sayıyı geçersiz kılmaz, ama iki noktayı **günceller**:
+
+| Bu belgedeki ifade | V6.9 sonrası doğru okuma |
+| :--- | :--- |
+| "Test bütçesi 6/6 tükendi, test seti kapalıdır" | v3 için **doğrudur**. V6 hattı v3 testine dokunmadı; kendi **iki** ön-kayıtlı, ayarsız mührünü kullandı (V6.4 → 0,9876 · **V6.9 → 0,8842 rank_metric / 0,9645 AUC**). |
+| "Harici doğrulama (VinDr) tamamlandı" ve V4/V5.3 sayıları | **Geçerlidir** — burada kullanılan modeller **ImageNet** tabanlıdır (xrv ağırlığı yok), kontaminasyon bu satırları etkilemez. Kontaminasyon sorunu **yalnız** sonradan gelen CXR vakıf omurgasına (V6.6.3/V6.6.5) aittir. |
+| VinDr'de "TDA şans düzeyinde" | **Geçerlidir** ve sonradan ölçüldü: temiz omurgayla VinDr AUC 0,6663 (V6.9c). |
+
+🔍 **Yayın öncesi zorunlu okuma:** [LEAK_AUDIT.md](LEAK_AUDIT.md) — sızıntı taraması
+(5 kontrol temiz), VinDr ön-eğitim kontaminasyonu (400/400 örtüşme, etkisi ölçüldü:
+şişme yok), **val seçim yanlılığı** (296 değerlendirme → dürüst test değeri 0,029 düşük)
+ve yayın öncesi 6 düzeltme.

@@ -1,5 +1,18 @@
 # VinDr-CXR Harici Doğrulama Verisi (V4)
 
+> 🔴 **ÖN-EĞİTİM ÇAKIŞMASI UYARISI (V6.9 denetimi).** Bu kohortun **400/400 görüntüsü
+> (%100)**, torchxrayvision `resnet50-res512-all` ağırlığının ön-eğitim listesinde
+> (`vinbigdata-train.csv.gz`, 15.000 görüntü) bulunmaktadır. Etiketlerimizi aldığımız
+> CSV, xrv'nin VinDr sınıfının varsayılan CSV'sinin **aynısıdır** (bkz.
+> `v6_5d_strict_no_adabn.py:178`). ⇒ Bu veri kümesiyle yapılan değerlendirmeler
+> **VinDr'yi görmemiş bir omurga** ile yapılmalıdır. Etkisi ölçüldü:
+> `densenet121-res224-nih` (temiz) **0,6663** nOR / 0,6369 top1 ≈ kontamine omurgalar
+> (0,6414 / 0,6479) ⇒ **şişme yok**, ama "zero-shot" etiketi kontamine satırlar için
+> kullanılamaz. Ayrıntı: [LEAK_AUDIT.md](../../LEAK_AUDIT.md) §3 ve §8.
+>
+> ✅ Temiz sayılan kullanımlar: v3/v4/V5.3 ve V6.5d — bunlar **ImageNet** tabanlı
+> `M5_centernet` / ResNet18 kullanır, xrv ağırlığı yoktur.
+
 Bu klasör, v3 (E0.6) mimarisinin **bağımsız dış veri** üzerinde sıfır-eğitim
 değerlendirmesinin girdilerini ve çıktılarını barındırır.
 

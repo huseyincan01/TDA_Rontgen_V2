@@ -14,7 +14,7 @@
 | **TDA katkısı** | İnce ayarlı güçlü baseline'a **+0.0232** [0.0132, 0.0338], p=0.0000 |
 | **Mekanizma** | PL üst-zarf çökmesi (E4.4) · tamamlayıcılık r ≈ 0.30 |
 | **Kapsam** | Hasta düzeyi sınıflandırma; **lokalizasyon yok** (E4.7) |
-| **Test bütçesi** | **6/6 TÜKENDİ** — v3 test seti kapalı |
+| **Test bütçesi** | **6/6 TÜKENDİ** — v3 test seti kapalı · ⚠️ **V6.9 güncellemesi:** sonraki hatlar v3 testine dokunmadı; kendi **iki ön-kayıtlı, ayarsız** mührünü kullandı (V6.4 → AUC 0,9876 · **V6.9 → rank_metric 0,8842 / AUC 0,9645**). Aynı bölmede üçüncü bir mühür sayılmaz |
 | **Kayıtlar** | [ablation_matrix.md](ablation_matrix.md) · [experiments.md](experiments.md) · [paper_draft.md](paper_draft.md) · `artifacts/figures/F1..F8` |
 
 ---
@@ -219,3 +219,24 @@ Adaylar, **d_fuzyon** ölçütüyle değerlendirilir:
 **❌ Güncelleme (V3.1 + V3.2 sonrası):** İlişkisel hipotez de **tutmadı** — skaler zon mesafeleri bilgi taşımıyor (V3.1), PI farkları bilgi taşıyor ama simetriye özgü değil ve füzyon kazancı gürültü mertebesinde (V3.2, +0.0066). ⇒ Önceden tanımlanmış TDA eklentilerinin hiçbiri füzyon ölçütünü geçemedi. Açık yönler: **mimari** (tüm görüntü / uçtan uca öğrenilen füzyon) veya **V4 harici doğrulama**.
 
 **✅ Kapanış (V4 sonrası):** Harici doğrulama, "yedeklilik" teşhisini **daha sert** biçimde doğruladı: VinDr'de TDA şans düzeyinde kalır (0,511–0,541), kilitli füzyon ResNet'in altına düşer ve **optimal ağırlık a=1,00** olur — yani dış dünyada TDA dalı **tamamen yedekli/zararlı**. Ölçek normalizasyonunun kurtarmaması, v4'ün "TDA dalını iyileştirmek yerine **tamamlayıcılık** ara" tezini bir kez daha haklı çıkarır ve v3'ün iç sonucunu **kapsam bakımından** sınırlar. Kalan tek açık yön: **uçtan uca öğrenilen / kalibre edilen** füzyon mimarileri.
+
+---
+
+## 7. V6.9 sonrası ek — v4 programının dış doğrulama hükmü
+
+Bu belgedeki "TDA dalı dış dünyada yedekli/zararlı" hükmü **ImageNet tabanlı** M5 için
+ölçüldü ve **geçerlidir**. Sonradan gelen CXR vakıf omurgası hattında (V6.6+) dış
+doğrulama yeniden ölçüldü ve iki **düzeltme** gerekti:
+
+1. 🔴 **Kontaminasyon:** esnet50-res512-all omurgası VinDr-CXR ile ön-eğitilmiştir;
+   değerlendirme görüntülerimizin **%100'ü** ön-eğitim listesindedir. Bu hattın VinDr
+   sayıları "zero-shot" olarak raporlanamaz.
+2. ✅ **Ama etkisi yok:** VinDr'yi hiç görmemiş omurgayla (densenet121-res224-nih) aynı
+   mertebe elde edildi (**0,6663** nOR / 0,6369 top1) ⇒ sayılar bir kontaminasyon
+   artefaktı değil, ~0,64–0,67'lik bir **transfer tavanı**dır. v4'ün "yedeklilik"
+   teşhisi bu tavanla tutarlıdır.
+
+Ayrıca v4'ün izlediği "val'de doğrula" disiplini için yeni ölçüm: V6 hattında val'de
+**296 + 19 + 12** seçim yapıldı ve dürüst test değeri val'den **0,029** düşük çıktı ⇒
+yeni hatlarda **seçim bütçesi beyanı** ve ayrı bir ön-kayıtlı mühür gerekir.
+Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §4, §5, §8.
