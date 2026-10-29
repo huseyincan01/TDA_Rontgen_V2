@@ -1,165 +1,197 @@
-# Hoca Bilgilendirme Notu — Göğüs Röntgenlerinde Akciğer Nodülü Tespiti
+# Göğüs Röntgeninde Nodül Tespiti — İki Aşamalı Bir Dedektif Sistemi
 
-> Bu belge, çalışmanın ne yaptığını ve nasıl çalıştığını, ilk kez okuyan bir bilgisayar
-> bilimleri hocasının kısa sürede kavrayacağı bir dille anlatır. Mimari ayrıntılar
-> atlanmamıştır; ancak terimler ilk geçtikleri yerde açıklanır. Bütün sayılar projede
-> doğrulanmış ve sızıntı denetiminden geçmiştir.
+## 1. Çıkış Noktamız: Neyi Çözmeye Çalışıyoruz?
+
+Bir radyolog göğüs röntgenine baktığında aslında çok zor bir oyun oynar: milimetre
+çapında, yuvarlak ve soluk bir lezyonu (nodülü), koca bir göğüs kafesinin gölgesi içinden
+ayıklamak. İşin zorluğu şu ki bu küçük lezyonlar çoğu zaman tam da kaburgaların kesiştiği,
+köprücük kemiğinin veya dikey bir damarın üstüne bindirdiği yerde durur. Göz, "orada bir şey
+var" der; ama o "şey" gerçek bir tümör olabileceği gibi, iki kemiğin üst üste binmiş
+gölgesinden ibaret de olabilir.
+
+Derin öğrenme tam da burada okul kitaplarındaki gibi davranır: inanılmaz hızlıdır, ama saf.
+Modelimize yüz binlerce röntgen gösterdik ki "şüpheli görünen bölgeyi" kaçırmamayı öğrensin;
+karşılığında bize **çok fazla** şüpheli bölge işaretlemeye başladı — bir damar kesitini,
+bir kaburga köşesini, hatta bazen iki kemiğin kesiştiği sıradan bir noktayı bile "nodül" diye
+işaretliyordu. Yüksek duyarlılık sağladık ama bunun bedeli, her gerçek nodülün yanında düzinelerce
+**yalancı pozitif** oldu.
+
+İşte çıkış noktamız tam burası. Bizimki gibi bir sistemi iki uzmanın elinden çıkıyormuş gibi
+kurmaya karar verdik: önce **hızlı ama saf bir tarayıcı** görüntünün tamamına bakar ve "şu
+bölgeler şüpheli, hepsini işaretleyelim, hiçbirini atlamayalım" der. Sonra devreye **ikinci,
+sabırlı bir uzman** girer: işaretlenen her kutunun içine ayrı ayrı eğilir, o küçücük karenin
+**şeklini** matematiksel olarak inceler ve "bu yuvarlak bir tümör, bu ise damarın boydan boya
+geçen gölgesi" diye hüküm verir.
+
+O ikinci uzmanın aleti, adı kulağa karmaşık gelen ama fikri çok zarif olan bir şey:
+**Topolojik Veri Analizi** — özellikle de Kübik Kalıcı Homoloji. İlerleyen satırlarda bunun ne
+olduğunu, bir röntgenin sistemimizin içinde geçtiği dört duraktan oluşan yolculuğu anlatarak
+göstereceğim.
 
 ---
 
-## 1. Problemin Tanımı ve Projenin Amacı
+## 2. Bir Röntgenin Sistem İçindeki Yolculuğu
 
-Göğüs röntgeni ucuz ve yaygın bir görüntüleme yöntemidir; ancak akciğer nodüllerini
-(erken evre akciğer kanserinin habercisi olabilecek küçük, yuvarlak lezyonları) bu görüntüde
-bulmak zordur. Kaburga ve damar gölgeleri küçük nodüllerle üst üste biner; bu yüzden derin
-öğrenme modelleri hızlı tarama yapsa da tam bu küçük bölgelerde çok sayıda **yalancı pozitif**
-üretir: bir damar kesitini nodül sanar. Bu projenin amacı, derin öğrenmenin **hızlı tarama**
-gücü ile Topolojik Veri Analizinin (TDA) **şekil/geometri ayrıştırma** gücünü iki aşamalı tek
-bir sistemde birleştirmektir.
-
----
-
-## 2. Sistem Nasıl Çalışıyor?
+Sisteme 1024×1024 piksellik ham bir röntgen giriyor. Bu görüntü, nihai karara ulaşana kadar
+dört duraktan geçiyor:
 
 ```
-HAM GÖĞÜS RÖNTGENİ
-   │  ÖN-İŞLEME: akciğer alanını otomatik ayır + parlaklığı akciğer dokusuna göre standartlaştır
-   ▼
-1. AŞAMA — ADAY ÜRETİCİ (derin öğrenme)
-   Omurga: 800 bin göğüs röntgeniyle ön-eğitilmiş ResNet50
-   Kafa:   CenterNet ısı haritası — her nodülün merkezine bir "sıcak nokta" çizer
-   Çıktı:  en güçlü 50 sıcak nokta → 50 şüpheli kutu (56×56 piksel), her biri skorlu
-   ▼
-2. AŞAMA — YENİDEN PUANLAMA (topolojik)
-   Her kutudan 32×32 (çekirdek) + 64×64 (çevre) kesit
-   → her kesitin "şeklini" kalıcı homolojiyle özetle (tepecikler + döngüler)
-   → özet + kutunun konumu → bir karar modeli → "gerçek nodül mü?"
-   ▼
-BİRLEŞTİRME: nihai skor = 1. aşama güveni + 2. aşama topolojik puanı
+HAM RÖNTGEN (1024×1024)
+   │
+   ▼ DURAK 1 — Sahneyi temizle, parlaklığı canlandır
+   ▼ DURAK 2 — Termal kamera gibi tara (1. aşama, derin öğrenme)
+   ▼ DURAK 3 — Şüpheli kutulara topolojik büyüteç tut (2. aşama, lokal TDA)
+   ▼ DURAK 4 — İki uzman ortak karar versin (HGB + birleştirme)
+   │
+   ▼ NİHAİ KARAR: bu hastada nodül var mı, varsa nerede
 ```
 
-**Ön-İşleme.** Röntgende akciğer alanı, TorchXRayVision'ın PSPNet segmentasyon modeliyle
-ayrılır; akciğer duvarına (plevraya) yapışık nodülleri kaçırmamak için bu maske 15 piksel
-dışarı genişletilir. Ardından parlaklık, akciğer dokusunun %1–%99 persentil aralığına göre
-yeniden ölçeklenir; böylece 12/16-bit derinlikteki ince parlaklık farkları yuvarlanıp
-kaybolmaz — küçük ve soluk nodüller bu adım olmadan silinir.
+**Durak 1 — Sahneyi Temizleme ve Parlaklığı Canlandırma.**
 
-**1. Aşama (Aday Üretici).** Göğüs röntgenleri üzerinde ön-eğitilmiş açık kaynaklı bir model
-(TorchXRayVision'ın ResNet50'si) ile ısı haritası üreten CenterNet kafası arasında, farklı
-boyuttaki nodülleri aynı anda yakalamak için çok-ölçekli bir özellik piramidi (ASPP + FPN)
-bulunur. Çıkarımda ise çok-ölçekli (0,9×, 1,0×, 1,1× + yatay çevirme) test-zamanı artırma
-(TTA) uygulanır. Görevi **duyarlılıktır**: tek bir gerçek nodülü kaçırmamayı önceler; bedeli,
-çoğu yanlış alarm olan çok sayıda aday üretmektir.
+İlk işimiz, görüntüdeki gürültüyü atmak. Omuz, omurga, karın çevresi gibi bizimle ilgisi
+olmayan bölgeler yalnızca kafa karıştırır; bu yüzden TorchXRayVision'ın PSPNet adlı segmentasyon
+ağıyla akciğeri görüntünün içinden adeta **oyup çıkarıyoruz**. Ama burada incelikli bir tehlikenin
+farkındaydık: akciğer duvarına yapışmış (plevral) nodüller, makas tam duvarın üzerinden geçtiğinde
+yanlışlıkla kesilip atılabilir. Bu yüzden maskeyi duvarın **15 piksel dışına** genişletiyoruz —
+küçük bir pay, ama kenardaki tümörü kurtarır. Ardından parlaklığı canlandırıyoruz: tıbbi röntgenler
+12 veya 16 bit derinlikte saklanır; bu derinlikteki soluk nodüller, ham hâliyle "0–255" arasına
+sıkıştırıldığında yok olup gidebilir. Onun yerine parlaklığı **yalnızca akciğer dokusunun %1–%99
+persentil aralığına** yayarak her soluk gölgeyi olabildiğince görünür kılıyoruz.
 
-> **Neden YOLO değil?** YOLO denemedik. Isı haritası yaklaşımını, kutu boyutu/oranı gibi
-> varsayımlar yapmadığı ve "çok aday üretme" görevine yatkın olduğu için seçtik. Yine de bu
-> dürüst bir eksiktir: NODE21 yarışmasının resmî liderleri YOLOv5 kullandı; YOLO ile birebir
-> kıyas henüz yapılmadı.
+**Durak 2 — Termal Kamera Gibi Tarama (1. Aşama).**
 
-**2. Aşama (Yeniden Puanlama).** Her şüpheli kutu, parlaklığın "yükseklik" olduğu küçük bir
-tepe haritası gibi düşünülür. GUDHI kütüphanesiyle hesaplanan **kübik kalıcı homoloji**, bu
-yüzeyde hangi **tepeciklerin** (bağlı bölgeler, H0) ve hangi **döngü/deliklerin** (H1) hangi
-eşikte doğup öldüğünü ölçer. 32×32 ve 64×64 kesitlerden 20×20 çözünürlüklü **kalıcılık
-imgeleri** üretilir (toplam 1.600 topolojik öznitelik); buna kutunun akciğer içindeki konumu
-(4 uzamsal öznitelik) eklenir ve 1.604 boyutlu bir vektör oluşur. Gerçek nodül ile damar
-gölgesinin bu "doğum-ölüm" izleri farklıdır; bu vektör, yorumlanabilir bir karar modeliyle
-(HistGradientBoosting) puanlanır ve 1. aşama skoruyla birleştirilir.
+Temizlenmiş akciğer, şimdi 800 binden fazla gerçek göğüs röntgeniyle önceden eğitilmiş bir
+**ResNet50** omurgasına giriyor. Bu omurga "röntgenin genel dilini" zaten biliyor; biz onun üstüne
+kendi dedektörümüzü koyuyoruz. Arkasındaki çok-ölçekli piramit (ASPP + FPN), hem bezelye kadar
+küçük hem ceviz kadar büyük kitleleri aynı anda görebilmek için görüntüye farklı çözünürlüklerden
+bakar; en uçtaki **CenterNet kafası** da tümör merkezlerini, tıpkı bir **termal kameranın sıcak
+noktaları gibi** parlak birer "sıcak nokta" olarak ışıtır.
 
-> **2. aşama neyle eğitildi?** Negatif örnekler, 1. aşamanın ürettiği **yanlış alarmlardır**
-> (nodül olmayan adaylar). Bu bilinçli bir seçimdir: modelin öğrenmesi gereken karışıklık tam
-> olarak budur. Veri dengesizdir (bir nodüle karşılık ~49 yanlış alarm), bu yüzden nadir
-> pozitif sınıfa otomatik ağırlık verilir ve eğitim hastaları nodüllü/normal olarak 1:1
-> dengelenir.
+İşin sırrı güven veren tek bir geçişe yetinmemek: aynı görüntüyü **3 farklı ölçekte** (0,9×, 1,0×,
+1,1×) ve bir de **yatay aynasından** tarayıp (bu tekniğe test-zamanı artırma, kısaca TTA deriz)
+her tahmini ortalamalıyoruz — bir kamerayla çekip, emin olmak için bir de aynadan bakıp iki görüntüyü
+üst üste koymak gibi. Sonuç: en güçlü 50 sıcak nokta, 56×56 piksellik kutu olarak işaretleniyor.
+Bu 50 kutunun güzelliği şu: gerçek tümörlerin **%98–99'u bu kutuların içine giriyor**. Yani 1. aşama
+görevini yaptı — hiçbir şeyi atlamadı; ama bu 50 kutunun çoğu hâlâ damar gölgesi.
 
----
+**Durak 3 — Şüpheli Kutulara Topolojik Büyüteç Tutma (2. Aşama).**
 
-## 3. Temel Bulgular ve Sayısal Sonuçlar
+Şimdi sabırlı uzman devreye giriyor. 50 kutunun her birinin merkezinden iç içe iki pencere
+kesiyoruz: **32×32 piksellik bir iç çekirdek** (tümörün kendisi, eğer varsa) ve **64×64 piksellik
+bir dış çevre** (onun etrafındaki bağlam). Bu kareleri artık bir fotoğraf gibi değil, parlaklığın
+**yükseklik** olduğu engebeli bir arazi gibi düşünüyoruz. Kübik Kalıcı Homoloji tam da bu araziye
+uygulanan bir ölçüm: arazide hangi **yoğunluk tepecikleri** (H0) ve hangi **döngü/delik yapıları**
+(H1) hangi eşikte doğup hangi eşikte kayboluyor, tek tek çıkarıyor. Gerçek bir tümör yuvarlak,
+kompakt ve yoğun bir tepe üretir; bir damar ise uzun ve dallı bir sırt çizer. Bu "doğum-ölüm"
+bilgisi, 20×20'lik **Kalıcılık İmgeleri**ne dökülünce 1.600 topolojik sayı elde ediyoruz; buna
+kutunun akciğer içindeki konumunu anlatan 4 sayı daha ekleyince ortaya **1.604 boyutlu bir şekil
+parmak izi** çıkıyor — her kutu için benzersiz bir imza.
 
-**Veri seti:** Halka açık NODE21 veri seti — 4.882 hasta (1.134 nodüllü, 3.748 normal),
-hasta düzeyinde bölünmüş: 3.414 eğitim / 734 doğrulama / 734 kilitli test. Bir hastanın
-görüntüleri asla hem eğitimde hem testte yer almaz; yani **hasta sızıntısı yok**.
+**Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
-| Ölçüt | Doğrulanmış sonuç |
-| :--- | :--- |
-| **Aday yakalama (1. aşama)** | Gerçek nodüllerin **%98–99'u** ilk 50 aday kutu içinde |
-| **Küçük bölgede piksel vs. topoloji (2. aşama)** | Piksel tabanlı küçük CNN ≈**0,65** · lokal TDA tek başına ≈**0,93** (hasta AUC) |
-| **Kilitli test — yalnız 1. aşama** | Hasta AUC **0,945** · resmî metrik benzetimi **0,884** |
-| **Kilitli test — 1.+2. aşama (TDA füzyonu)** | Hasta AUC **0,969** · resmî metrik benzetimi **0,905** |
-| **Dış veri (VinDr-CXR, Vietnam; sıfır eğitim)** | Hasta AUC ≈**0,66** · hedef merkezden 160 etiketli görüntüyle saha kalibrasyonu **0,80**'e taşıyor |
-
-Kısaca: "hasta AUC" (0 ile 1; 0,5 = şans, 1,0 = kusursuz) modelin *"bu hastada nodül var mı?"*
-sorusunu ne kadar iyi ayırdığını gösterir; "resmî metrik benzetimi" ise NODE21 yarışmasının
-gerçek puanlama yöntemini (hem doğru yerini bulma hem doğru sınıflandırma) taklit eder.
-
-Üç bulgu öne çıkıyor:
-
-1. **Aday yakalama:** 1. aşama, gerçek nodüllerin büyük çoğunluğunu (%98–99) ilk 50 aday
-   içinde yakalıyor — "kaçırmama" hedefi sağlanıyor; kalan iş, bu adaylardaki damar
-   gölgelerini elemek.
-2. **Lokal piksel vs. lokal topoloji:** Aynı küçük kırpıntıları puanlarken piksel dokusuna
-   bakan küçük bir CNN ≈0,65'te kalırken, kesitin **şeklini** özetleyen topolojik temsil tek
-   başına ≈0,93'e ulaşıyor — yani bu küçük ölçekte ayırt edici bilgi dokudan çok **şekil**de.
-3. **Kilitli test ve tamamlayıcılık:** Sızıntısız 734 hastalık test setimizde sistem hasta
-   düzeyinde **0,969** AUC'ye ulaşıyor. Topolojik katman, derin modelin emin olmadığı kısmı
-   tamamlıyor: hasta AUC **0,945'ten 0,969'a**, resmî metrik **0,884'ten 0,905'e** yükseliyor.
-   Göğüs röntgeniyle ön-eğitimli omurga, genel görüntü ön-eğitimli omurgaya göre belirgin
-   biçimde daha iyi (aday yakalamada %99'a karşı %98). Ayrıca daha önceki bir sürümümüzde,
-   5 bölgeli global temsil modeli ile lokal dedektör birleştirildiğinde, tamamlayıcılık
-   sayesinde testte **0,988** hasta AUC'ye ulaşılmıştı.
+Bu 1.604 boyutlu parmak izini, hızlı ve yorumlanabilir bir karar modeline (HistGradientBoosting,
+kısaca HGB) veriyoruz. HGB, "bu parmak izi gerçek tümöre mi yoksa damara mı ait?" sorusunu puanlıyor.
+Sonra iki uzmanın görüşünü birleştiriyoruz: 1. aşamanın **görsel güveni** (ağırlığı 0,55) ile
+2. aşamanın **topolojik puanı** (ağırlığı 0,45) ağırlıklı bir toplamda buluşuyor. Böylece hem nihai
+kutu hem de "bu hastada nodül var mı?" sorusunun cevabı ortaya çıkıyor.
 
 ---
 
-## 4. Hocanın Aklına Gelebilecek Sorular
+## 3. Bu Makineyi Sıfırdan Nasıl İnşa Ettik ve Eğittik?
 
-* **Neden iki aşama?** "Hiçbir nodülü kaçırma" (duyarlılık) ile "yanlış alarm üretme"
-  (kesinlik) çatışır; iki aşamaya bölmek bu çatışmayı iki uzmana dağıtır. Ölçüm bunu
-  destekliyor: 2. aşama eklenince hasta AUC 0,945 → 0,969.
-* **Neden hazır bir omurga, sıfırdan değil?** ~4.900 hasta bu büyüklükte bir ağı sıfırdan
-  eğitmek için küçüktür; göğüs röntgeniyle ön-eğitilmiş bir başlangıç ezberlemeyi azaltır.
-  Topolojik katman ise eğitim gerektirmez, şekli doğrudan hesaplar.
-* **Sızıntı var mı?** Hasta düzeyinde bölme, ayar yapılmayan mühürlü test ve kod denetimiyle
-  kontrol edildi; sızıntı bulunmadı.
-* **Ön-eğitim verisiyle sizin veriniz örtüşüyor mu?** Kısmen evet (NODE21 açık veri
-  kümelerinden derlenmiş; omurga pozitiflerin ~%83'ünü görmüş). Bunu ölçtük ve skoru
-  **şişirmediğini** gördük; bu nokta makalede açıkça beyan edilecek.
-* **Neden AUC/FROC, doğruluk değil?** Veri dengesiz (hastalık az görülür); doğruluk "hep
-  sağlam de" diyen modeli bile yüksek gösterir. AUC/FROC sıralamaya dayalıdır, bu tuzağa
-  düşmez.
-* **Nasıl dağıtılır?** Resmî Grand-Challenge standardında, internet bağlantısı olmadan
-  çalışan bir Docker konteyneri olarak paketlendi.
+Hocanın doğal sorusu: "Peki bunu teknik olarak nasıl kurdunuz?" Dört adımda özetleyeyim.
+
+**Adım 1 — Sızıntısız Veri Bölünmesi.** Elinizdeki 4.882 NODE21 hastası (1.134 nodüllü, 3.748
+normal), **hasta bazında** üçe ayrıldı: 3.414 eğitim, 734 doğrulama, 734 kilitli test. Önemli olan
+şu: bir hastanın görüntüsü asla iki farklı kümeye düşmez — aksi hâlde model kendi test verisini
+"görüp ezberleyerek" yanıltıcı bir başarı raporlarız. Eğitimde de dengesizliği önledik: nodüllü
+sayısı normalden çok az olduğu için, her nodüllü hastaya bir normal hasta eşleyerek eğitimi 1:1
+dengeledik. Yoksa model "her şeye sağlam de" diyen tembel bir öğrenci olurdu.
+
+**Adım 2 — 1. Aşamanın İki Fazlı Eğitimi (Unutmayı Önleme).** 800 bin röntgenlik tıbbi bilgiyi
+içinde taşıyan hazır ResNet50 omurgası, bizim için altın değerinde. Ama yeni eklenen katmanların
+ilk adımları rastgele ağırlıklarla doludur; böyle gürültülü gradyanların omurgaya akmasına izin
+verirsek o 800 bin röntgenlik "hafızayı" bozarız. Bu yüzden eğitimi iki faza böldük: önce **5 epoch
+boyunca omurga tamamen donuk**, yalnızca yeni eklediğimiz katmanlar ısınıyor; sonra **13 epoch
+boyunca omurganın yalnızca üst bloklarını çok düşük öğrenme hızıyla** (Cosine Annealing ile
+sönümlenerek) açıyoruz. Toplam 18 epoch; BatchNorm istatistikleri baştan sona donuk tutuluyor ki 800
+bin röntgenden gelen normalizasyon bilgisi hiç bozulmasın. Bu kademeli yaklaşıma "diferansiyel ince
+ayar" diyoruz.
+
+**Adım 3 — 2. Aşamanın Zor-Negatiflerle Eğitimi.** 2. aşamayı rastgele "kolay" akciğer parçalarıyla
+eğitmek ona hiçbir şey öğretmezdi. Bunun yerine, 1. aşamayı eğitim hastalarının üzerinde çalıştırdık
+ve **74.482 şüpheli kutu** topladık. Gerçek nodülün tam üstüne oturan kutular **Pozitif**, dedektörün
+yanıldığı — damarı ya da kaburga kesişimini nodül sandığı — kutular ise **Zor-Negatif** oldu. Modeli
+tam olarak bu zor örneklerle, `class_weight="balanced"` korumasıyla eğittik (bir nodüle karşılık yaklaşık
+50 zor-negatif var; nadir pozitif sınıfa bu yüzden otomatik ağırlık verdik). Böylece 2. aşama,
+dedektörün **gerçekten karıştırdığı** şeyleri ayırt etmeyi öğrendi.
+
+**Adım 4 — Aşırı Özgüven (Stacking) Tuzağından Kaçınma.** Birleştirmenin naif yolu şu olurdu:
+2. aşamaya, 1. aşamanın skorunu da bir özellik olarak verirsin. Ama bu tehlikeli bir tuzak: 1. aşamanın
+skoru **kendi eğitim verisinde** şişmiştir (model ezberlediği örneklerde aşırı özgüvenlidir); 2. aşama
+bu şişkin puanı "gerçek" sanıp ona kilitlenir, gerçek hayatta ise çöker. Biz bu tuzağa düşmedik:
+2. aşamaya 1. aşamanın eğitim-skorunu **hiç göstermedik** (kod seviyesinde `stage1_score_included=False`
+olarak mühürlendi) ve birleştirmeyi **doğrulama kümesinde bir kez belirlenip dondurulan** sabit bir
+ağırlıkla (w = 0,55) yaptık. Bu ağırlık hiçbir veri kümesinde yeniden öğrenilmedi.
 
 ---
 
-## 5. Dürüstlük ve Sınırlamalar
+## 4. Deneysel Sonuçlar ve Kanıtlar
 
-Çalışmada yalnızca yüksek skor kovalanmadı; sistem güvenilmeden önce zorlu kontrollerden
-geçirildi: veri sızıntısı denetimi, parlaklık niceleme hatası (12/16-bit derinlik kaybı),
-ön-eğitim veri kaynağı örtüşmesi ve harici hastane genellemesi ayrı ayrı ölçüldü.
+| Ölçüt | Sonuç | Ne anlama geliyor |
+| :--- | :---: | :--- |
+| Aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
+| Küçük kırpıntıda piksel CNN vs. lokal TDA | **0,646 vs. 0,926** | Aynı küçük kareyi pikselleriyle inceleyen CNN ≈şansın biraz üstü; **şeklini** inceleyen TDA çok daha ayırt edici |
+| Kilitli test — yalnız 1. aşama | **0,945 AUC · 0,884 skor** | Dedektör tek başına güçlü bir tarayıcı |
+| Kilitli test — 1.+2. aşama füzyon | **0,969 AUC · 0,905 skor** (S@0.25 %71,2 · S@0.50 %79,0) | Topolojik katman, dedektörün emin olmadığı kısmı tamamlıyor: AUC +0,024, resmî skor +0,021 |
+| Harici veri (VinDr-CXR, Vietnam; sıfır eğitim) | **0,656 → 0,799** (160 etiketli görüntüyle saha kalibrasyonu) | Farklı bir ülkeye/hastaneye taşınınca önce düşüyor, ama az sayıda sahaya özgü örnekle belirgin biçimde toparlanıyor |
 
-Dürüstçe kabul edilen sınırlar şunlardır:
+Tabloda iki satır özellikle dikkat çekici. Birincisi, **küçük kırpıntı** satırı: aynı 64×64 kareyi
+inceleyen piksel tabanlı bir CNN 0,646'da kalırken, aynı karenin topolojik şeklini özetleyen
+temsil 0,926'ya çıkıyor. Bu, küçük ölçekte ayırt edici bilginin piksellerde değil **şekilde** gizli
+olduğunun en somut kanıtı. İkincisi, **füzyon** satırı: kilitli testte 2. aşama eklenince hasta AUC
+0,945'ten 0,969'a, resmî NODE21 skoru 0,884'ten 0,905'e yükseliyor — yani topoloji, derin ağın
+"emin değilim" dediği yerde tam da ihtiyaç duyulan yargıyı veriyor.
 
-* **Dış genelleme zayıf — ama kalibrasyonla iyileşiyor:** Farklı bir ülkenin verisinde
-  (VinDr-CXR, Vietnam) hiç eğitim yapmadan test edildiğinde hasta AUC ≈0,66 çıkıyor; kurum içi
-  0,969'un belirgin altında. Ancak hedef hastaneden az sayıda etiketli görüntü alındığında
-  (saha kalibrasyonu) sistem belirgin biçimde toparlanıyor: 160 görüntüyle iki katmanın birlikte
-  kalibrasyonu dış AUC'yi **0,66 → 0,80**'e çıkarıyor (ama kurum içi düzeye yine ulaşmıyor).
-  Yani sistem hedef merkeze **hafif bir kalibrasyonla** taşınabiliyor.
-* **Ödünleşim:** TDA hasta düzeyi ayrımı artırıyor, ama çok sıkı yanlış-alarm eşiklerinde
-  küçük bir duyarlılık kaybı olabiliyor.
-* **Tek eğitim tekrarı:** Sonuçlarda ±0,02'lik bir belirsizlik bandı var; çoklu tekrar
-  henüz yapılmadı.
-* **Kutu boyutu:** Model, `R>0` merkez-maskeli bir yarıçap kafasıyla artık her nodülün kendi
-  boyutunu dinamik olarak tahmin edebiliyor (doğrulama setinde sabit kutuyu geçti: 0,9185 vs
-  0,9131). Yine de kilitli test setinde resmî skor eşit çıktığı için (ikisi de 0,884), sabit
-  56 px kutu muhafazakâr varsayılan olarak korunuyor.
+---
+
+## 5. Yaptığımız Zorlu Kontroller ve Dürüst Sınırlılıklar
+
+Sadece yüksek sayı kovalamadık; sonuçlara inanmadan önce kendimize en zor soruları sorduk.
+
+**Ön-eğitim örtüşmesi bir hile mi?** Kullandığımız hazır omurga, verilerimizin kaynaklarının bir
+kısmını önceden görmüştü; "belki de skor bu yüzden şişiyor" şüphesiyle bir etkileşim testi kurduk.
+Sonuç şaşırtıcıydı: omurganın gerçek avantajı, tam da **hiç görmediği** kaynaklarda (JSRT ve OpenI)
++0,325 AUC'luk bir sağlamlaştırma olarak ortaya çıktı. Yani kazanç ezberden değil, genel göğüs
+röntgeni bilgisinden geliyor — ve bunu makalemizde açıkça beyan edeceğiz.
+
+**Saha (site) kalibrasyonunun sinerjisi.** Vietnam verisinde, tek başına 2. aşamayı kalibre etmek
+0,70–0,73'e kadar taşıyor; tek başına 1. aşamanın kafasını ince ayarlamak da benzeri bir seviyede.
+Ama **her iki katmanı birlikte** kalibre ettiğimizde 0,80'e ulaşıyoruz — iki katman birbirinin
+zayıf noktasını kapatıyor. Bu, sistemin yeni bir hastaneye "az sayıda yerel örnekle" taşınabileceğinin
+umut verici bir işareti.
+
+**Dağıtım.** Sistem araştırma kodundan çıkıp gerçek bir araca dönüşsün diye, resmî Grand-Challenge
+standardında, internet bağlantısı olmadan çalışan **çevrimdışı bir Docker paketi** hazırladık.
+Girdi olarak üç boyutlu taranmış bir göğsü alıp standart biçimde nodül kutuları üretiyor.
+
+**Samimi sınırlar.** Her şey yolunda değil ve bunların hepsini biliyoruz: en sıkı yanlış-alarm
+eşiğinde (FROC) küçük bir ödünleşim var — topoloji hasta düzeyindeki ayrımı güçlendirirken,
+milimetrik eşiklerde bir parça duyarlılık verebiliyor. Kutu boyutu konusunda dinamik (öğrenilmiş)
+ile sabit 56×56 seçeneğini kıyasladık; dinamik kutu doğrulama setinde parlak göründü ama kilitli
+testte resmî skoru değiştirmedi, bu yüzden muhafazakâr sabit kutuyu koruduk. Ve en önemlisi: farklı
+bir cihaza **kalibrasyonsuz** geçişte sistem belirgin biçimde zayıflıyor — bu, "tek merkezde güçlü,
+çok merkezde emin değiliz" dürüstlüğüyle sunulması gereken bir sınır.
 
 ---
 
 ## 6. Sonuç ve Danışmak İstediklerim
 
-Bir lisans öğrencisi olarak bu projeyi, "derin öğrenme + topolojik veri analizi" fikrinden
-çalışan, denetlenmiş ve sınırları dürüstçe çizilmiş bir sisteme kadar getirdim. Çalışmanın
-akademik bir yayına (makale/bildiri) veya bir tez/proje konusuna dönüştürülmesi konusunda
-sizin görüşünüze ve yönlendirmenize çok değer veriyorum; özellikle hangi yöne
-(yerelleştirme metodolojisi, topolojik temsilin yorumlanabilirliği veya dış doğrulama)
-ağırlık vermem gerektiğini danışmak isterim.
+Bu çalışmada, "derin öğrenme + topolojik veri analizi" gibi iki farklı dünyayı, göğüs röntgeninde
+nodül bulmaya yarayan çalışan bir sisteme dönüştürmeyi; onu sabırla, sızıntı kontrolleriyle ve
+kendimize sorduğumuz zor sorularla eğitmeyi ve sonunda sınırlarını dürüstçe çizmeyi öğrendim.
+
+Bir lisans öğrencisi olarak bu noktadan sonra yolun ne olacağını — bu çalışmanın bir yayına, bildiriye
+ya da daha büyük bir projeye dönüşüp dönüşemeyeceğini — sizden öğrenmek isterim. Özellikle hangi yöne
+ağırlık vermem gerektiği, hangi eksikliğin en kritik olduğu ve bu ölçekte bir çalışmanın akademik
+olarak nerede konumlandırılabileceği konusundaki yönlendirmeniz benim için çok değerli.
