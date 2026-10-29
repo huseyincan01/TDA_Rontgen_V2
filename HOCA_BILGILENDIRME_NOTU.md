@@ -113,7 +113,7 @@ gerçek puanlama yöntemini (hem doğru yerini bulma hem doğru sınıflandırma
 
 * **Neden iki aşama?** "Hiçbir nodülü kaçırma" (duyarlılık) ile "yanlış alarm üretme"
   (kesinlik) çatışır; iki aşamaya bölmek bu çatışmayı iki uzmana dağıtır. Ölçüm bunu
-  destekliyor: 2. aşama eklenince hasta AUC 0,945 → 0,965.
+  destekliyor: 2. aşama eklenince hasta AUC 0,945 → 0,969.
 * **Neden hazır bir omurga, sıfırdan değil?** ~4.900 hasta bu büyüklükte bir ağı sıfırdan
   eğitmek için küçüktür; göğüs röntgeniyle ön-eğitilmiş bir başlangıç ezberlemeyi azaltır.
   Topolojik katman ise eğitim gerektirmez, şekli doğrudan hesaplar.
@@ -139,7 +139,7 @@ geçirildi: veri sızıntısı denetimi, parlaklık niceleme hatası (12/16-bit 
 Dürüstçe kabul edilen sınırlar şunlardır:
 
 * **Dış genelleme zayıf:** Farklı bir ülkenin verisinde (VinDr-CXR, Vietnam) hiç eğitim
-  yapmadan test edildiğinde hasta AUC ≈0,65–0,66 çıkıyor; kurum içi 0,965'in belirgin
+  yapmadan test edildiğinde hasta AUC ≈0,65–0,66 çıkıyor; kurum içi 0,969'un belirgin
   altında. Sistem farklı cihazlara **kalibrasyonsuz** taşınmıyor.
 * **Ödünleşim:** TDA hasta düzeyi ayrımı artırıyor, ama çok sıkı yanlış-alarm eşiklerinde
   küçük bir duyarlılık kaybı olabiliyor.
