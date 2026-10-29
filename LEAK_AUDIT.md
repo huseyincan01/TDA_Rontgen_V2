@@ -21,7 +21,7 @@
 | Klasik sızıntı (hasta/etiket/test) | ✅ **Bulunamadı.** Beş bağımsız kontrol temiz. |
 | Raporlanan sayıların dürüstlüğü | 🟠 **Kısmen iyimser.** Val'de 296 değerlendirme yapılmış; dürüst dış-değer **rank_metric 0,8842** (val'de 0,9131). |
 | Dış doğrulama (VinDr) | 🔴 Kontamine *ama* **ölçülebilir şişme yok**: 400/400 görüntü ön-eğitim listesinde; temiz omurgayla fark gürültü bandında (Δ top1 +0,004). "Zero-shot" etiketi yine de kullanılamaz — sayı **temiz omurgayla** raporlanmalı (bkz. §9) |
-| **NODE21 iç kaynak örtüşmesi** | 🟠 **Pozitiflerin %82,9'u** omuranın gördüğü korpuslardan (NIH/PadChest). **Kutular yeni** ⇒ lokalizasyon sızıntıya kapalı; kaynak-ayrıştırmalı ölçümde fark ~1 SE ve cihaz farkıyla karışık (AUC 0,970 vs 0,933). Beyan edilmeli (§9) |
+| **NODE21 iç kaynak örtüşmesi** | 🟠→✅ **Örtüşme gerçek, şişme yok.** Pozitiflerin %82,9'u omurganın gördüğü korpuslardan (NIH/PadChest) ama **kutular yeni** ⇒ lokalizasyon sızıntıya kapalı. Etkileşim testi **ters yönde**: FND−M5 farkı görülmeyen kaynaklarda daha büyük (**−0,200**, %95 GA 0'ı dışlıyor) ⇒ §9, §10 (🔒 kapalı) |
 | Test bölmesi | 🟡 **İki kez görüldü** (V6.4 mührü + V6.9 mührü). Beyan edildi; V6.4 sonrası hiçbir karar test'e bakılarak alınmadı. |
 | Tohum çeşitliliği | 🟡 **Tek tohum.** Aynı protokol ±0,02 kayıyor (V6.8'de ölçüldü). |
 
@@ -180,7 +180,7 @@ bir "mühür" artık mühür sayılmaz.
 | 4 | Tüm ana sayılara **%95 GA** (bootstrap) | 229–231 lezyonla nokta tahmini yetersiz |
 | 5 | **Tek tohum** sınırının açık yazılması (±0,02 bant) | V6.8'de ölçüldü |
 | 6 | Tuzak B beyanı (LR füzyonu in-sample s1 ile uydurulmuştu) | Zaten belgeli; makaleye taşınmalı |
-| 7 | **Kaynak örtüşmesi beyanı** (§9): pozitiflerin %82,9'u NIH/PadChest'ten; kutular yeni; kaynak-ayrıştırmalı tablo eklenmeli | Hakem bunu mutlaka sorar; "sıfır sızıntı" iddiası kurulamaz |
+| 7 | **Kaynak örtüşmesi beyanı** (§9): pozitiflerin %82,9'u NIH/PadChest'ten; kutular yeni; kaynak-ayrıştırmalı **ve** etkileşim tablosu eklenmeli | Hakem bunu mutlaka sorar; "sıfır sızıntı" iddiası kurulamaz |
 
 **Uygulama durumu (Ekim 2026):** #2, #3, #4, #5, #6, #7 → **belgelerde uygulandı**
 (`experiments.md §13`, `ablation_matrix.md §17`, `STORY.md §12.6`, `paper_draft.md §4.10 + §6`,
@@ -321,9 +321,91 @@ S@0,25 0,7448 → 0,6667 (Δ −0,078).
 **Kayıt:** `artifacts/v6_two_stage/v6_9d_source_overlap.json` ·
 [`v6_9d_source_overlap.py`](pipelines/v6_two_stage/v6_9d_source_overlap.py)
 
+### 9.6 Belirleyici test — omurga × kaynak ETKİLEŞİMİ (V6.9e)
+
+V6.9d'deki "görülen > görülmeyen" farkı **iki şeyle karışıktı**: kaynakların cihaz/geometri
+farkı **ve** modelin kendisi. Ayrıştırmak için iki model **aynı protokolde** (heat-map TTA)
+karşılaştırıldı:
+
+* **M5** = ImageNet ResNet18 — hiç CXR görmemiş ⇒ **"temiz" omurga**
+* **FND** = `resnet50-res512-vin` — pozitiflerin %82,9'unu görmüş ⇒ **"kontamine" omurga**
+
+Ölçülen: her kaynak grubunda hasta düzeyi AUC ve **Δ = FND − M5**. Kritik istatistik
+**etkileşim** = Δ(görülen) − Δ(görülmeyen).
+
+**Üretim hattı doğrulandı:** M5_heatTTA recall@K10/K20/K50 = 0,9091 / 0,9654 / 0,9784 ve
+FND_heatTTA = 0,9481 / 0,9827 / 0,9913 — yayımlanmış V6.6.2 değerlerinin **aynısı**.
+
+| Val (734 hasta; görülen 138 poz/192 lezyon, görülmeyen 34 poz/39 lezyon, 562 kontrol) | M5 (temiz) | FND (kontamine) | **Δ = FND − M5** |
+| :--- | ---: | ---: | ---: |
+| **Görülen** kaynaklar (chestxray14+padchest) | 0,8386 | 0,9636 | **+0,1249** |
+| **Görülmeyen** kaynaklar (jsrt+openi) | 0,6176 | 0,9427 | **+0,3251** |
+| **ETKİLEŞİM** | | | **−0,2002** (95% GA −0,299 … −0,109; P(>0) = **0,000**) |
+
+Aynı tablo top3 için −0,193 ve noisy-OR için −0,202 — üç toplama kuralında da aynı.
+
+**Hüküm — örtüşme avantaj sağlıyor mu? HAYIR, ters yönde işaret:**
+
+1. 🔴→✅ **Etkileşim tamamen negatif.** FND'nin ImageNet'e göre avantajı, omurganın **hiç
+   görmediği** kaynaklarda **2,6 kat daha büyük** (+0,325 vs +0,125). Yani avantaj
+   "hatırlama"dan değil, **genel CXR temsil kalitesinden** geliyor.
+2. 🔑 **V6.9d'nin farkını asıl açıklayan şey kaynak zorluğu:** ImageNet omurgası JSRT/OpenI'de
+   çöküyor (0,618), CXR omurgası çökmüyor (0,943). Görülen↔görülmeyen açığı M5'te **+0,221**,
+   FND'de yalnız **+0,021** ⇒ **CXR ön-eğitimi kaynak-duyarlılığını ~0,20 AUC azaltıyor.**
+   Bu, örtüşmenin *şişirdiği* değil, ön-eğitimin *sağlamlaştırdığı* bir tablodur.
+3. ⚠️ **Sınırlar:** (i) yalnız **val** kullanıldı — test mühürlü, üçüncü kullanım yapılmaz;
+   (ii) M5 ResNet18 ≈ 11M, FND ResNet50 ≈ 23M ⇒ **kapasite karıştırıcısı** var; (iii)
+   görülmeyen grupta 34 hasta/39 lezyon.
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9e_backbone_interaction.json` ·
+[`v6_9e_backbone_interaction.py`](pipelines/v6_two_stage/v6_9e_backbone_interaction.py)
+
 ---
 
-## 10. Kayıtlar
+## 10. 🔒 KAPANIŞ — ön-eğitim örtüşmesi konusu mühürlendi
+
+**Soru:** Ön-eğitim korpusu NODE21'in kaynaklarıyla örtüştüğü için skorlarımız şişmiş olabilir mi?
+**Cevap:** Örtüşme **gerçek**, ama **ölçülebilir bir şişme yok**; belirleyici test **ters yönde**.
+
+| Ölçüm | Ne test edildi | Sonuç |
+| :--- | :--- | :--- |
+| **V6.9c** | Dış örtüşme (VinDr): 3 omurga, yalnız korpus değişti | Fark gürültü bandında (top1 +0,004; nOR'da temiz omurga **daha iyi**) |
+| **V6.9d** | İç örtüşme: kilitli hattın görülen/görülmeyen kaynaklarda performansı | 0,9698 vs 0,9332 AUC (Δ −0,037, ≈1 SE, cihaz farkıyla karışık) |
+| **V6.9e** | **Etkileşim:** FND−M5 farkı görülen vs görülmeyen kaynaklarda | **−0,200** [−0,299, −0,109], P(>0)=0 ⇒ avantaj görülmeyen kaynaklarda **daha büyük** |
+
+**Mühürlü kararlar (yayın metni bunları kullanacak):**
+
+1. **İddia edilmeyecek:** *"Sonuçlar ön-eğitim örtüşmesinden tamamen arınıktır"* — kanıtlanamaz.
+2. **İddia edilecek:** *"Örtüşme vardır ve beyan edilmiştir; ancak kaynak-ayrıştırmalı ve
+   etkileşim ölçümleri, skorların örtüşme kaynaklı şiştiğine dair kanıt göstermemiştir
+   (etkileşim −0,200, %95 GA 0'ı dışlıyor, ters yönde)."*
+3. **Raporlanacak tablolar:** §9.3 (kaynak-ayrıştırmalı) + §9.6 (etkileşim) birlikte.
+4. **VinDr:** sayı **temiz omurgayla** (0,6663) verilecek; "zero-shot" etiketi kontamine
+   satırlarda kullanılmayacak.
+5. **Yarışma/sıralama:** gizli test setinin bileşimi doğrulanamadığı için **"sıfır sızıntı
+   garantisi"** verilmeyecek.
+
+**Bu mühür neyi kapatıyor?** Örtüşme konusunda **yeni ölçüm taleplerini** kapatıyor: mevcut
+veriyle elde edilebilecek üç bağımsız test yapıldı ve üçü de aynı yönü gösteriyor.
+
+**Mührü yeniden açacak tek şey** (exit criteria): (a) yeni ve **gerçekten dış** bir veri
+kümesi, ya da (b) korpusu NODE21 kaynaklarıyla **kanıtlanabilir biçimde kesişmeyen** bir
+omurga (ör. yalnız MIMIC-CH ile eğitilmiş DenseNet) ile aynı deneyin tekrarı.
+
+**Mühür kaydı (SHA-256):**
+
+| Dosya | SHA-256 |
+| :--- | :--- |
+| `pipelines/v6_two_stage/v6_9e_backbone_interaction.py` | `0baac12dc271e34197e4c686a241ce1d60d0901a0e68297d4b6d819f07a3a172` |
+| `artifacts/v6_two_stage/v6_9e_backbone_interaction.json` | `2cb66f1f5e003c7c10b77b77355c538d2813a518c82e74eda5e28ddaffc4c2e9` |
+| `artifacts/v6_two_stage/v6_9d_source_overlap.json` | `7c427d9208567ac8522a36c63e73eee55133f2b91c70dcad70a6c19e03b2adf5` |
+| `artifacts/v6_two_stage/v6_9c_contamination.json` | `cbd3950236e48111f8783f01ddb0f37a6300a3c06b5d7f7495b53bf2e63b9746` |
+
+**Mühür tarihi:** Ekim 2026 · **Durum:** 🔒 KAPALI
+
+---
+
+## 11. Kayıtlar
 
 | Dosya | İçerik |
 | :--- | :--- |

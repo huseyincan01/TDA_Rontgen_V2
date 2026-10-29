@@ -1,0 +1,99 @@
+{
+  "experiment": "V6.9e-backbone-source-interaction",
+  "question": "FND (CXR ön-eğitimli) ile M5 (ImageNet) arasındaki fark, omurganın gördüğü kaynaklarda daha mı büyük? (etkileşim testi)",
+  "split": "val (test mühürlü — üçüncü kullanım yapılmaz)",
+  "models": {
+    "M5": "ImageNet ResNet18 CenterNet (CXR görmemiş)",
+    "FND": "xrv resnet50-res512-all (pc-nih-rsna-siim-vin)"
+  },
+  "protocol": "heat-map TTA (çok ölçek + yatay flip) — iki model için de aynı yol",
+  "pipeline_check_recall_at_K": {
+    "M5_heatTTA": {
+      "K10": 0.9091,
+      "K20": 0.9654,
+      "K50": 0.9784
+    },
+    "FND_heatTTA": {
+      "K10": 0.9481,
+      "K20": 0.9827,
+      "K50": 0.9913
+    }
+  },
+  "counts": {
+    "n_val": 734,
+    "seen_pos": 138,
+    "unseen_pos": 34,
+    "controls": 562,
+    "seen_lesions": 192,
+    "unseen_lesions": 39
+  },
+  "groups": {
+    "top1": {
+      "seen": {
+        "auc_M5": 0.8386,
+        "auc_FND": 0.9636,
+        "delta_FND_minus_M5": 0.1249
+      },
+      "unseen": {
+        "auc_M5": 0.6176,
+        "auc_FND": 0.9427,
+        "delta_FND_minus_M5": 0.3251
+      }
+    },
+    "top3": {
+      "seen": {
+        "auc_M5": 0.8489,
+        "auc_FND": 0.9707,
+        "delta_FND_minus_M5": 0.1218
+      },
+      "unseen": {
+        "auc_M5": 0.6369,
+        "auc_FND": 0.9514,
+        "delta_FND_minus_M5": 0.3146
+      }
+    },
+    "noisyor": {
+      "seen": {
+        "auc_M5": 0.8449,
+        "auc_FND": 0.9731,
+        "delta_FND_minus_M5": 0.1282
+      },
+      "unseen": {
+        "auc_M5": 0.6279,
+        "auc_FND": 0.9585,
+        "delta_FND_minus_M5": 0.3306
+      }
+    }
+  },
+  "interaction": {
+    "top1": -0.2002,
+    "top3": -0.1928,
+    "noisyor": -0.2024
+  },
+  "interaction_ci95": {
+    "top1": {
+      "mean": -0.2006,
+      "lo95": -0.2994,
+      "hi95": -0.1089,
+      "share_positive": 0.0
+    },
+    "noisyor": {
+      "mean": -0.2024,
+      "lo95": -0.3087,
+      "hi95": -0.0957,
+      "share_positive": 0.0
+    }
+  },
+  "verdict": {
+    "interaction_top1": -0.2002,
+    "ci95": {
+      "mean": -0.2006,
+      "lo95": -0.2994,
+      "hi95": -0.1089,
+      "share_positive": 0.0
+    },
+    "conclusion": "Etkileşim tamamen NEGATİF ⇒ FND görülmeyen kaynaklarda daha avantajlı; örtüşme lehine kanıt yok, ters yönde işaret.",
+    "note": "Val, FND'nin seçildiği bölmedir; bu FND'nin *genel* avantajını şişirir ama etkileşim kontrastını doğrudan şişirmez.",
+    "confound": "M5 ResNet18 (11M) ile FND ResNet50 (23M) kapasite farkı ve TTA yolu aynı olsa da mimari farklıdır; etkileşim yorumu bu sınırla okunmalıdır."
+  }
+}

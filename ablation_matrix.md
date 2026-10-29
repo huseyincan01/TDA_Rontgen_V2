@@ -927,3 +927,18 @@ Val'de aynı yön, daha küçük: AUC 0,9826 vs 0,9660 · S@0,25 0,7448 vs 0,666
 * ⚠️ Kaynak kimliği başlı başına güçlü değişken (spacing 0,143–0,331 mm/px; A3'te aynı model için kaynak-içi AUC 0,78–0,94 = §7.3b) ⇒ confound.
 * ✅ Yön tutarlı ama büyüklük sınırlı (≤0,04 AUC) ⇒ ne "etkisiz" ne "sahte" denebilir; **beyan** edilir.
 * 🔒 Gizli test setinin bileşimi doğrulanamaz ⇒ "sıfır sızıntı" iddiası kurulmamalı.
+
+### 17.3 Omurga × kaynak etkileşimi — belirleyici test (V6.9e, 🔒 kapandı)
+
+V6.9d'nin farkı kaynak cihazıyla karışıktı; ayrıştırmak için iki omurga **aynı protokolde** (heat-map TTA) kıyaslandı: **M5** = ImageNet ResNet18 (temiz), **FND** = `resnet50-res512-vin` (NODE21 pozitiflerinin %82,9'unu görmüş). Etkileşim = ΔFND−M5(görülen) − ΔFND−M5(görülmeyen).
+
+| Val (734 hasta) | M5 (temiz) | FND (kontamine) | Δ = FND − M5 |
+| :--- | ---: | ---: | ---: |
+| Görülen (chestxray14+padchest, 192 lezyon) | 0,8386 | 0,9636 | **+0,1249** |
+| Görülmeyen (jsrt+openi, 39 lezyon) | 0,6176 | 0,9427 | **+0,3251** |
+| **ETKİLEŞİM** | | | **−0,2002** (GA −0,299…−0,109) |
+
+* ✅ **Örtüşme lehine kanıt yok, ters yönde:** avantaj görülmeyen kaynaklarda **2,6×** daha büyük ⇒ kazanç hatırlama değil, genel CXR temsili.
+* 🔑 Görülen↔görülmeyen açığı M5'te +0,221, FND'de +0,021 ⇒ CXR ön-eğitimi kaynak-duyarlılığını **~0,20 AUC** azaltıyor.
+* ⚠️ Sınırlar: yalnız val (test mühürlü) · kapasite farkı (11M vs 23M) · görülmeyen grupta 39 lezyon.
+* 🔒 Konu **kapandı** (V6.9c + V6.9d + V6.9e aynı yön); mührü yalnız yeni dış veri veya korpusu NODE21 ile kesişmeyen omurga açar. Ayrıntı: [LEAK_AUDIT.md §10](LEAK_AUDIT.md).

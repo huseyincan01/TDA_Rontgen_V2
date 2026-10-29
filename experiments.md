@@ -1833,6 +1833,26 @@ Val'de aynı yön, daha küçük fark: 0,9826 vs 0,9660 (Δ −0,017); S@0,25 0,
 * ⚠️ **Kaynak kimliği başlı başına güçlü değişken:** spacing chestxray14 0,143 · padchest 0,275 · jsrt 0,309 · openi 0,331 mm/px; A3'te **aynı model** için kaynak-içi AUC 0,78–0,94 (ablation §7.3b) ⇒ cihaz/geometri farkı, aşinalıktan bağımsız olarak da fark üretir.
 * ✅ **Yön tutarlı** (val + test) ⇒ "hiç etkisi yok" denemez; ✅ **büyüklük sınırlı** (≤0,04 AUC) ⇒ "skorlar sahte" de denemez.
 * 🔒 **Yarışma notu:** kurallar halka açık ön-eğitimli modellere izin verir, **ama gizli test setinin bileşimini biz doğrulayamayız** ⇒ "sıfır sızıntı garantili" cümlesi kurulmamalıdır.
+
+### V6.9.7 Belirleyici test — omurga × kaynak ETKİLEŞİMİ (konu 🔒 kapandı)
+
+V6.9.6'daki "görülen > görülmeyen" farkı **iki şeyle karışıktı**: kaynakların cihaz/geometri farkı ve modelin kendisi. Ayrıştırmak için iki omurga **aynı protokolde** (heat-map TTA) kıyaslandı: **M5** = ImageNet ResNet18 (hiç CXR görmemiş = "temiz"), **FND** = `resnet50-res512-vin` (pozitiflerin %82,9'unu görmüş = "kontamine"). Ölçülen: her kaynak grubunda hasta düzeyi AUC ve **Δ = FND − M5**; kritik istatistik **etkileşim = Δ(görülen) − Δ(görülmeyen)**.
+
+**Hat doğrulaması:** M5_heatTTA recall@K10/K20/K50 = 0,9091/0,9654/0,9784 ve FND_heatTTA = 0,9481/0,9827/0,9913 — V6.6.2'nin yayımlanmış değerlerinin **aynısı**.
+
+| Val (734 hasta · görülen 138 poz/192 lezyon · görülmeyen 34 poz/39 lezyon · 562 kontrol) | M5 (temiz) | FND (kontamine) | **Δ = FND − M5** |
+| :--- | ---: | ---: | ---: |
+| **Görülen** kaynaklar (chestxray14+padchest) | 0,8386 | 0,9636 | **+0,1249** |
+| **Görülmeyen** kaynaklar (jsrt+openi) | 0,6176 | 0,9427 | **+0,3251** |
+| **ETKİLEŞİM** | | | **−0,2002** (95% GA −0,299…−0,109 · P(>0) = **0,000**) |
+
+top3 için −0,193 · noisy-OR için −0,202 ⇒ üç toplama kuralında da aynı.
+
+* ✅ **Örtüşme lehine KANIT YOK — ters yönde işaret.** FND'nin ImageNet'e göre avantajı, omurganın **hiç görmediği** kaynaklarda **2,6 kat** daha büyük (+0,325 vs +0,125) ⇒ kazanç "hatırlama"dan değil, **genel CXR temsil kalitesinden**.
+* 🔑 **V6.9.6'nın farkını asıl açıklayan şey kaynak zorluğu:** ImageNet omurgası JSRT/OpenI'de çöküyor (0,618), CXR omurgası çökmüyor (0,943). Görülen↔görülmeyen açığı M5'te **+0,221**, FND'de **+0,021** ⇒ **CXR ön-eğitimi kaynak-duyarlılığını ~0,20 AUC azaltıyor.** Yani tablo, örtüşmenin *şişirdiği* değil ön-eğitimin *sağlamlaştırdığı* bir tablodur.
+* ⚠️ **Sınırlar:** yalnız **val** (test mühürlü — üçüncü kullanım yapılmaz); M5 ResNet18 ≈11M vs FND ResNet50 ≈23M ⇒ **kapasite karıştırıcısı**; görülmeyen grup 34 hasta/39 lezyon.
+* 🔒 **KAPANIŞ:** Örtüşme konusu **mühürlendi** — üç bağımsız ölçüm (V6.9c dış, V6.9d iç, V6.9e etkileşim) aynı yönü gösteriyor; mevcut veriyle yapılacak **yeni ölçüm talebi kapatıldı**. Yalnız (a) yeni ve gerçekten dış bir veri kümesi veya (b) korpusu NODE21 kaynaklarıyla kesişmeyen bir omurga (ör. yalnız MIMIC-CH) mührü yeniden açabilir. Ayrıntı: [LEAK_AUDIT.md §10](LEAK_AUDIT.md).
+* **Betik/kayıt:** [v6_9e_backbone_interaction.py](pipelines/v6_two_stage/v6_9e_backbone_interaction.py) · `artifacts/v6_two_stage/v6_9e_backbone_interaction.json`
 * ⚠️ **Düzeltme:** [LEAK_AUDIT.md](LEAK_AUDIT.md)'nin ilk sürümünde "NODE21 omuranın hiç görmediği veridir" yazıyordu — **yanlıştı**; §9'da düzeltildi.
 
 

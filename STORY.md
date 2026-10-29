@@ -452,6 +452,29 @@ kaynakların cihaz/geometri farkıyla karışık (spacing 0,143–0,331 mm/px). 
 **beyan** edilir; örtüşmeden tamamen arınmış sonuç iddia edilmez. Gizli test setinin
 bileşimi doğrulanamadığı için **"sıfır sızıntı garantisi"** de verilmez.
 
+**(d′) Belirleyici test: karıştırıcıyı ayırdık — ve işaret ters çıktı.** Aynı protokolde
+(heat-map TTA) iki omurga kıyaslandı: **M5** = ImageNet ResNet18 (hiç CXR görmemiş),
+**FND** = `resnet50-res512-vin` (pozitiflerin %82,9'unu görmüş). Kritik istatistik,
+FND'nin avantajının görülen ve görülmeyen kaynaklarda **ayrışıp ayrışmadığı**:
+
+| Val (734 hasta) | M5 (temiz) | FND (kontamine) | Δ = FND − M5 |
+| :--- | ---: | ---: | ---: |
+| Görülen (192 lezyon) | 0,8386 | 0,9636 | **+0,1249** |
+| Görülmeyen (39 lezyon) | 0,6176 | 0,9427 | **+0,3251** |
+| **Etkileşim** | | | **−0,2002** (GA −0,299…−0,109) |
+
+⇒ FND'nin avantajı, omurganın **hiç görmediği** kaynaklarda **2,6 kat** daha büyük.
+Yani kazanç "hatırlama" değil, **genel CXR temsil kalitesi**. ImageNet omurgası
+JSRT/OpenI'de çöküyor (0,618), CXR omurgası çökmüyor (0,943): görülen↔görülmeyen açığı
+M5'te +0,221 iken FND'de +0,021 ⇒ **CXR ön-eğitimi kaynak-duyarlılığını ~0,20 AUC
+azaltıyor.** Bu tablo, örtüşmenin *şişirdiği* değil ön-eğitimin *sağlamlaştırdığı* bir
+tablodur.
+
+🔒 **Konu kapandı.** Üç bağımsız ölçüm (dış VinDr · iç kaynak-ayrıştırmalı · etkileşim)
+aynı yönü gösteriyor; mevcut veriyle yeni ölçüm talebi kapatıldı. Mührü yalnız (a) yeni ve
+gerçekten dış bir veri kümesi ya da (b) korpusu NODE21 kaynaklarıyla kesişmeyen bir omurga
+(ör. yalnız MIMIC-CH) açabilir. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §10.
+
 
 
 

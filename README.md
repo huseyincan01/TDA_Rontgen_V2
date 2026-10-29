@@ -60,11 +60,11 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
    19 w noktası aynı bölmede); **dürüst** dış-değer yalnız mühürlü test koşusundan gelir.
    Her tablo hangisi olduğunu **yazmak zorundadır**. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md).
 6. **Her doğrulama iddiası, omurganın ön-eğitim listesiyle çapraz kontrol edilmeden
-   yazılmaz.** VinDr dersi: 400/400 örtüşme ancak denetimle ortaya çıktı. **NODE21'in içi
-   de aynı kurala tabidir:** halka açık eğitim seti açık veri kümelerinden derlenmiştir;
-   pozitiflerin **%82,9'u** omurganın gördüğü korpuslardan (NIH/PadChest) gelir — kutular
-   yeni olduğu için lokalizasyon sızıntıya kapalı, ama her yayın metninde **beyan** edilir
-   ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9).
+   yazılmaz.** VinDr dersi: 400/400 örtüşme ancak denetimle ortaya çıktı. NODE21'in içi
+   de aynı kurala tabidir: pozitiflerin %82,9'u omurganın gördüğü korpuslardan (NIH/PadChest).
+   **Ölçüldü ve kapandı** — etkileşim testi −0,200 (avantaj görülmeyen kaynaklarda 2,6×
+   daha büyük) ⇒ şişme lehine kanıt yok; yine de her metinde **beyan** edilir
+   ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9–§10).
 
 ---
 
