@@ -9,23 +9,18 @@ köprücük kemiğinin veya dikey bir damarın üstüne bindirdiği yerde durur.
 var" der; ama o "şey" gerçek bir tümör olabileceği gibi, iki kemiğin üst üste binmiş
 gölgesinden ibaret de olabilir.
 
-Derin öğrenme tam da burada okul kitaplarındaki gibi davranır: inanılmaz hızlıdır, ama saf.
-Modelimize yüz binlerce röntgen gösterdik ki "şüpheli görünen bölgeyi" kaçırmamayı öğrensin;
-karşılığında bize **çok fazla** şüpheli bölge işaretlemeye başladı — bir damar kesitini,
-bir kaburga köşesini, hatta bazen iki kemiğin kesiştiği sıradan bir noktayı bile "nodül" diye
-işaretliyordu. Yüksek duyarlılık sağladık ama bunun bedeli, her gerçek nodülün yanında düzinelerce
-**yalancı pozitif** oldu.
+Derin öğrenme tam da burada inanılmaz hızlıdır, ama saf: modelimize yüz binlerce röntgen
+gösterdik ki "şüpheli görünen bölgeyi" kaçırmasın; karşılığında bize **çok fazla** şüpheli bölge
+işaretlemeye başladı — bir damar kesitini, bir kaburga köşesini, hatta iki kemiğin kesiştiği
+sıradan bir noktayı "nodül" sandı. Yüksek duyarlılık sağladık ama bedeli, her gerçek nodülün
+yanında düzinelerce **yalancı pozitif**.
 
-İşte çıkış noktamız tam burası. Bizimki gibi bir sistemi iki uzmanın elinden çıkıyormuş gibi
-kurmaya karar verdik: önce **hızlı ama saf bir tarayıcı** görüntünün tamamına bakar ve "şu
-bölgeler şüpheli, hepsini işaretleyelim, hiçbirini atlamayalım" der. Sonra devreye **ikinci,
-sabırlı bir uzman** girer: işaretlenen her kutunun içine ayrı ayrı eğilir, o küçücük karenin
-**şeklini** matematiksel olarak inceler ve "bu yuvarlak bir tümör, bu ise damarın boydan boya
-geçen gölgesi" diye hüküm verir.
-
-O ikinci uzmanın aleti, adı kulağa karmaşık gelen ama fikri çok zarif olan bir şey:
-**Topolojik Veri Analizi** — özellikle de Kübik Kalıcı Homoloji. İlerleyen satırlarda bunun ne
-olduğunu, bir röntgenin sistemimizin içinde geçtiği dört duraktan oluşan yolculuğu anlatarak
+İşte çıkış noktamız bu. Sistemi iki uzmanın elinden çıkmış gibi kurduk: önce **hızlı ama saf bir
+tarayıcı** görüntünün tamamına bakar ve "şu bölgeler şüpheli, hepsini işaretleyelim, hiçbirini
+atlamayalım" der. Sonra **ikinci, sabırlı bir uzman** girer: işaretlenen her kutunun içine ayrı ayrı
+eğilir, o karenin **şeklini** matematiksel olarak inceler ve "bu yuvarlak bir tümör, bu ise damar
+gölgesi" diye hüküm verir. O ikinci uzmanın aleti **Topolojik Veri Analizi** — özellikle Kübik
+Kalıcı Homoloji. Bunun ne olduğunu, bir röntgenin sistemimizde geçtiği dört durak üzerinden
 göstereceğim.
 
 ---
@@ -78,14 +73,19 @@ görevini yaptı — hiçbir şeyi atlamadı; ama bu 50 kutunun çoğu hâlâ da
 
 Şimdi sabırlı uzman devreye giriyor. 50 kutunun her birinin merkezinden iç içe iki pencere
 kesiyoruz: **32×32 piksellik bir iç çekirdek** (tümörün kendisi, eğer varsa) ve **64×64 piksellik
-bir dış çevre** (onun etrafındaki bağlam). Bu kareleri artık bir fotoğraf gibi değil, parlaklığın
-**yükseklik** olduğu engebeli bir arazi gibi düşünüyoruz. Kübik Kalıcı Homoloji tam da bu araziye
-uygulanan bir ölçüm: arazide hangi **yoğunluk tepecikleri** (H0) ve hangi **döngü/delik yapıları**
-(H1) hangi eşikte doğup hangi eşikte kayboluyor, tek tek çıkarıyor. Gerçek bir tümör yuvarlak,
-kompakt ve yoğun bir tepe üretir; bir damar ise uzun ve dallı bir sırt çizer. Bu "doğum-ölüm"
-bilgisi, 20×20'lik **Kalıcılık İmgeleri**ne dökülünce 1.600 topolojik sayı elde ediyoruz; buna
-kutunun akciğer içindeki konumunu anlatan 4 sayı daha ekleyince ortaya **1.604 boyutlu bir şekil
-parmak izi** çıkıyor — her kutu için benzersiz bir imza.
+bir dış çevre** (onun etrafındaki bağlam). Her kareyi, parlaklığın **yükseklik** olduğu engebeli bir
+arazi gibi ele alıp GUDHI kütüphanesiyle iki şey ölçüyoruz: o arazideki **tepecikler** (bağlı
+bölgeler, H0) ve **delik/döngüler** (kapalı yapılar, H1), her birinin *hangi parlaklıkta doğup*
+*hangi parlaklıkta kaybolduğu*yla birlikte.
+
+Bu noktaları 20×20'lik bir ızgaraya düşürüyoruz (x ekseni = doğduğu parlaklık, y ekseni = ne kadar
+uzun yaşadığı) ve her hücrede ne kadar "güç" biriktiğini topluyoruz. Ortaya çıkan 20×20 = 400 sayılık
+tablo, kesitin **şekil haritası**: tümör tek, dar ve yüksek bir tepe üretir; damar ise geniş, dağınık
+ve dallı bir "sırt çizgisi". Bu haritayı tepecikler için (400) ve delikler için (400) ayrı, iki pencere
+(32×32 ve 64×64) için de ayrı çıkarıyoruz — toplam 4 harita = **1.600 sayı**. Üstüne kutunun akciğer
+içindeki yerini söyleyen 4 sayı (x, y, hilusa ve plevraya uzaklık) ekliyoruz. Sonuç, her kutu için
+**1.604 sayıdan oluşan bir vektör**: iki ölçekte, iki homoloji boyutunda, kesitin parlaklık şeklinin
+sayısal özeti + konumu.
 
 **Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
@@ -146,12 +146,9 @@ ağırlıkla (w = 0,55) yaptık. Bu ağırlık hiçbir veri kümesinde yeniden �
 | Kilitli test — 1.+2. aşama füzyon | **0,969 AUC · 0,905 skor** (S@0.25 %71,2 · S@0.50 %79,0) | Topolojik katman, dedektörün emin olmadığı kısmı tamamlıyor: AUC +0,024, resmî skor +0,021 |
 | Harici veri (VinDr-CXR, Vietnam; sıfır eğitim) | **0,656 → 0,799** (160 etiketli görüntüyle saha kalibrasyonu) | Farklı bir ülkeye/hastaneye taşınınca önce düşüyor, ama az sayıda sahaya özgü örnekle belirgin biçimde toparlanıyor |
 
-Tabloda iki satır özellikle dikkat çekici. Birincisi, **küçük kırpıntı** satırı: aynı 64×64 kareyi
-inceleyen piksel tabanlı bir CNN 0,646'da kalırken, aynı karenin topolojik şeklini özetleyen
-temsil 0,926'ya çıkıyor. Bu, küçük ölçekte ayırt edici bilginin piksellerde değil **şekilde** gizli
-olduğunun en somut kanıtı. İkincisi, **füzyon** satırı: kilitli testte 2. aşama eklenince hasta AUC
-0,945'ten 0,969'a, resmî NODE21 skoru 0,884'ten 0,905'e yükseliyor — yani topoloji, derin ağın
-"emin değilim" dediği yerde tam da ihtiyaç duyulan yargıyı veriyor.
+Tablodaki en önemli iki satır şunlar: küçük kırpıntıda ayırt edici bilginin piksellerde değil
+**şekilde** olduğu (0,646 vs 0,926), ve topolojik katmanın kilitli testte dedektörün zayıf kaldığı
+yeri tamamladığı (AUC 0,945 → 0,969).
 
 ---
 
