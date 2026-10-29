@@ -1892,6 +1892,38 @@ V6.8'de `R>0` maskesiyle eğitilen dinamik yarıçap kafası **val**'de sabit 56
 > gönderim öncesi karar yeniden değerlendirilmelidir: FROC-optimal (lezyon bulma) hedefleniyorsa
 > dinamik kutu uygulanır, aksi hâlde sabit 56 px muhafazakâr varsayılan olarak korunur.
 
+### V6.9.9 Yarıçap 5. özellik olarak 2. aşamaya — NEGATİF sonuç (V6.9h)
+
+**Soru:** V6.9f, dinamik yarıçapın yalnızca *dış çerçeveyi* değiştirdiğini, TDA penceresinin
+(32×32 + 64×64) hâlâ sabit olduğunu gösterdi. Peki tahmin edilen yarıçap R̂, 2. aşamaya **ek bir
+özellik** olarak verilirse (1600 PI + 4 uzamsal + 1 yarıçap = 1605 özellik) nodül adayı ile
+yanlış-alarm ayrımı iyileşir mi?
+
+**Yöntem (temiz varyant — TDA penceresi DEĞİŞMEZ):** aynı adaylar üzerinde HGB(1604) vs HGB(1605);
+yalnızca R̂ skaleri eklenir; train 400+400, val 734, class_weight balanced, w=0,55. Test KAPALI
+(3. kullanım geçildi). Betik: [v6_9h_radius_feature.py](pipelines/v6_two_stage/v6_9h_radius_feature.py).
+
+| Val (734/231) | TDA-tek AUC | Füzyon rank_metric | Füzyon AUC |
+| :--- | ---: | ---: | ---: |
+| HGB **1604** (yarıçap yok) | 0,9096 | **0,9238** | **0,9835** |
+| HGB **1605** (+yarıçap) | 0,8559 | 0,9040 | 0,9658 |
+| **Δ** | **−0,0537** | **−0,0198** | **−0,0177** |
+
+* ❌ **Yarıçap özelliği ZARAR VERİYOR, fayda sağlamıyor.** TDA-tek AUC −0,054, füzyon rank −0,020,
+  füzyon AUC −0,018 — üçü de geri.
+* 🔑 **Neden (muhtemel):** yarıçap kafası yalnızca **nodül merkezinde** (`R>0` maskesi) eğitildi;
+  yanlış-alarm adayları (damar/arka plan) için anlamlı bir "boyut" üretmez, ürettiği değer gürültü
+  gibi davranır. V6.8'de zaten görülen **"regresyona-ortalama"** (medyan 33 px'e sıkışma) bunun
+  işaretiydi ⇒ R̂ ayırt edici değil, sadece gürültü ekliyor.
+* ✅ **Yan ürün:** aynı adaylar üzerinde HGB'yi **foundation adaylarıyla yeniden eğitmek**, dondurulmuş
+  V6.3 bundle'ına göre val füzyonunu 0,9174 → **0,9238**'e taşıyor (HGB eğitim verisi ↔ çıkarım aday
+  dağılımı uyumu). Bu, 2. aşamanın "yeniden eğitimle" potansiyel bir kazancı olduğunu gösterir ama
+  yarıçap özelliğiyle **alakasızdır**.
+* 🎯 **Karar:** yarıçap-uyarlamalı 2. aşama (özellik olarak) **reddedildi**; sabit 32/64 TDA penceresi
+  + 1604 özellik **doğru seçimmiş**. Riskli "2R×2R alan-normalize TDA" varyantı da (V5.1 resize tuzağı +
+  E3.6 boyut confound'u) bu negatif sonuçla daha az cazip hâle geldi.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9h_radius_feature.json`
+
 
 
 

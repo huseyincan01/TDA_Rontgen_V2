@@ -957,3 +957,16 @@ V6.8'de `R>0` maskesiyle eğitilen dinamik yarıçap kafası **val**'de sabit 56
   eşit (0,8842). Val'deki +0,0054 (0,9131→0,9185) test'in S@0,125/0,25'inde tekrarlanmadı.
 * ✅ **Ama zarar yok, gevşek eşiklerde +0,0131:** S@0,5/1/2/4'te dinamik kutu daha iyi (FROC-optimal bölge).
 * 🎯 **Karar:** sabit 56 px muhafazakâr varsayılan kalır; dinamik kutu resmî skoru artırmadığı için zorunlu değil (opsiyonel).
+
+### 17.5 Yarıçap 5. özellik olarak 2. aşamaya — negatif (V6.9h)
+
+Tahmin edilen yarıçap R̂, 5. uzamsal özellik olarak HGB'ye eklendi (1605 özellik; TDA penceresi SABİT).
+
+| Val (734/231) | TDA-tek AUC | Füzyon rank | Füzyon AUC |
+| :--- | ---: | ---: | ---: |
+| HGB 1604 | 0,9096 | **0,9238** | **0,9835** |
+| HGB 1605 (+R̂) | 0,8559 | 0,9040 | 0,9658 |
+| Δ | −0,0537 | −0,0198 | −0,0177 |
+
+* ❌ Yarıçap özelliği **zarar veriyor** (R̂ yalnız nodül merkezinde eğitildi → yanlış alarmlarda gürültü).
+* 🎯 Sabit 32/64 TDA penceresi + 1604 özellik **doğru seçimmiş**; yarıçap-uyarlamalı 2. aşama reddedildi.

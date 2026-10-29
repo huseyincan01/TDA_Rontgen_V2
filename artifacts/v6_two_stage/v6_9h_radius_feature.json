@@ -1,0 +1,98 @@
+{
+  "experiment": "V6.9h-radius-as-feature",
+  "question": "Tahmin edilen yarıçap R̂, 5. uzamsal özellik olarak HGB'ye verilirse 2. aşama iyileşir mi?",
+  "protocol": "TDA penceresi SABİT (32/64); yalnızca R̂ skaleri eklenir (1605 özellik). train 400+400, val 734. Test KAPALI (3. kullanım geçildi).",
+  "n_train_cands": 37899,
+  "n_val_cands": 33910,
+  "train_pos_ratio": 0.0171,
+  "val_pos_ratio": 0.0087,
+  "results": {
+    "tda_1604": {
+      "stage1_only": {
+        "sens": {
+          "0.125": 0.671,
+          "0.25": 0.7489,
+          "0.5": 0.8009,
+          "1": 0.8355,
+          "2": 0.8788,
+          "4": 0.9091
+        },
+        "auc": 0.9678,
+        "froc_mean_3pt": 0.7403,
+        "rank_metric": 0.9131
+      },
+      "tda_only": {
+        "sens": {
+          "0.125": 0.0866,
+          "0.25": 0.1082,
+          "0.5": 0.1818,
+          "1": 0.2641,
+          "2": 0.4113,
+          "4": 0.5152
+        },
+        "auc": 0.9096,
+        "froc_mean_3pt": 0.1255,
+        "rank_metric": 0.7092
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.697,
+          "0.25": 0.7446,
+          "0.5": 0.8052,
+          "1": 0.8225,
+          "2": 0.8528,
+          "4": 0.8874
+        },
+        "auc": 0.9835,
+        "froc_mean_3pt": 0.7489,
+        "rank_metric": 0.9238
+      }
+    },
+    "tda_1605": {
+      "stage1_only": {
+        "sens": {
+          "0.125": 0.671,
+          "0.25": 0.7489,
+          "0.5": 0.8009,
+          "1": 0.8355,
+          "2": 0.8788,
+          "4": 0.9091
+        },
+        "auc": 0.9678,
+        "froc_mean_3pt": 0.7403,
+        "rank_metric": 0.9131
+      },
+      "tda_only": {
+        "sens": {
+          "0.125": 0.1299,
+          "0.25": 0.1775,
+          "0.5": 0.2424,
+          "1": 0.3593,
+          "2": 0.4978,
+          "4": 0.6494
+        },
+        "auc": 0.8559,
+        "froc_mean_3pt": 0.1833,
+        "rank_metric": 0.6863
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.6364,
+          "0.25": 0.7186,
+          "0.5": 0.7792,
+          "1": 0.8182,
+          "2": 0.8355,
+          "4": 0.8745
+        },
+        "auc": 0.9658,
+        "froc_mean_3pt": 0.7114,
+        "rank_metric": 0.904
+      }
+    }
+  },
+  "delta": {
+    "fusion_rank": -0.0198,
+    "fusion_auc": -0.0177,
+    "tda_auc": -0.0537
+  }
+}
