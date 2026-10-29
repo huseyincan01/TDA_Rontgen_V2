@@ -1949,6 +1949,42 @@ adaylarıyla** (790+790 hasta, 1604 özellik, s1 YOK = Tuzak B) yeniden eğitmek
 * **Betik/kayıt:** [v6_9i_compatible_stage2.py](pipelines/v6_two_stage/v6_9i_compatible_stage2.py) ·
   `artifacts/v6_two_stage/v6_9i_compatible_stage2.json`
 
+### V6.9.11 Çift-katmanlı few-shot site kalibrasyonu (V6.9j) — VinDr-CXR
+
+**Soru:** Güncel mimaride (M5_foundation + stage2_foundation_tda_hgb) yeni bir hastane kaynağına
+N ∈ {0,10,20,40,80,160} etiketli görüntüyle adapte olurken 1. katmanı (head/neck FT), 2. katmanı
+(TDA kalibrasyonu) ve ikisini birlikte kalibre etmenin etkisi nedir? (5-fold stratified CV, sızıntısız,
+kilitli w=0,55 füzyon, sabit 56px kutu, resmî IoU>0,2.)
+
+**Tasarım (kullanıcı onayı):** SABİT aday havuzu + yeniden puanlama. Donuk ResNet50'nin c2..c5
+özellikleri **bir kez** hesaplanıp float16 RAM'de önbelleklendi (flip'siz + flip'li) ⇒ FT ve re-score
+omurgayı YENİDEN geçmez (≈10× hız). 2. katman LR'si küçük N'de sıfır-eğitim p_tda0'a **shrinkage**
+(α = N/(N+40)) ile harmanlandı. Betik: [v6_9j_dual_stage_fewshot.py](pipelines/v6_two_stage/v6_9j_dual_stage_fewshot.py).
+
+| N | Kol1 — yalnız 2. katman (TDA LR) | Kol2 — yalnız 1. katman (head FT) | **Kol3 — ikisi birlikte** |
+|---:|---:|---:|---:|
+| 0 (sıfır-eğitim) | 0,6559 ± 0,0573 | 0,6559 ± 0,0573 | 0,6559 ± 0,0573 |
+| 10 | 0,6573 ± 0,0657 | 0,6863 ± 0,0565 | 0,6863 ± 0,0663 |
+| 20 | 0,6575 ± 0,0578 | 0,6869 ± 0,0521 | 0,6952 ± 0,0527 |
+| 40 | 0,6748 ± 0,0491 | 0,7105 ± 0,0439 | **0,7424 ± 0,0243** |
+| 80 | 0,7008 ± 0,0514 | 0,7180 ± 0,0636 | **0,7751 ± 0,0494** |
+| 160 | 0,6928 ± 0,0549 | 0,7297 ± 0,0559 | **0,7992 ± 0,0462** |
+
+(AUC = noisy-OR hasta düzeyi, 5-fold ortalama ± std. S@0.25 ≈ 0,09–0,12; FROC@2 ≈ 0,18–0,19 tüm kollarda.)
+
+* 🏆 **Çift-katmanlı kalibrasyon N≥40'ta açıkça üstün:** Kol3, N=160'ta sıfır-eğitimden **+0,143**
+  (0,656 → 0,799). N=40'ta +0,086, N=80'de +0,119.
+* 🔑 **1. katman FT, 2. katman kalibrasyonundan daha değerli:** Kol2 (head FT) her N'de Kol1'i geçiyor;
+  hâlbuki 2. katman tek başına (Kol1) N=80'de tepe yapıp N=160'ta geri düşüyor. Bu, V6.5'in "2. aşama
+  tablosal modeli hedef merkezde kalibre et" reçetesinin güncel mimaride **yeterli olmadığını** gösterir:
+  asıl kazanç, dedektörün kendi skorunu sahada yeniden kalibre etmektir.
+* ✅ **İki katman tamamlayıcı:** Kol3 − Kol2 > 0 (N≥40'ta +0,03…+0,07) ⇒ FT edilmiş dedektör skoru ile
+  kalibre edilmiş TDA skoru birbirini tamamlıyor.
+* 📉 **Mutlak sınır:** N=160 bile 0,799 — kurum içi 0,969'un çok altında; dışmerkez kalibrasyonu
+  domain-shift'i tamamen kapatmıyor (V6.9h/V6.9c ile tutarlı).
+* ⚙️ **Hız:** omurga önbelleği sayesinde re-score ~60–90s → **~10–20s**; tam koşu ~1 saatin altına indi.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9j_dual_stage_fewshot.json`
+
 
 
 

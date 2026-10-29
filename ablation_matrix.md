@@ -984,3 +984,24 @@ yeniden eğitilen uyumlu bundle, kilitli testte:
 * ✅ rank **+0,0075** · AUC **+0,0042** · S@0,25/S@0,5 **+0,0175** (yalnız S@0,125'te −0,009).
 * 🔒 Eski bundle korundu; yeni `stage2_foundation_tda_hgb.joblib` (1604 özellik, s1 YOK, w=0,55).
 * ⚠️ Dördüncü test kullanımı; bu koşudan sonra test kapanır.
+
+### 17.7 Çift-katmanlı few-shot site kalibrasyonu (V6.9j)
+
+VinDr-CXR'de N etiketli görüntüyle (5-fold CV, kilitli w=0,55, sabit 56 px) üç kalibrasyon kolu —
+hasta AUC (noisy-OR, mean±std):
+
+| N | Kol1 — yalnız 2. katman | Kol2 — yalnız 1. katman | **Kol3 — ikisi birlikte** |
+|---:|---:|---:|---:|
+| 0 | 0,656 ± 0,057 | 0,656 ± 0,057 | 0,656 ± 0,057 |
+| 10 | 0,657 ± 0,066 | 0,686 ± 0,057 | 0,686 ± 0,066 |
+| 20 | 0,658 ± 0,058 | 0,687 ± 0,052 | 0,695 ± 0,053 |
+| 40 | 0,675 ± 0,049 | 0,711 ± 0,044 | **0,742 ± 0,024** |
+| 80 | 0,701 ± 0,051 | 0,718 ± 0,064 | **0,775 ± 0,049** |
+| 160 | 0,693 ± 0,055 | 0,730 ± 0,056 | **0,799 ± 0,046** |
+
+* 🏆 **Çift katman N≥40'ta üstün:** N=160'ta sıfır-eğitimden **+0,143** (0,656 → 0,799).
+* 🔑 **1. katman FT > 2. katman kalibrasyonu:** Kol2 her N'de Kol1'i geçer; Kol1 tek başına 0,701'de
+  doygun. V6.5'in "2. aşamayı kalibre et" reçetesi güncel mimaride yetersiz — asıl kazanç dedektör
+  kafasını sahada yeniden kalibre etmek.
+* ✅ İki katman tamamlayıcı (Kol3 − Kol2 ≈ +0,03…+0,07, N≥40).
+* 📉 N=160 bile 0,799 < kurum içi 0,969 ⇒ domain-shift tam kapanmaz.

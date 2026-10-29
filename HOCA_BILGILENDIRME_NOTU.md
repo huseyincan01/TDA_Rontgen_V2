@@ -85,7 +85,7 @@ görüntüleri asla hem eğitimde hem testte yer almaz; yani **hasta sızıntıs
 | **Küçük bölgede piksel vs. topoloji (2. aşama)** | Piksel tabanlı küçük CNN ≈**0,65** · lokal TDA tek başına ≈**0,93** (hasta AUC) |
 | **Kilitli test — yalnız 1. aşama** | Hasta AUC **0,945** · resmî metrik benzetimi **0,884** |
 | **Kilitli test — 1.+2. aşama (TDA füzyonu)** | Hasta AUC **0,969** · resmî metrik benzetimi **0,905** |
-| **Dış veri (VinDr-CXR, Vietnam; sıfır eğitim)** | Hasta AUC ≈**0,65–0,66** |
+| **Dış veri (VinDr-CXR, Vietnam; sıfır eğitim)** | Hasta AUC ≈**0,66** · hedef merkezden 160 etiketli görüntüyle saha kalibrasyonu **0,80**'e taşıyor |
 
 Kısaca: "hasta AUC" (0 ile 1; 0,5 = şans, 1,0 = kusursuz) modelin *"bu hastada nodül var mı?"*
 sorusunu ne kadar iyi ayırdığını gösterir; "resmî metrik benzetimi" ise NODE21 yarışmasının
@@ -138,9 +138,12 @@ geçirildi: veri sızıntısı denetimi, parlaklık niceleme hatası (12/16-bit 
 
 Dürüstçe kabul edilen sınırlar şunlardır:
 
-* **Dış genelleme zayıf:** Farklı bir ülkenin verisinde (VinDr-CXR, Vietnam) hiç eğitim
-  yapmadan test edildiğinde hasta AUC ≈0,65–0,66 çıkıyor; kurum içi 0,969'un belirgin
-  altında. Sistem farklı cihazlara **kalibrasyonsuz** taşınmıyor.
+* **Dış genelleme zayıf — ama kalibrasyonla iyileşiyor:** Farklı bir ülkenin verisinde
+  (VinDr-CXR, Vietnam) hiç eğitim yapmadan test edildiğinde hasta AUC ≈0,66 çıkıyor; kurum içi
+  0,969'un belirgin altında. Ancak hedef hastaneden az sayıda etiketli görüntü alındığında
+  (saha kalibrasyonu) sistem belirgin biçimde toparlanıyor: 160 görüntüyle iki katmanın birlikte
+  kalibrasyonu dış AUC'yi **0,66 → 0,80**'e çıkarıyor (ama kurum içi düzeye yine ulaşmıyor).
+  Yani sistem hedef merkeze **hafif bir kalibrasyonla** taşınabiliyor.
 * **Ödünleşim:** TDA hasta düzeyi ayrımı artırıyor, ama çok sıkı yanlış-alarm eşiklerinde
   küçük bir duyarlılık kaybı olabiliyor.
 * **Tek eğitim tekrarı:** Sonuçlarda ±0,02'lik bir belirsizlik bandı var; çoklu tekrar
