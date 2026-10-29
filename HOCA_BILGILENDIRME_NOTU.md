@@ -2,173 +2,184 @@
 
 ## 1. Çıkış Noktamız: Neyi Çözmeye Çalışıyoruz?
 
-Bir radyolog göğüs röntgenine baktığında aslında çok zor bir oyun oynar: milimetre
-çapında, yuvarlak ve soluk bir lezyonu (nodülü), koca bir göğüs kafesinin gölgesi içinden
-ayıklamak. İşin zorluğu şu ki bu küçük lezyonlar çoğu zaman tam da kaburgaların kesiştiği,
-köprücük kemiğinin veya dikey bir damarın üstüne bindirdiği yerde durur. Göz, "orada bir şey
-var" der; ama o "şey" gerçek bir tümör olabileceği gibi, iki kemiğin üst üste binmiş
-gölgesinden ibaret de olabilir.
+Bir doktor göğüs röntgenine baktığında oldukça zor bir işle karşılaşır: milimetre
+çapında, yuvarlak ve soluk bir tümörü (nodülü), göğüs kafesinin karmaşık gölgeleri içinden
+ayıklamak. İşin zorluğu şuradan gelir; bu küçük nodüller çoğu zaman kaburgaların kesiştiği,
+köprücük kemiğinin geçtiği veya dikey bir kan damarının üstüne bindiği yerlerde saklanır. Göz
+"orada parlak bir şey var" der; ama o parlaklık gerçek bir tümör olabileceği gibi, iki kemiğin
+üst üste binmiş sıradan gölgesi de olabilir.
 
-Derin öğrenme tam da burada inanılmaz hızlıdır, ama saf: modelimize yüz binlerce röntgen
-gösterdik ki "şüpheli görünen bölgeyi" kaçırmasın; karşılığında bize **çok fazla** şüpheli bölge
-işaretlemeye başladı — bir damar kesitini, bir kaburga köşesini, hatta iki kemiğin kesiştiği
-sıradan bir noktayı "nodül" sandı. Yüksek duyarlılık sağladık ama bedeli, her gerçek nodülün
-yanında düzinelerce **yalancı pozitif**.
+Derin öğrenme modelleri röntgeni taramakta çok hızlıdır ama bu konuda sıkça yanılır: modele
+"hiçbir gerçek tümörü kaçırma" dediğimizde, röntgende gördüğü her parlak damar kesitini ve
+her kaburga kesişimini "nodül olabilir" diye işaretlemeye başlar. Gerçek tümörleri yakalarız
+ama karşılığında her gerçek tümörün yanında onlarca **yanlış alarm (yalancı pozitif)** üretilir.
 
-İşte çıkış noktamız bu. Sistemi iki uzmanın elinden çıkmış gibi kurduk: önce **hızlı ama saf bir
-tarayıcı** görüntünün tamamına bakar ve "şu bölgeler şüpheli, hepsini işaretleyelim, hiçbirini
-atlamayalım" der. Sonra **ikinci, sabırlı bir uzman** girer: işaretlenen her kutunun içine ayrı ayrı
-eğilir, o karenin **şeklini** matematiksel olarak inceler ve "bu yuvarlak bir tümör, bu ise damar
-gölgesi" diye hüküm verir. O ikinci uzmanın aleti **Topolojik Veri Analizi** — özellikle Kübik
-Kalıcı Homoloji. Bunun ne olduğunu, bir röntgenin sistemimizde geçtiği dört durak üzerinden
-göstereceğim.
+İşte bu projedeki çıkış noktamız tam olarak budur. Sistemi iki ayrı uzmanın işbirliği gibi
+kurduk: Önce **1. aşamadaki hızlı tarayıcı model** röntgenin tamamına bakar ve "şu 50 nokta
+şüpheli, hiçbirini atlamayalım" diyerek aday kutuları çıkarır. Ardından **2. aşamadaki şekil
+uzmanı** devreye girer: işaretlenen her küçük kutunun içine tek tek büyüteçle bakar, o bölgenin
+**geometrik şeklini** matematiksel olarak inceler ve "bu yuvarlak bir tümör yumrusu, bu ise
+sadece uzun bir damar gölgesi" diyerek yanlış alarmları eler. Bu ikinci uzmanın kullandığı
+matematiksel araç **Topolojik Veri Analizi (Kübik Kalıcı Homoloji)** yöntemidir. Bunun nasıl
+çalıştığını, sisteme giren bir röntgenin geçtiği dört durak üzerinden adım adım anlatmak isterim.
 
 ---
 
 ## 2. Bir Röntgenin Sistem İçindeki Yolculuğu
 
-Sisteme 1024×1024 piksellik ham bir röntgen giriyor. Bu görüntü, nihai karara ulaşana kadar
-dört duraktan geçiyor; her durağı aşağıda kendi şemasıyla birlikte anlatıyorum.
+Sisteme 1024×1024 piksellik ham bir röntgen giriyor. Bu görüntü, son karara ulaşana kadar
+dört duraktan geçiyor:
 
 **Durak 1 — Sahneyi Temizleme ve Parlaklığı Canlandırma.**
 
-İlk işimiz, görüntüdeki gürültüyü atmak. Omuz, omurga, karın çevresi gibi bizimle ilgisi
-olmayan bölgeler yalnızca kafa karıştırır; bu yüzden TorchXRayVision'ın PSPNet adlı segmentasyon
-ağıyla akciğeri görüntünün içinden adeta **oyup çıkarıyoruz**. Ama burada incelikli bir tehlikenin
-farkındaydık: akciğer duvarına yapışmış (plevral) nodüller, makas tam duvarın üzerinden geçtiğinde
-yanlışlıkla kesilip atılabilir. Bu yüzden maskeyi duvarın **15 piksel dışına** genişletiyoruz —
-küçük bir pay, ama kenardaki tümörü kurtarır. Ardından parlaklığı canlandırıyoruz: tıbbi röntgenler
-12 veya 16 bit derinlikte saklanır; bu derinlikteki soluk nodüller, ham hâliyle "0–255" arasına
-sıkıştırıldığında yok olup gidebilir. Onun yerine parlaklığı **yalnızca akciğer dokusunun %1–%99
-persentil aralığına** yayarak her soluk gölgeyi olabildiğince görünür kılıyoruz.
+İlk işimiz röntgendeki gereksiz bölgeleri temizlemektir. Omuz kemikleri, omurga ve karın boşluğu
+gibi akciğer dışı alanlar modeli yanıltır; bu yüzden TorchXRayVision kütüphanesinin PSPNet adlı
+bölütleme modeliyle akciğerleri görüntünün içinden adeta **oyup çıkarıyoruz**. Ancak burada
+kritik bir detaya dikkat ettik: akciğerin dış duvarına (plevraya) yapışık tümörler, kesim sınırı
+tam duvarın üzerinden geçtiğinde yanlışlıkla dışarıda kalıp silinebilir. Bunu önlemek için
+akciğer maskesini duvarın **15 piksel dışına doğru** genişletiyoruz. Ardından parlaklığı
+düzenliyoruz: tıbbi röntgenler 12 veya 16 bit derinlikte (binlerce gri tonuyla) saklanır; bunu
+doğrudan standart "0–255" aralığına sıkıştırdığımızda soluk tümörler silinip gider. Bunun yerine
+akciğer içindeki en karanlık %1 ve en parlak %1'lik uç gürültüleri kesip, kalan gerçek akciğer
+dokusu parlaklığını 0–255 arasına yayıyoruz; böylece en soluk nodüller bile net biçimde görünür
+hale geliyor.
 
 ```mermaid
 flowchart LR
     A["HAM RÖNTGEN<br/>1024 × 1024"] --> B["PSPNet<br/>akciğeri oyar"]
-    B --> C["maske 15 px<br/>genişler<br/>(plevral nodül kurtulur)"]
-    C --> D["parlaklık %1–%99<br/>persentile yayılır"]
+    B --> C["maske 15 px<br/>genişler<br/>(duvardaki nodül korunur)"]
+    C --> D["akciğer parlaklığı<br/>0–255 arasına yayılır"]
     D --> E["TEMİZ AKCİĞER<br/>soluk gölgeler görünür"]
 ```
 
-**Durak 2 — Termal Kamera Gibi Tarama (1. Aşama).**
+**Durak 2 — Termal Kamera Gibi Tarama (1. Aşama: Şüpheli Aday Bulucu).**
 
-Temizlenmiş akciğer, şimdi 800 binden fazla gerçek göğüs röntgeniyle önceden eğitilmiş bir
-**ResNet50** omurgasına giriyor. Bu omurga "röntgenin genel dilini" zaten biliyor; biz onun üstüne
-kendi dedektörümüzü koyuyoruz. Arkasındaki çok-ölçekli piramit (ASPP + FPN), hem bezelye kadar
-küçük hem ceviz kadar büyük kitleleri aynı anda görebilmek için görüntüye farklı çözünürlüklerden
-bakar; en uçtaki **CenterNet kafası** da tümör merkezlerini, tıpkı bir **termal kameranın sıcak
-noktaları gibi** parlak birer "sıcak nokta" olarak ışıtır.
+Temizlenmiş akciğer görüntüsü, şimdi 800 binden fazla gerçek göğüs röntgeniyle önceden eğitilmiş
+ana görsel gövdeye (**ResNet50** modeline) girer. Bu ana gövde "röntgen görüntüsünün dilini"
+zaten iyi bilir. Onun hemen arkasına eklediğimiz çok-ölçekli özellik piramidi (ASPP + FPN), hem
+mercimek kadar küçük hem de ceviz kadar büyük kitleleri aynı anda yakalayabilmek için görüntüye
+farklı ölçeklerden bakar. En uçtaki **CenterNet başlığı** ise şüpheli tümör merkezlerini, tıpkı bir
+**termal kameranın sıcak noktaları göstermesi gibi** parlak tepecikler olarak işaretler.
 
-İşin sırrı güven veren tek bir geçişe yetinmemek: aynı görüntüyü **3 farklı ölçekte** (0,9×, 1,0×,
-1,1×) ve bir de **yatay aynasından** tarayıp (bu tekniğe test-zamanı artırma, kısaca TTA deriz)
-her tahmini ortalamalıyoruz — bir kamerayla çekip, emin olmak için bir de aynadan bakıp iki görüntüyü
-üst üste koymak gibi. Sonuç: en güçlü 50 sıcak nokta, 56×56 piksellik kutu olarak işaretleniyor.
-Bu 50 kutunun güzelliği şu: gerçek tümörlerin **%98–99'u bu kutuların içine giriyor**. Yani 1. aşama
-görevini yaptı — hiçbir şeyi atlamadı; ama bu 50 kutunun çoğu hâlâ damar gölgesi.
+Hiçbir tümörü gözden kaçırmamak için röntgene tek bir açıdan bakmakla yetinmiyoruz: görüntüyü
+**3 farklı büyüklükte** (0,9×, 1,0×, 1,1×) ve bir de **yatay aynalanmış** haliyle tarayıp
+(test-zamanı artırma — TTA) tahminlerin ortalamasını alıyoruz. Sonuçta en parlak 50 sıcak nokta,
+merkezlerinin etrafına 56×56 piksellik birer kutu çizilerek seçiliyor. Bu ilk aşama görevini
+başarıyla yapıyor: gerçek tümörlerin **%98–99'u bu 50 şüpheli kutunun içine giriyor**. Ancak bu
+50 kutunun büyük kısmı hâlâ damar veya kemik gölgesi.
 
 ```mermaid
 flowchart LR
-    A["TEMİZ AKCİĞER"] --> B["ResNet50 omurga<br/>800 bin röntgen ön-eğitimi"]
+    A["TEMİZ AKCİĞER"] --> B["ResNet50 ana gövde<br/>800 bin röntgen ön-eğitimi"]
     B --> C["ASPP + FPN<br/>çok-ölçekli piramit"]
-    C --> D["CenterNet kafası<br/>sıcak noktalar"]
+    C --> D["CenterNet başlığı<br/>ısı haritası"]
     D --> E["3 ölçek + yatay ayna<br/>(TTA) ortalaması"]
-    E --> F["en güçlü 50 kutu<br/>56×56 px"]
+    E --> F["en şüpheli 50 kutu<br/>56×56 px"]
 ```
 
-**Durak 3 — Şüpheli Kutulara Topolojik Büyüteç Tutma (2. Aşama).**
+**Durak 3 — Şüpheli Kutulara Topolojik Büyüteç Tutma (2. Aşama: Şekil Analizi).**
 
-Şimdi sabırlı uzman devreye giriyor. 50 kutunun her birinin merkezinden iç içe iki pencere
-kesiyoruz: **32×32 piksellik bir iç çekirdek** (tümörün kendisi, eğer varsa) ve **64×64 piksellik
-bir dış çevre** (onun etrafındaki bağlam). Her kareyi, parlaklığın **yükseklik** olduğu engebeli bir
-arazi gibi ele alıp GUDHI kütüphanesiyle iki şey ölçüyoruz: o arazideki **tepecikler** (bağlı
-bölgeler, H0) ve **delik/döngüler** (kapalı yapılar, H1), her birinin *hangi parlaklıkta doğup*
-*hangi parlaklıkta kaybolduğu*yla birlikte.
+Şimdi ikinci uzmanımız devreye giriyor. İlk aşamadan gelen 50 kutunun her birinin merkezinden iç
+içe iki küçük pencere kesiyoruz: tümörün tam göbeğini gören **32×32 piksellik iç çekirdek** ve
+etrafındaki doku geçişini gören **64×64 piksellik dış çevre**. Her küçük kareyi, piksel
+parlaklığının "yükseklik" olduğu 3 boyutlu engebeli bir arazi (tepecikler ve çukurlar) gibi
+düşünüyoruz.
 
-Bu noktaları 20×20'lik bir ızgaraya düşürüyoruz (x ekseni = doğduğu parlaklık, y ekseni = ne kadar
-uzun yaşadığı) ve her hücrede ne kadar "güç" biriktiğini topluyoruz. Ortaya çıkan 20×20 = 400 sayılık
-tablo, kesitin **şekil haritası**: tümör tek, dar ve yüksek bir tepe üretir; damar ise geniş, dağınık
-ve dallı bir "sırt çizgisi". Vektörün tam hesabı şöyle:
+GUDHI kütüphanesiyle hesapladığımız **Kübik Kalıcı Homoloji** şunu yapar: Parlaklık eşiğini
+0'dan 255'e doğru adım adım yükseltirken, o arazideki **parlak tepeciklerin (bağlı bileşenler — H0)**
+ve **kapalı halka/delik şekillerinin (döngüler — H1)** hangi parlaklık seviyesinde ortaya çıkıp
+(doğum) hangi seviyede birleşerek kaybolduğunu (ölüm) takip eder.
+
+Bu doğum ve ölüm noktalarını 20×20'lik bir tabloya (**Kalıcılık İmgesi**) yerleştiriyoruz (yatay
+eksen = şeklin doğduğu parlaklık, dikey eksen = ne kadar uzun süre korunduğu). Ortaya çıkan
+20×20 = 400 sayılık tablo, o kesitin **matematiksel şekil özetidir**: gerçek bir tümör kompakt ve
+belirgin bir tepe izi bırakırken, damar ve kaburga gölgeleri dağınık ve çizgisel izler bırakır.
+Özellik vektörümüz tam olarak şöyle oluşur:
 
 ```mermaid
 flowchart LR
-    A["20 × 20 ızgara<br/>= 400 sayı"] --> B["× 2 homoloji<br/>(H0 tepecik + H1 delik)"]
+    A["20 × 20 tablo<br/>= 400 sayı"] --> B["× 2 şekil özelliği<br/>(H0 tepecik + H1 halka)"]
     B --> C["× 2 pencere<br/>(32×32 çekirdek + 64×64 çevre)"]
     C --> D["= 1.600 topolojik sayı"]
-    D --> E["+ 4 konum (x, y, hilus, plevra)"]
-    E --> F["= 1.604 boyutlu vektör"]
+    D --> E["+ 4 konum bilgisi<br/>(x, y, merkez, duvar)"]
+    E --> F["= 1.604 boyutlu<br/>şekil parmak izi"]
 ```
 
-Bu vektör iki ölçekte, iki homoloji boyutunda kesitin parlaklık şeklini ve konumunu özetler; yani
-her kutu için, retina gibi piksellere değil **şekle** bakan bir imzadır.
+Böylece her şüpheli kutu için, sadece ham piksellere değil doğrudan **o bölgenin geometrik
+şekline ve akciğerdeki konumuna** bakan 1.604 sayılık bir parmak izi elde ederiz.
 
 **Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
-Bu 1.604 boyutlu parmak izini, hızlı ve yorumlanabilir bir karar modeline (HistGradientBoosting,
-kısaca HGB) veriyoruz. HGB, "bu parmak izi gerçek tümöre mi yoksa damara mı ait?" sorusunu puanlıyor.
-Sonra iki uzmanın görüşünü birleştiriyoruz: 1. aşamanın **görsel güveni** (ağırlığı 0,55) ile
-2. aşamanın **topolojik puanı** (ağırlığı 0,45) ağırlıklı bir toplamda buluşuyor. Böylece hem nihai
-kutu hem de "bu hastada nodül var mı?" sorusunun cevabı ortaya çıkıyor.
+Bu 1.604 boyutlu şekil parmak izini, ağaç tabanlı hızlı bir karar modeline (HistGradientBoosting —
+HGB) veriyoruz. HGB modeli, "bu şekil parmak izi gerçek bir tümöre mi yoksa damar/kemik gölgesine
+mi ait?" sorusuna bir puan veriyor. Son adımda iki uzmanın görüşünü birleştiriyoruz: **1. aşama
+tarayıcı modelin görsel puanı (%55 ağırlık)** ile **2. aşama modelin topolojik şekil puanı (%45
+ağırlık)** bir araya gelerek hem nihai tümör kutularını hem de hastanın genel nodül riskini
+belirliyor.
 
 ```mermaid
 flowchart LR
-    A["1. aşama güveni z(s1)"] --> C["S = sigmoid<br/>( 0,55 · z(s1) + 0,45 · z(p_TDA) )"]
-    B["2. aşama topolojik puanı z(p_TDA)"] --> C
-    C --> D["NİHAİ KARAR<br/>nodül var mı,<br/>varsa nerede"]
+    A["1. aşama görsel puanı (%55)"] --> C["Ağırlıklı Birleştirme"]
+    B["2. aşama topolojik şekil puanı (%45)"] --> C
+    C --> D["NİHAİ KARAR<br/>nodül var mı,<br/>varsa hangi kutuda"]
 ```
 
 ---
 
 ## 3. Bu Makineyi Sıfırdan Nasıl İnşa Ettik ve Eğittik?
 
-Hocanın doğal sorusu: "Peki bunu teknik olarak nasıl kurdunuz?" Dört adımda özetleyeyim.
+Bu sistemi kurarken ve eğitirken izlediğimiz dört temel mühendislik adımı şunlardır:
 
-**Adım 1 — Sızıntısız Veri Bölünmesi.** Elinizdeki 4.882 NODE21 hastası (1.134 nodüllü, 3.748
-normal), **hasta bazında** üçe ayrıldı: 3.414 eğitim, 734 doğrulama, 734 kilitli test. Önemli olan
-şu: bir hastanın görüntüsü asla iki farklı kümeye düşmez — aksi hâlde model kendi test verisini
-"görüp ezberleyerek" yanıltıcı bir başarı raporlarız. Eğitimde de dengesizliği önledik: nodüllü
-sayısı normalden çok az olduğu için, her nodüllü hastaya bir normal hasta eşleyerek eğitimi 1:1
-dengeledik. Yoksa model "her şeye sağlam de" diyen tembel bir öğrenci olurdu.
+**Adım 1 — Sızıntısız Veri Bölünmesi.** Halka açık NODE21 veri setindeki 4.882 hasta (1.134
+nodüllü, 3.748 sağlıklı kontrol), **hasta bazında** üçe ayrıldı: 3.414 eğitim, 734 doğrulama ve
+734 kilitli test. Burada en katı kuralımız şuydu: bir hastanın röntgeni asla iki farklı kümeye
+düşmez; aksi halde model hastayı ezberler ve test sonucu yanıltıcı olur. Eğitim aşamasında ise
+nodüllü hasta sayısı sağlıklı olanlardan çok daha az olduğu için, model "herkese sağlıklı de geç"
+kolaycılığına kaçmasın diye her nodüllü hastaya bir sağlıklı hasta eşleyerek eğitimi 1:1 oranında
+dengeledik.
 
 ```mermaid
 flowchart TD
-    A["4.882 hasta<br/>1.134 nodüllü · 3.748 normal"] --> B["hasta bazında bölme"]
+    A["4.882 hasta<br/>1.134 nodüllü · 3.748 sağlıklı"] --> B["hasta bazında bölme"]
     B --> C["eğitim<br/>3.414"]
     B --> D["doğrulama<br/>734"]
     B --> E["kilitli test<br/>734"]
-    C --> F["1:1 denge<br/>her nodüllüye bir normal"]
+    C --> F["1:1 dengeleme<br/>her nodüllüye bir sağlıklı"]
 ```
 
-**Adım 2 — 1. Aşamanın İki Fazlı Eğitimi (Unutmayı Önleme).** 800 bin röntgenlik tıbbi bilgiyi
-içinde taşıyan hazır ResNet50 omurgası, bizim için altın değerinde. Ama yeni eklenen katmanların
-ilk adımları rastgele ağırlıklarla doludur; böyle gürültülü gradyanların omurgaya akmasına izin
-verirsek o 800 bin röntgenlik "hafızayı" bozarız. Bu yüzden eğitimi iki faza böldük: önce **5 epoch
-boyunca omurga tamamen donuk**, yalnızca yeni eklediğimiz katmanlar ısınıyor; sonra **13 epoch
-boyunca omurganın yalnızca üst bloklarını çok düşük öğrenme hızıyla** (Cosine Annealing ile
-sönümlenerek) açıyoruz. Toplam 18 epoch; BatchNorm istatistikleri baştan sona donuk tutuluyor ki 800
-bin röntgenden gelen normalizasyon bilgisi hiç bozulmasın. Bu kademeli yaklaşıma "diferansiyel ince
-ayar" diyoruz.
+**Adım 2 — 1. Aşama Tarayıcı Modelin İki Fazlı Eğitimi (Unutmayı Önleme).** 800 bin röntgenden
+öğrenilmiş bilgiyi taşıyan hazır ResNet50 ana gövdesi bizim için çok değerlidir. Ancak üstüne
+yeni eklediğimiz piramit ve ısı haritası katmanları ilk başta rastgele tahminler yapar; eğer tüm
+ağı ilk andan itibaren birlikte eğitirsek, bu rastgele hatalar ana gövdenin 800 bin röntgenlik
+hafızasını bozar. Bunu önlemek için eğitimi iki aşamaya böldük: **İlk 5 turda (epoch) ana gövdeyi
+tamamen dondurduk** ve sadece yeni eklediğimiz katmanları eğittik. Yeni katmanlar mantıklı
+tahminler yapmaya başladıktan sonra, **kalan 13 turda ana gövdenin üst katmanlarını da açarak**
+çok küçük adımlarla (düşük öğrenme hızıyla, toplam 18 tur) tüm sistemi birlikte ince ayarladık.
 
 ```mermaid
 flowchart LR
-    A["Faz 1<br/>1–5. epoch<br/>omurga DONUK<br/>yalnız yeni katmanlar"] --> B["Faz 2<br/>6–18. epoch<br/>üst bloklar açık<br/>düşük öğrenme hızı"]
-    B --> C["Toplam 18 epoch<br/>Cosine Annealing<br/>BatchNorm hep donuk"]
+    A["Faz 1 (1–5. tur)<br/>ResNet50 ana gövde DONUK<br/>yalnız yeni katmanlar ısınır"] --> B["Faz 2 (6–18. tur)<br/>üst katmanlar açılır<br/>küçük adımlarla ince ayar"]
+    B --> C["Toplam 18 tur eğitim<br/>ön-eğitim hafızası korunur"]
 ```
 
-**Adım 3 — 2. Aşamanın Zor-Negatiflerle Eğitimi.** 2. aşamayı rastgele "kolay" akciğer parçalarıyla
-eğitmek ona hiçbir şey öğretmezdi. Bunun yerine, 1. aşamayı eğitim hastalarının üzerinde çalıştırdık
-ve **74.482 şüpheli kutu** topladık. Gerçek nodülün tam üstüne oturan kutular **Pozitif**, dedektörün
-yanıldığı — damarı ya da kaburga kesişimini nodül sandığı — kutular ise **Zor-Negatif** oldu. Modeli
-tam olarak bu zor örneklerle, `class_weight="balanced"` korumasıyla eğittik (bir nodüle karşılık yaklaşık
-50 zor-negatif var; nadir pozitif sınıfa bu yüzden otomatik ağırlık verdik). Böylece 2. aşama,
-dedektörün **gerçekten karıştırdığı** şeyleri ayırt etmeyi öğrendi.
+**Adım 3 — 2. Aşama Şekil Modelinin "Zor-Negatiflerle" Eğitimi.** 2. aşamadaki HGB karar modelini
+rastgele seçilmiş boş ve kolay akciğer parçalarıyla eğitmek ona hiçbir şey öğretmezdi. Bunun
+yerine, eğittiğimiz 1. aşama tarayıcı modeli eğitim hastalarının üzerinde çalıştırdık ve ürettiği
+**74.482 şüpheli kutuyu** topladık. Gerçek tümörün üstüne denk gelen kutuları **Pozitif (1)**,
+1. aşama modelinin yanılıp tümör sandığı damar ve kaburga kesişimlerini ise **Zor-Negatif (0)**
+olarak etiketledik. HGB modelini tam olarak bu zorlu örnekler üzerinde (1 gerçek tümöre karşılık
+yaklaşık 49 yanlış alarm düştüğü için pozitif sınıfa otomatik dengeleme ağırlığı vererek) eğittik.
+Böylece 2. aşama, 1. aşamanın **gerçekten karıştırdığı** kemik/damar gölgelerini şekillerinden
+ayırmayı öğrendi.
 
-**Adım 4 — Aşırı Özgüven (Stacking) Tuzağından Kaçınma.** Birleştirmenin naif yolu şu olurdu:
-2. aşamaya, 1. aşamanın skorunu da bir özellik olarak verirsin. Ama bu tehlikeli bir tuzak: 1. aşamanın
-skoru **kendi eğitim verisinde** şişmiştir (model ezberlediği örneklerde aşırı özgüvenlidir); 2. aşama
-bu şişkin puanı "gerçek" sanıp ona kilitlenir, gerçek hayatta ise çöker. Biz bu tuzağa düşmedik:
-2. aşamaya 1. aşamanın eğitim-skorunu **hiç göstermedik** (kod seviyesinde `stage1_score_included=False`
-olarak mühürlendi) ve birleştirmeyi **doğrulama kümesinde bir kez belirlenip dondurulan** sabit bir
-ağırlıkla (w = 0,55) yaptık. Bu ağırlık hiçbir veri kümesinde yeniden öğrenilmedi.
+**Adım 4 — Aşırı Özgüven Tuzağından Kaçınma.** İki aşamayı birleştirirken çok sık yapılan bir
+hata vardır: 1. aşama modelinin kendi eğitim verisi üzerinde verdiği puanları 2. aşama modeline
+girdi olarak vermek. Oysa 1. aşama modeli eğitimde gördüğü röntgenleri tanıdığı için orada aşırı
+yüksek (şişkin) puanlar verir; 2. aşama da "1. aşama zaten her şeyi biliyor" sanıp kendi topolojik
+özelliklerine bakmayı bırakır ve yeni bir test hastası geldiğinde yanılır. Biz bu tuzağı tamamen
+kapattık: 2. aşamadaki HGB modeline 1. aşamanın puanını **hiç göstermedik** (sadece 1.604 şekil ve
+konum özelliğiyle eğittik); iki uzmanın puanlarını en sonda doğrulama kümesinde belirlenen sabit
+ağırlıklarla (%55 ve %45) birleştirdik.
 
 ---
 
@@ -176,55 +187,65 @@ ağırlıkla (w = 0,55) yaptık. Bu ağırlık hiçbir veri kümesinde yeniden �
 
 | Ölçüt | Sonuç | Ne anlama geliyor |
 | :--- | :---: | :--- |
-| Aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
-| Küçük kırpıntıda piksel CNN vs. lokal TDA | **0,646 vs. 0,926** | Aynı küçük kareyi pikselleriyle inceleyen CNN ≈şansın biraz üstü; **şeklini** inceleyen TDA çok daha ayırt edici |
-| Kilitli test — yalnız 1. aşama | **0,945 AUC · 0,884 skor** | Dedektör tek başına güçlü bir tarayıcı |
-| Kilitli test — 1.+2. aşama füzyon | **0,969 AUC · 0,905 skor** (S@0.25 %71,2 · S@0.50 %79,0) | Topolojik katman, dedektörün emin olmadığı kısmı tamamlıyor: AUC +0,024, resmî skor +0,021 |
-| Harici veri (VinDr-CXR, Vietnam; sıfır eğitim) | **0,656 → 0,799** (160 etiketli görüntüyle saha kalibrasyonu) | Farklı bir ülkeye/hastaneye taşınınca önce düşüyor, ama az sayıda sahaya özgü örnekle belirgin biçimde toparlanıyor |
+| 1. Aşama aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama tarayıcı model ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
+| Küçük kutuda piksel CNN vs. lokal TDA | **0,646 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN zayıf kalırken (`0,646`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
+| Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC · 0,884 yarışma skoru** | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
+| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,969 AUC · 0,905 yarışma skoru** (S@0.25 %71,2 · S@0.50 %79,0) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC +2,4 puan, resmî yarışma skoru +2,1 puan artıyor |
+| Harici veri (VinDr-CXR, Vietnam; 400 görüntü) | **0,656 (sıfır-eğitim) → 0,799 AUC** (160 görüntüyle saha kalibrasyonu) | Farklı bir ülkenin hastanesine hiç ayar yapmadan taşınınca başarı düşüyor, ancak az sayıda yerel örnekle kalibre edildiğinde **0,80** düzeyine toparlanıyor |
 
-Tablodaki en önemli iki satır şunlar: küçük kırpıntıda ayırt edici bilginin piksellerde değil
-**şekilde** olduğu (0,646 vs 0,926), ve topolojik katmanın kilitli testte dedektörün zayıf kaldığı
-yeri tamamladığı (AUC 0,945 → 0,969).
+Tablodaki en temel iki bulgumuz şunlardır: Küçük şüpheli kutularda ayırt edici bilgi ham piksel
+dokusunda değil **geometrik şekilde** yatmaktadır (`0,646` vs `0,926`), ve topolojik katman kilitli
+test setinde 1. aşama tarayıcı modelin eksik bıraktığı kısmı tamamlayarak genel başarıyı
+`0,945`'ten `0,969`'a taşımaktadır.
 
 ---
 
 ## 5. Yaptığımız Zorlu Kontroller ve Dürüst Sınırlılıklar
 
-Sadece yüksek sayı kovalamadık; sonuçlara inanmadan önce kendimize en zor soruları sorduk.
+Yalnızca yüksek skor kovalamadık; elde ettiğimiz sonuçlardan emin olmak için sistemi zorlu
+denetimlerden geçirdik:
 
-**Ön-eğitim örtüşmesi bir hile mi?** Kullandığımız hazır omurga, verilerimizin kaynaklarının bir
-kısmını önceden görmüştü; "belki de skor bu yüzden şişiyor" şüphesiyle bir etkileşim testi kurduk.
-Sonuç şaşırtıcıydı: omurganın gerçek avantajı, tam da **hiç görmediği** kaynaklarda (JSRT ve OpenI)
-+0,325 AUC'luk bir sağlamlaştırma olarak ortaya çıktı. Yani kazanç ezberden değil, genel göğüs
-röntgeni bilgisinden geliyor — ve bunu makalemizde açıkça beyan edeceğiz.
+**Ön-eğitim veri örtüşmesi skoru şişiriyor mu?** NODE21 veri seti açık kaynaklı röntgenlerden
+derlendiği için, 1. aşamada kullandığımız hazır ResNet50 gövdesi pozitif vakaların bir kısmını
+ön-eğitim sırasında (kutu etiketi olmadan) görmüştü. "Acaba başarımız bu yüzden mi yüksek?"
+şüphesiyle modeli hiç röntgen görmemiş bir ImageNet gövdesiyle kıyasladık. Sonuç tam tersini
+gösterdi: Hazır gövdenin asıl büyük faydası, daha önce gördüğü kaynaklarda değil, **hayatında hiç
+görmediği** zorlu kaynaklarda (JSRT ve OpenI veri setlerinde **+0,325 AUC** artışla) ortaya çıktı.
+Yani ön-eğitim ezber değil, farklı röntgen tiplerine karşı sağlamlık kazandırıyor.
 
-**Saha (site) kalibrasyonunun sinerjisi.** Vietnam verisinde, tek başına 2. aşamayı kalibre etmek
-0,70–0,73'e kadar taşıyor; tek başına 1. aşamanın kafasını ince ayarlamak da benzeri bir seviyede.
-Ama **her iki katmanı birlikte** kalibre ettiğimizde 0,80'e ulaşıyoruz — iki katman birbirinin
-zayıf noktasını kapatıyor. Bu, sistemin yeni bir hastaneye "az sayıda yerel örnekle" taşınabileceğinin
-umut verici bir işareti.
+**Yeni hastaneye saha kurulumu (Çift-katmanlı kalibrasyon).** Sistem hiç görmediği Vietnam
+verisine (düşük kaliteli 8-bit JPEG röntgenlere) götürüldüğünde, sadece 2. aşamayı yerel
+örneklerle kalibre etmek skoru `0,70`'e, sadece 1. aşama başlığını ince ayarlamak ise `0,73`'e
+taşıyabildi. Ancak **her iki aşamayı birlikte** kalibre ettiğimizde güçlü bir tamamlayıcılıkla
+**`0,799 AUC`** değerine ulaştık. Bu da sistemin yeni bir hastaneye kurulduğunda az sayıda yerel
+örnekle hızla uyarlanabileceğini gösteriyor.
 
-**Dağıtım.** Sistem araştırma kodundan çıkıp gerçek bir araca dönüşsün diye, resmî Grand-Challenge
-standardında, internet bağlantısı olmadan çalışan **çevrimdışı bir Docker paketi** hazırladık.
-Girdi olarak üç boyutlu taranmış bir göğsü alıp standart biçimde nodül kutuları üretiyor.
+**Kullanıma hazır paketleme (Docker).** Sistemin sadece bir araştırma kodu olarak kalmaması için,
+resmî Grand-Challenge yarışma kurallarına uyan ve internet bağlantısı olmadan çalışan **çevrimdışı
+bir Docker konteyneri** hazırladık. Paket, birden fazla 2 boyutlu göğüs röntgeninin tek bir tıbbi
+`.mha` dosyasında üst üste dizildiği röntgen yığınlarını doğrudan okuyup standart formatta tümör
+kutularını ve olasılıklarını üretiyor.
 
-**Samimi sınırlar.** Her şey yolunda değil ve bunların hepsini biliyoruz: en sıkı yanlış-alarm
-eşiğinde (FROC) küçük bir ödünleşim var — topoloji hasta düzeyindeki ayrımı güçlendirirken,
-milimetrik eşiklerde bir parça duyarlılık verebiliyor. Kutu boyutu konusunda dinamik (öğrenilmiş)
-ile sabit 56×56 seçeneğini kıyasladık; dinamik kutu doğrulama setinde parlak göründü ama kilitli
-testte resmî skoru değiştirmedi, bu yüzden muhafazakâr sabit kutuyu koruduk. Ve en önemlisi: farklı
-bir cihaza **kalibrasyonsuz** geçişte sistem belirgin biçimde zayıflıyor — bu, "tek merkezde güçlü,
-çok merkezde emin değiliz" dürüstlüğüyle sunulması gereken bir sınır.
+**Dürüst sınırlılıklar.** Çalışmamızın sınırlarını da net biçimde çizdik: Topolojik katman hasta
+düzeyindeki ayrımı ve orta yanlış-alarm noktalarını (`S@0.25` ve `S@0.50`) belirgin biçimde
+güçlendirirken, en katı yanlış-alarm eşiğinde (`S@0.125`) çok küçük bir duyarlılık tavizi
+verebiliyor. Kutu boyutu konusunda her tümöre kendi büyüklüğünde dinamik kutu çizen bir başlık da
+eğittik; doğrulama setinde sabit 56×56 kutuyu geçse de (`0,9185` vs `0,9131`) kilitli test setinde
+resmî yarışma puanını değiştirmediği için (`0,884`) daha sade olan sabit kutuyu varsayılan olarak
+koruduk. En önemli sınır ise cihazlar arası farktır: Sistem farklı bir hastanenin cihazına **hiç
+kalibrasyon yapılmadan** götürüldüğünde başarısı düşmektedir; çok merkezli kullanım için yerel
+kalibrasyon şarttır.
 
 ---
 
 ## 6. Sonuç ve Danışmak İstediklerim
 
-Bu çalışmada, "derin öğrenme + topolojik veri analizi" gibi iki farklı dünyayı, göğüs röntgeninde
-nodül bulmaya yarayan çalışan bir sisteme dönüştürmeyi; onu sabırla, sızıntı kontrolleriyle ve
-kendimize sorduğumuz zor sorularla eğitmeyi ve sonunda sınırlarını dürüstçe çizmeyi öğrendim.
+Bu çalışmada, "derin öğrenme ile hızlı tarama" ve "topolojik veri analizi ile şekil inceleme"
+fikirlerini birleştirerek göğüs röntgeninde nodül bulan uçtan uca bir sistem kurmayı; bu sistemi
+sızıntı kontrolleriyle denetlemeyi ve sınırlarını dürüstçe ölçmeyi öğrendim.
 
-Bir lisans öğrencisi olarak bu noktadan sonra yolun ne olacağını — bu çalışmanın bir yayına, bildiriye
-ya da daha büyük bir projeye dönüşüp dönüşemeyeceğini — sizden öğrenmek isterim. Özellikle hangi yöne
-ağırlık vermem gerektiği, hangi eksikliğin en kritik olduğu ve bu ölçekte bir çalışmanın akademik
-olarak nerede konumlandırılabileceği konusundaki yönlendirmeniz benim için çok değerli.
+Bir lisans öğrencisi olarak bu noktadan sonra nasıl bir yol izlemem gerektiğini — bu çalışmanın bir
+akademik yayına, bildiriye ya da daha kapsamlı bir projeye dönüşüp dönüşemeyeceğini — sizden
+öğrenmek isterim. Özellikle hangi yöne ağırlık vermem gerektiği, hangi eksikliğin en kritik olduğu
+ve bu çalışmanın akademik olarak nasıl değerlendirilebileceği konusundaki yönlendirmeniz benim için
+çok kıymetli olacaktır.
