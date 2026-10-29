@@ -28,17 +28,7 @@ göstereceğim.
 ## 2. Bir Röntgenin Sistem İçindeki Yolculuğu
 
 Sisteme 1024×1024 piksellik ham bir röntgen giriyor. Bu görüntü, nihai karara ulaşana kadar
-dört duraktan geçiyor:
-
-```mermaid
-flowchart TD
-    A["HAM RÖNTGEN<br/>1024 × 1024"] --> B
-    B["DURAK 1 · Ön-işleme<br/>PSPNet akciğeri ayırır<br/>maske 15 px genişler<br/>parlaklık %1–%99'a ölçeklenir"] --> C
-    C["DURAK 2 · 1. Aşama (derin öğrenme)<br/>ResNet50 → ASPP + FPN → CenterNet<br/>tümör merkezleri 'sıcak nokta' olur<br/>en güçlü 50 kutu seçilir"] --> D
-    D["DURAK 3 · 2. Aşama (lokal TDA)<br/>32×32 + 64×64 kesit<br/>GUDHI ile H0 tepecik + H1 delik<br/>→ 1.604 sayılık şekil vektörü"] --> E
-    E["DURAK 4 · Birleştirme<br/>HGB skoru + 1. aşama güveni<br/>0,55 · görsel + 0,45 · topolojik"] --> F
-    F["NİHAİ KARAR<br/>nodül var mı,<br/>varsa nerede"]
-```
+dört duraktan geçiyor; her durağı aşağıda kendi şemasıyla birlikte anlatıyorum.
 
 **Durak 1 — Sahneyi Temizleme ve Parlaklığı Canlandırma.**
 
@@ -51,6 +41,14 @@ küçük bir pay, ama kenardaki tümörü kurtarır. Ardından parlaklığı can
 12 veya 16 bit derinlikte saklanır; bu derinlikteki soluk nodüller, ham hâliyle "0–255" arasına
 sıkıştırıldığında yok olup gidebilir. Onun yerine parlaklığı **yalnızca akciğer dokusunun %1–%99
 persentil aralığına** yayarak her soluk gölgeyi olabildiğince görünür kılıyoruz.
+
+```mermaid
+flowchart LR
+    A["HAM RÖNTGEN<br/>1024 × 1024"] --> B["PSPNet<br/>akciğeri oyar"]
+    B --> C["maske 15 px<br/>genişler<br/>(plevral nodül kurtulur)"]
+    C --> D["parlaklık %1–%99<br/>persentile yayılır"]
+    D --> E["TEMİZ AKCİĞER<br/>soluk gölgeler görünür"]
+```
 
 **Durak 2 — Termal Kamera Gibi Tarama (1. Aşama).**
 
@@ -67,6 +65,15 @@ her tahmini ortalamalıyoruz — bir kamerayla çekip, emin olmak için bir de a
 üst üste koymak gibi. Sonuç: en güçlü 50 sıcak nokta, 56×56 piksellik kutu olarak işaretleniyor.
 Bu 50 kutunun güzelliği şu: gerçek tümörlerin **%98–99'u bu kutuların içine giriyor**. Yani 1. aşama
 görevini yaptı — hiçbir şeyi atlamadı; ama bu 50 kutunun çoğu hâlâ damar gölgesi.
+
+```mermaid
+flowchart LR
+    A["TEMİZ AKCİĞER"] --> B["ResNet50 omurga<br/>800 bin röntgen ön-eğitimi"]
+    B --> C["ASPP + FPN<br/>çok-ölçekli piramit"]
+    C --> D["CenterNet kafası<br/>sıcak noktalar"]
+    D --> E["3 ölçek + yatay ayna<br/>(TTA) ortalaması"]
+    E --> F["en güçlü 50 kutu<br/>56×56 px"]
+```
 
 **Durak 3 — Şüpheli Kutulara Topolojik Büyüteç Tutma (2. Aşama).**
 
@@ -102,6 +109,13 @@ Sonra iki uzmanın görüşünü birleştiriyoruz: 1. aşamanın **görsel güve
 2. aşamanın **topolojik puanı** (ağırlığı 0,45) ağırlıklı bir toplamda buluşuyor. Böylece hem nihai
 kutu hem de "bu hastada nodül var mı?" sorusunun cevabı ortaya çıkıyor.
 
+```mermaid
+flowchart LR
+    A["1. aşama güveni z(s1)"] --> C["S = sigmoid<br/>( 0,55 · z(s1) + 0,45 · z(p_TDA) )"]
+    B["2. aşama topolojik puanı z(p_TDA)"] --> C
+    C --> D["NİHAİ KARAR<br/>nodül var mı,<br/>varsa nerede"]
+```
+
 ---
 
 ## 3. Bu Makineyi Sıfırdan Nasıl İnşa Ettik ve Eğittik?
@@ -114,6 +128,15 @@ normal), **hasta bazında** üçe ayrıldı: 3.414 eğitim, 734 doğrulama, 734 
 "görüp ezberleyerek" yanıltıcı bir başarı raporlarız. Eğitimde de dengesizliği önledik: nodüllü
 sayısı normalden çok az olduğu için, her nodüllü hastaya bir normal hasta eşleyerek eğitimi 1:1
 dengeledik. Yoksa model "her şeye sağlam de" diyen tembel bir öğrenci olurdu.
+
+```mermaid
+flowchart TD
+    A["4.882 hasta<br/>1.134 nodüllü · 3.748 normal"] --> B["hasta bazında bölme"]
+    B --> C["eğitim<br/>3.414"]
+    B --> D["doğrulama<br/>734"]
+    B --> E["kilitli test<br/>734"]
+    C --> F["1:1 denge<br/>her nodüllüye bir normal"]
+```
 
 **Adım 2 — 1. Aşamanın İki Fazlı Eğitimi (Unutmayı Önleme).** 800 bin röntgenlik tıbbi bilgiyi
 içinde taşıyan hazır ResNet50 omurgası, bizim için altın değerinde. Ama yeni eklenen katmanların
