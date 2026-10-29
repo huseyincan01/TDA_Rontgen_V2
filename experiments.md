@@ -1799,6 +1799,42 @@ Denetim (§3) kontaminasyonun **varlığını** kanıtladı; bu alt bölüm **et
 * 🔁 **İç tutarlılık:** A satırı, V6.6.3'ün yayımlanmış strict değerini (0,6469) aynı tarifle 0,6479 olarak yeniden üretti ⇒ ölçüm hattı sağlam.
 * **Betik:** [v6_9c_contamination.py](pipelines/v6_two_stage/v6_9c_contamination.py) · **Kayıt:** `artifacts/v6_two_stage/v6_9c_contamination.json` · omurga ağırlıkları `artifacts/xrv_weights/` (git dışı).
 
+### V6.9.6 NODE21'in İÇİNDEKİ kaynak örtüşmesi (kaynak-ayrıştırmalı ölçüm)
+
+**V6.9c'den farklı ve daha kritik mesele:** VinDr dış veriydi; bu kez **kendi testimizin kaynağı** sorgulandı.
+
+**Veri nereden geliyor?** NODE21'in halka açık eğitim seti yeni hastane verisi değil, açık veri kümelerinden derlenmiş bir yeniden etiketlemedir. `patient_info.json` 4.882 hastada şunu söylüyor:
+
+| `source_dataset` | n | etiket | `pc-nih-rsna-siim-vin` gördü mü? |
+| :--- | ---: | :---: | :---: |
+| `node21_control` | 3.748 | hepsi 0 | **bilinmiyor** (köken kayıtlı değil) |
+| `chestxray14` (NIH) | 617 | hepsi 1 | ✅ `nih` |
+| `padchest` | 314 | hepsi 1 | ✅ `pc` |
+| `jsrt` | 149 | hepsi 1 | ❌ |
+| `openi` | 54 | hepsi 1 | ❌ |
+
+⇒ Pozitiflerin **%82,9'u** omuranın gördüğü korpuslardan. **Ama** korpusta yalnız görüntü + rapor düzeyi etiket var; **NODE21'in radyolog kutuları yok** ⇒ resmî metrik (IoU>0,2) kutu ezberine yapısal olarak kapalı.
+
+**Ölçüm** ([v6_9d_source_overlap.py](pipelines/v6_two_stage/v6_9d_source_overlap.py); kilitli protokol bir kez koşuldu, mühür kaydıyla birebir doğrulandı; aynı aday listesi kaynaklara ayrıştırıldı):
+
+| Test (734/229) | n hasta | n lezyon | AUC (kontrole karşı) | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| chestxray14 ✅ | 89 | 138 | 0,9760 | 0,6449 | 0,6957 | 0,7754 |
+| padchest ✅ | 58 | 66 | 0,9604 | 0,6515 | 0,7273 | 0,8182 |
+| jsrt ❌ | 19 | 19 | 0,9147 | 0,3684 | 0,4737 | 0,5263 |
+| openi ❌ | 6 | 6 | 0,9920 | 1,000 | 1,000 | 1,000 |
+| **GÖRÜLEN birleşim** | 147 | 204 | **0,9698** | 0,6471 | **0,7059** | 0,7892 |
+| **GÖRÜLMEYEN birleşim** | 25 | 25 | **0,9332** | 0,5200 | **0,6000** | 0,6400 |
+| **Fark** | | | **−0,037** | −0,127 | **−0,106** | −0,149 |
+
+Val'de aynı yön, daha küçük fark: 0,9826 vs 0,9660 (Δ −0,017); S@0,25 0,7448 vs 0,6667 (Δ −0,078).
+
+* ⚠️ **Fark ≈ 1 SE** (görülmeyen grupta 25 lezyon; duyarlılık SE ≈ 0,10) ⇒ belirleyici değil.
+* ⚠️ **Kaynak kimliği başlı başına güçlü değişken:** spacing chestxray14 0,143 · padchest 0,275 · jsrt 0,309 · openi 0,331 mm/px; A3'te **aynı model** için kaynak-içi AUC 0,78–0,94 (ablation §7.3b) ⇒ cihaz/geometri farkı, aşinalıktan bağımsız olarak da fark üretir.
+* ✅ **Yön tutarlı** (val + test) ⇒ "hiç etkisi yok" denemez; ✅ **büyüklük sınırlı** (≤0,04 AUC) ⇒ "skorlar sahte" de denemez.
+* 🔒 **Yarışma notu:** kurallar halka açık ön-eğitimli modellere izin verir, **ama gizli test setinin bileşimini biz doğrulayamayız** ⇒ "sıfır sızıntı garantili" cümlesi kurulmamalıdır.
+* ⚠️ **Düzeltme:** [LEAK_AUDIT.md](LEAK_AUDIT.md)'nin ilk sürümünde "NODE21 omuranın hiç görmediği veridir" yazıyordu — **yanlıştı**; §9'da düzeltildi.
+
 
 
 

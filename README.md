@@ -34,7 +34,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 
 | | |
 | :--- | :--- |
-| **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9645** (füzyon) / **0,9446** (1. aşama) · rank_metric **0,8970** / **0,8842** (V6.9, ön-kayıtlı tek atım) |
+| **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9645** (füzyon) / **0,9446** (1. aşama) · rank_metric **0,8970** / **0,8842** (V6.9, ön-kayıtlı tek atım) · ⚠️ pozitiflerin **%82,9'u** omurganın gördüğü kaynaklardan (kutular yeni) — beyan: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9 |
 | **Val'de ölçülen (seçilmiş) sonuç** | Füzyon AUC **0,9879** · rank_metric **0,9131** (56 px) · **0,9185** (onarılmış yarıçap, V6.8) — val'de 296 değerlendirme yapıldı ⇒ **hafif iyimser** |
 | **Lokalizasyon (V6.6, val)** | Yalnız Aşama-1: Recall@K20/K30 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
 | **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
@@ -59,8 +59,12 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 5. **"Seçilmiş" ≠ "dürüst".** Val'de alınan sayılar **seçilmiş**tir (296 değerlendirme +
    19 w noktası aynı bölmede); **dürüst** dış-değer yalnız mühürlü test koşusundan gelir.
    Her tablo hangisi olduğunu **yazmak zorundadır**. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md).
-6. **Dış doğrulama iddiası, omuranın ön-eğitim listesiyle çapraz kontrol edilmeden
-   yazılmaz.** VinDr dersi: 400/400 örtüşme ancak denetimle ortaya çıktı.
+6. **Her doğrulama iddiası, omurganın ön-eğitim listesiyle çapraz kontrol edilmeden
+   yazılmaz.** VinDr dersi: 400/400 örtüşme ancak denetimle ortaya çıktı. **NODE21'in içi
+   de aynı kurala tabidir:** halka açık eğitim seti açık veri kümelerinden derlenmiştir;
+   pozitiflerin **%82,9'u** omurganın gördüğü korpuslardan (NIH/PadChest) gelir — kutular
+   yeni olduğu için lokalizasyon sızıntıya kapalı, ama her yayın metninde **beyan** edilir
+   ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9).
 
 ---
 

@@ -906,3 +906,24 @@ VinDr sayılarının ön-eğitim kontaminasyonundan şişip şişmediği **doğr
 * ⚠️ **Confound:** B ile C toplam korpus büyüklüğünde de ayrışır ⇒ +0,079 NODE21 farkı VinDr'ye özgü sayılamaz.
 * 🎯 **Yayın:** VinDr sayısı **C satırıyla** (0,6663 nOR / 0,6369 top1) verilmeli; A/B "kontamine üst sınır" dipnotu.
 * 🔁 **İç tutarlılık:** A satırı V6.6.3'ün 0,6469'unu 0,6479 olarak yeniden üretti.
+
+### 17.2 NODE21 iç kaynak örtüşmesi — kaynak-ayrıştırmalı ölçüm (V6.9d)
+
+NODE21'in halka açık eğitim seti, açık veri kümelerinden derlenmiştir (`patient_info.json`, 4.882 hasta): `node21_control` 3.748 (etiket 0, köken kayıtlı değil) · `chestxray14` 617 · `padchest` 314 · `jsrt` 149 · `openi` 54 (hepsi etiket 1). Omurga `pc-nih-rsna-siim-vin` ile ön-eğitildiği için **pozitiflerin %82,9'u gördüğü** korpuslardan gelir — **ama kutular yeni** (açık veri kümelerinde NODE21 anotasyonu yok) ⇒ resmî IoU metriği kutu ezberine kapalı.
+
+| Test (734/229) | n hasta | n lezyon | AUC | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| chestxray14 ✅ görüldü | 89 | 138 | 0,9760 | 0,6449 | 0,6957 | 0,7754 |
+| padchest ✅ görüldü | 58 | 66 | 0,9604 | 0,6515 | 0,7273 | 0,8182 |
+| jsrt ❌ görülmedi | 19 | 19 | 0,9147 | 0,3684 | 0,4737 | 0,5263 |
+| openi ❌ görülmedi | 6 | 6 | 0,9920 | 1,000 | 1,000 | 1,000 |
+| **GÖRÜLEN** | 147 | 204 | **0,9698** | 0,6471 | **0,7059** | 0,7892 |
+| **GÖRÜLMEYEN** | 25 | 25 | **0,9332** | 0,5200 | **0,6000** | 0,6400 |
+| **Fark** | | | −0,037 | −0,127 | −0,106 | −0,149 |
+
+Val'de aynı yön, daha küçük: AUC 0,9826 vs 0,9660 · S@0,25 0,7448 vs 0,6667.
+
+* ⚠️ Fark ≈ **1 SE** (görülmeyen grupta 25 lezyon); **belirleyici değil**.
+* ⚠️ Kaynak kimliği başlı başına güçlü değişken (spacing 0,143–0,331 mm/px; A3'te aynı model için kaynak-içi AUC 0,78–0,94 = §7.3b) ⇒ confound.
+* ✅ Yön tutarlı ama büyüklük sınırlı (≤0,04 AUC) ⇒ ne "etkisiz" ne "sahte" denebilir; **beyan** edilir.
+* 🔒 Gizli test setinin bileşimi doğrulanamaz ⇒ "sıfır sızıntı" iddiası kurulmamalı.

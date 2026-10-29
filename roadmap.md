@@ -433,3 +433,10 @@ değildir ama **ölçülebilir bir iyimserliktir** — V6'da 296 + 19 + 12 değe
 yapıldı ve dürüst test değeri **0,029** daha düşük çıktı. Yeni hatlarda **seçim bütçesi
 beyan edilmeli** ve dürüst sayı ayrı bir mühürle üretilmelidir.
 Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) · [experiments.md §13](experiments.md)
+
+**Ek (V6.9d) — veri kaynağı örtüşmesi:** "Yeni veri" kuralı, ön-eğitimli modeller
+kullanıldığında **iki** katmanlıdır: (i) değerlendirme seti yeni mi, (ii) o setin
+**kaynakları** omurganın ön-eğitiminde var mı? NODE21'de ikincisi vardır: pozitiflerin
+%82,9'u NIH ChestX-ray14 + PadChest'ten. Kutular yeni olduğu için lokalizasyon metriği
+sızıntıya kapalıdır, ama kaynak-ayrıştırmalı ölçüm ve **beyan** zorunludur
+([LEAK_AUDIT.md](LEAK_AUDIT.md) §9).

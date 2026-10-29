@@ -351,8 +351,9 @@ sorular bunlardır ve cevapları hazırdır ([LEAK_AUDIT.md](LEAK_AUDIT.md)):
 | 1 | *"X-ray vakıf omurgası VinDr ile ön-eğitilmiş; dış doğrulamanız kontamine."* | Doğru — ve **ölçtük**: VinDr'yi görmemiş densenet121-res224-nih ile aynı mertebe (0,6663 vs 0,6414 nOR). Sayıyı **temiz omurgayla** raporluyoruz. | ✅ kapatıldı |
 | 2 | *"Hiperparametrelerinizi aynı validasyonda seçip aynı yerde raporlamışsınız."* | Doğru — **296 + 19 + 12** değerlendirme. Ön-kayıtlı ikinci mühürle dürüst değer verildi: rank_metric 0,9131 → **0,8842**; AUC 0,9793 → **0,9645**. | ✅ kapatıldı (val "seçilmiş" etiketli) |
 | 3 | *"Tek tohum; ±0,02'lik sapmayı raporlamıyorsunuz."* | Doğru. İki bağımsız koşuda sapma ölçüldü (±0,02, V6.8) ve tüm etki büyüklükleri **aralık** olarak yazıldı. Çok-seed koşusu **açık iş**. | ⏳ kısmen |
+| 4 | *"NODE21 açık veri kümelerinden derlenmiş; ön-eğitimli kodlayıcınız bu görüntülerin çoğunu görmüş olabilir."* | Doğru — **ölçtük**: pozitiflerin **%82,9'u** NIH ChestX-ray14 + PadChest'ten; ama korpusta **radyolog kutusu yok** ⇒ lokalizasyon sızıntıya kapalı. Kaynak-ayrıştırmalı: görülen **0,9698** / görülmeyen **0,9332** AUC (25 lezyon, ≈1 SE) ve cihaz farkıyla karışık. **Beyan ediyoruz**; "arınmış" iddia etmiyoruz. | ✅ kapatıldı (beyanla) |
 
-**Konumlandırma sonucu:** Bu üç itiraz, çalışmanın "başka bir SOTA" iddiası olmadığı
+**Konumlandırma sonucu:** Bu **dört** itiraz, çalışmanın "başka bir SOTA" iddiası olmadığı
 için savunulabilir; makalenin gücü **neyin ne kadar kazandırdığını ve nerede
 kazandırmadığını** ölçmesindedir. Buna karşılık "kontaminasyonu ölçüp yok bulduk"
 bulgusu, TDA literatüründe **yöntemsel** bir katkı olarak sunulabilir: CXR vakıf

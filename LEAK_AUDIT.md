@@ -20,7 +20,8 @@
 | :--- | :--- |
 | Klasik sızıntı (hasta/etiket/test) | ✅ **Bulunamadı.** Beş bağımsız kontrol temiz. |
 | Raporlanan sayıların dürüstlüğü | 🟠 **Kısmen iyimser.** Val'de 296 değerlendirme yapılmış; dürüst dış-değer **rank_metric 0,8842** (val'de 0,9131). |
-| Dış doğrulama (VinDr) | 🔴 Kontamine *ama* **ölçülebilir şişme yok**: 400/400 görüntü ön-eğitim listesinde; temiz omurgayla fark gürültü bandında (Δ top1 +0,004). "Zero-shot" etiketi yine de kullanılamaz — sayı **temiz omurgayla** raporlanmalı (bkz. §8) |
+| Dış doğrulama (VinDr) | 🔴 Kontamine *ama* **ölçülebilir şişme yok**: 400/400 görüntü ön-eğitim listesinde; temiz omurgayla fark gürültü bandında (Δ top1 +0,004). "Zero-shot" etiketi yine de kullanılamaz — sayı **temiz omurgayla** raporlanmalı (bkz. §9) |
+| **NODE21 iç kaynak örtüşmesi** | 🟠 **Pozitiflerin %82,9'u** omuranın gördüğü korpuslardan (NIH/PadChest). **Kutular yeni** ⇒ lokalizasyon sızıntıya kapalı; kaynak-ayrıştırmalı ölçümde fark ~1 SE ve cihaz farkıyla karışık (AUC 0,970 vs 0,933). Beyan edilmeli (§9) |
 | Test bölmesi | 🟡 **İki kez görüldü** (V6.4 mührü + V6.9 mührü). Beyan edildi; V6.4 sonrası hiçbir karar test'e bakılarak alınmadı. |
 | Tohum çeşitliliği | 🟡 **Tek tohum.** Aynı protokol ±0,02 kayıyor (V6.8'de ölçüldü). |
 
@@ -75,10 +76,11 @@ Bu, iddiayı **desteklemek için yeterli değil, çürütmek için yeterlidir**.
 **Yapıldı** (§8): üç omurga, aynı tarif, yalnız ön-eğitim korpusu değişti. Sonuç
 beklediğimizden **daha iyi**: kontaminasyon **ölçülebilir bir şişme üretmiyor**.
 
-> ✅ **Lehte not (bu denetimin en önemli iyi haberi):** NODE21, omuranın ön-eğitim
-> korpuslarının **hiçbirinde yok** (pc · nih · rsna · siim · vin). Yani **kurum içi**
-> sonuçlar (val + mühürlü test) ön-eğitim sızıntısından etkilenmez; kontaminasyon
-> yalnız VinDr dış doğrulamasına aittir.
+> 🔴 **DÜZELTME (bu belgenin ilk sürümünde yanlıştı):** İlk yazımda *"NODE21 omuranın
+> ön-eğitim korpuslarının hiçbirinde yok"* demiştim. **Bu yanlıştı.** NODE21'in halka açık
+> eğitim seti yeni hastane verisi değil, **dört açık veri kümesinden derlenmiş** bir
+> yeniden etiketlemedir; pozitiflerin **%82,9'u** `chestxray14` (NIH) ve `padchest`'ten
+> gelir — yani omurganın **gördüğü** korpuslardan. Ayrıntı ve ölçüm: **§9**.
 
 ---
 
@@ -178,8 +180,9 @@ bir "mühür" artık mühür sayılmaz.
 | 4 | Tüm ana sayılara **%95 GA** (bootstrap) | 229–231 lezyonla nokta tahmini yetersiz |
 | 5 | **Tek tohum** sınırının açık yazılması (±0,02 bant) | V6.8'de ölçüldü |
 | 6 | Tuzak B beyanı (LR füzyonu in-sample s1 ile uydurulmuştu) | Zaten belgeli; makaleye taşınmalı |
+| 7 | **Kaynak örtüşmesi beyanı** (§9): pozitiflerin %82,9'u NIH/PadChest'ten; kutular yeni; kaynak-ayrıştırmalı tablo eklenmeli | Hakem bunu mutlaka sorar; "sıfır sızıntı" iddiası kurulamaz |
 
-**Uygulama durumu (Ekim 2026):** #2, #3, #4, #5, #6 → **belgelerde uygulandı**
+**Uygulama durumu (Ekim 2026):** #2, #3, #4, #5, #6, #7 → **belgelerde uygulandı**
 (`experiments.md §13`, `ablation_matrix.md §17`, `STORY.md §12.6`, `paper_draft.md §4.10 + §6`,
 `README.md`, `progress.md §8`, `roadmap.md §14`, `v4_roadmap.md §7`, `literature.md §5.6`,
 `data/external_vindr/README.md`, `submission_docker/README.md`). #1 → **kısmen**
@@ -228,7 +231,99 @@ gösteriyor; bu tavan, VinDr'yi görmemiş bir omurgada da aynı."*
 
 ---
 
-## 9. Kayıtlar
+## 9. 🟠 NODE21'in İÇİNDEKİ kaynak örtüşmesi (asıl mesele)
+
+Bu bölüm, denetimin **en kritik** bulgusudur ve ilk sürümdeki bir hatamı düzeltir.
+
+### 9.1 Veri nereden geliyor?
+
+NODE21'in halka açık eğitim seti **yeni hastane verisi değildir**; dört açık veri
+kümesinden gelen nodüllü röntgenlerin + bir kontrol havuzunun yeniden etiketlenmesidir.
+Verinin kendi `patient_info.json` alanı bunu söylüyor (4.882 hasta, hepsi sayıldı):
+
+| `source_dataset` | n | etiket | omurga gördü mü?<br>(`pc-nih-rsna-siim-vin`) |
+| :--- | ---: | :---: | :---: |
+| `node21_control` | 3.748 | hepsi **0** | **bilinmiyor** (kökeni kayıtta yok) |
+| `chestxray14` (= NIH ChestX-ray14) | 617 | hepsi **1** | ✅ **evet** (`nih`) |
+| `padchest` | 314 | hepsi **1** | ✅ **evet** (`pc`) |
+| `jsrt` | 149 | hepsi **1** | ❌ hayır |
+| `openi` | 54 | hepsi **1** | ❌ hayır |
+
+⇒ Pozitiflerin **%82,9'u (931/1.134)** omuranın ön-eğitiminde **gördüğü** iki korpustan
+geliyor. Yani *"NODE21 omuranın hiç görmediği veridir"* ifadesi **yanlıştır**; bu belgenin
+ilk sürümünde bu hata yapılmıştı (§3'teki düzeltme kutusu).
+
+> ⚠️ **Sizin verdiğiniz listeden iki sapma:** (i) NODE21 pozitiflerinde **CheXpert yok**,
+> **JSRT** var; (ii) kontroller `node21_control` havuzundan geliyor ve bu havuzun özgün
+> kaynağı bizim metadata'mızda **kayıtlı değil** — "kendi hastanelerinden" diyemeyiz.
+
+### 9.2 Sızıntı ne düzeyde? (etiket mi, kutu mu)
+
+| Bilgi türü | Omurga gördü mü? | Sonuç |
+| :--- | :---: | :--- |
+| Görüntü pikselleri | ✅ evet (%82,9 pozitif) | görüntü-düzeyi aşinalık mümkün |
+| Kaba rapor etiketi ("Nodule=1") | ✅ evet (NIH/PadChest etiketleri) | sınıflandırma önyargısı mümkün |
+| **NODE21'in radyolog kutuları** (x, y, w, h) | ❌ **hayır** | **lokalizasyon sızıntıya kapalı** |
+
+NODE21'in ayırt edici katkısı tam olarak kutulardır: organizatörler açık veri
+görüntülerini alıp **yeni radyolog anotasyonları** üretmiştir. Resmî metrik (IoU > 0,2)
+bu yeni kutulara dayandığı için **kutu ezberi yapısal olarak imkânsızdır**; etkilenebilecek
+tek şey dedektörün *duyarlılığı*dır.
+
+### 9.3 Ölçüm — kaynak-ayrıştırmalı değerlendirme (V6.9d)
+
+Yöntem: kilitli protokol **tek kez** koşuldu (mühür kaydıyla birebir doğrulandı), sonra
+aynı aday listesi kaynaklara göre ayrıştırıldı. Test: omurganın gördüğü (chestxray14 +
+padchest) ve görmediği (jsrt + openi) pozitiflerde performans ayrışıyor mu?
+
+| Test (734 hasta / 229 lezyon) | n hasta | n lezyon | AUC (kontrole karşı) | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| chestxray14 ✅ görüldü | 89 | 138 | 0,9760 | 0,6449 | 0,6957 | 0,7754 |
+| padchest ✅ görüldü | 58 | 66 | 0,9604 | 0,6515 | 0,7273 | 0,8182 |
+| jsrt ❌ görülmedi | 19 | 19 | 0,9147 | 0,3684 | 0,4737 | 0,5263 |
+| openi ❌ görülmedi | 6 | 6 | 0,9920 | 1,000 | 1,000 | 1,000 |
+| **GÖRÜLEN birleşim** | 147 | 204 | **0,9698** | 0,6471 | **0,7059** | 0,7892 |
+| **GÖRÜLMEYEN birleşim** | 25 | 25 | **0,9332** | 0,5200 | **0,6000** | 0,6400 |
+| **Fark** | | | **−0,037** | −0,127 | **−0,106** | −0,149 |
+
+Val'de aynı yön, daha küçük fark: görülen **0,9826** / görülmeyen **0,9660** (Δ −0,017);
+S@0,25 0,7448 → 0,6667 (Δ −0,078).
+
+### 9.4 Okuma — dürüst sınırlar
+
+1. ⚠️ **Fark ~1 SE.** Görülmeyen grupta yalnız **25 lezyon** (test) / 39 (val) var;
+   duyarlılığın standart hatası ≈ 0,07–0,10. −0,106'lık fark **istatistiksel olarak
+   belirleyici değildir**.
+2. ⚠️ **Kaynak kimliği başlı başına güçlü bir değişken.** Bu dört kaynak farklı cihaz ve
+   geometriye sahiptir (spacing: chestxray14 0,143 · padchest 0,275 · jsrt 0,309 ·
+   openi 0,331 mm/px). A3 denetiminde **aynı model** için kaynak-içi AUC 0,78–0,94
+   aralığındaydı (v3 tablosu, `ablation_matrix.md §7.3b`) ⇒ kaynaklar arası fark,
+   ön-eğitim aşinalığı olmadan da beklenir.
+3. ✅ **Yön tutarlı** (hem val hem testte görülen > görülmeyen) ⇒ *"ön-eğitim örtüşmesinin
+   hiç etkisi yok"* denemez.
+4. ✅ **Büyüklük sınırlı** ⇒ *"skorlar sahte"* de denemez: fark ≤0,04 AUC ve ≤0,11
+   duyarlılık; toplam kazanç (ImageNet → CXR omurgası + TDA) bundan çok daha büyük.
+5. 🔒 **Yarışma tarafı:** kurallar halka açık ön-eğitimli modellere izin verir; ancak
+   **gizli test setinin bileşimini biz doğrulayamayız** — bu yüzden "sıfır sızıntı
+   garantili" gibi bir cümle kurulmamalıdır. Aynı risk, halka açık ağırlık kullanan
+   **tüm** katılımcılar için simetriktir.
+
+### 9.5 Yayın için doğru cümle
+
+> *"NODE21'in halka açık eğitim setindeki nodüllü olguların %82,9'u (ChestX-ray14 ve
+> PadChest) kullandığımız ön-eğitimli kodlayıcının korpusuyla örtüşmektedir; ancak
+> korpusta yalnız görüntü ve rapor düzeyi etiketler bulunur, NODE21'in radyolog kutuları
+> **bulunmaz**. Kaynak-ayrıştırmalı değerlendirmede hasta AUC'si görülen kaynaklarda
+> 0,970, görülmeyenlerde 0,933 (25 lezyon, ≈1 SE) ve lokalizasyon duyarlılığı 0,706 vs
+> 0,600 olarak ölçüldü. Bu fark, kaynakların cihaz/geometri farklarıyla karışıktır;
+> sonuçlarımızı örtüşmeden **tamamen arınmış** olarak sunmuyoruz."*
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9d_source_overlap.json` ·
+[`v6_9d_source_overlap.py`](pipelines/v6_two_stage/v6_9d_source_overlap.py)
+
+---
+
+## 10. Kayıtlar
 
 | Dosya | İçerik |
 | :--- | :--- |
@@ -237,6 +332,9 @@ gösteriyor; bu tavan, VinDr'yi görmemiş bir omurgada da aynı."*
 | `artifacts/v6_two_stage/v6_9b_test_seal_ci.json` | Bootstrap %95 aralıkları + "mühürle birebir aynı" doğrulaması |
 | [`pipelines/v6_two_stage/v6_9_test_seal.py`](pipelines/v6_two_stage/v6_9_test_seal.py) | Mühür betiği (kendi hash'ini doğrular) |
 | [`pipelines/v6_two_stage/v6_9b_test_seal_ci.py`](pipelines/v6_two_stage/v6_9b_test_seal_ci.py) | Aralık betiği (mühür uyuşmazlığında durur) |
+| `artifacts/v6_two_stage/v6_9c_contamination.json` | VinDr kontaminasyon deneyi (3 omurga, §8) |
+| `artifacts/v6_two_stage/v6_9d_source_overlap.json` | NODE21 iç kaynak örtüşmesi, kaynak-ayrıştırmalı (§9) |
+| [`pipelines/v6_two_stage/v6_9d_source_overlap.py`](pipelines/v6_two_stage/v6_9d_source_overlap.py) | Kaynak-ayrıştırmalı değerlendirme betiği |
 
-*Son güncelleme: V6.9 (Ekim 2026)*
+*Son güncelleme: V6.9 (Ekim 2026) — §9 kaynak örtüşmesi eklendi*
 

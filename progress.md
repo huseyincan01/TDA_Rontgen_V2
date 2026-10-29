@@ -370,3 +370,12 @@ sonuçları buradaki hiçbir sayıyı geçersiz kılmaz, ama iki noktayı **gün
 (5 kontrol temiz), VinDr ön-eğitim kontaminasyonu (400/400 örtüşme, etkisi ölçüldü:
 şişme yok), **val seçim yanlılığı** (296 değerlendirme → dürüst test değeri 0,029 düşük)
 ve yayın öncesi 6 düzeltme.
+
+⚠️ **Ek (V6.9d) — NODE21'in kendi kaynakları:** Bu belgedeki "harici doğrulama" tartışmasından
+bağımsız olarak, NODE21'in **halka açık eğitim setinin kendisi** açık veri kümelerinden
+derlenmiştir (
+ode21_control 3.748 · chestxray14 617 · padchest 314 · jsrt 149 · openi 54).
+Buradaki v3/V4/V5.3 sonuçları **ImageNet** tabanlı olduğu için bu örtüşmeden etkilenmez;
+ancak **CXR vakıf omurgası** kullanan sonraki hatlar için geçerlidir: pozitiflerin %82,9'u
+omurganın gördüğü korpuslardan gelir (radyolog kutuları yeni). Ölçüm ve beyan:
+[LEAK_AUDIT.md](LEAK_AUDIT.md) §9.

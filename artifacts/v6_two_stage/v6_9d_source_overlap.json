@@ -1,0 +1,161 @@
+{
+  "experiment": "V6.9d-source-overlap",
+  "question": "Omurganın ön-eğitiminde gördüğü kaynaklar (chestxray14, padchest) ile görmediği kaynaklar (jsrt, openi) arasında performans ayrışıyor mu?",
+  "seen": [
+    "chestxray14",
+    "padchest"
+  ],
+  "unseen": [
+    "jsrt",
+    "openi"
+  ],
+  "backbone_corpora": "pc-nih-rsna-siim-vin",
+  "w_fusion": 0.55,
+  "note": "Eğitim/seçim YOK. Kilitli protokol bir kez koşulur; aynı aday listesi kaynaklara göre ayrıştırılır.",
+  "splits": {
+    "test": {
+      "chestxray14": {
+        "n_patients": 89,
+        "n_lesions": 138,
+        "auc_vs_control": 0.976,
+        "sens": {
+          "0.125": 0.6449,
+          "0.25": 0.6957,
+          "0.5": 0.7754
+        },
+        "group": "SEEN"
+      },
+      "jsrt": {
+        "n_patients": 19,
+        "n_lesions": 19,
+        "auc_vs_control": 0.9147,
+        "sens": {
+          "0.125": 0.3684,
+          "0.25": 0.4737,
+          "0.5": 0.5263
+        },
+        "group": "UNSEEN"
+      },
+      "openi": {
+        "n_patients": 6,
+        "n_lesions": 6,
+        "auc_vs_control": 0.992,
+        "sens": {
+          "0.125": 1.0,
+          "0.25": 1.0,
+          "0.5": 1.0
+        },
+        "group": "UNSEEN"
+      },
+      "padchest": {
+        "n_patients": 58,
+        "n_lesions": 66,
+        "auc_vs_control": 0.9604,
+        "sens": {
+          "0.125": 0.6515,
+          "0.25": 0.7273,
+          "0.5": 0.8182
+        },
+        "group": "SEEN"
+      },
+      "SEEN_union": {
+        "n_patients": 147,
+        "n_lesions": 204,
+        "auc_vs_control": 0.9698,
+        "sens": {
+          "0.125": 0.6471,
+          "0.25": 0.7059,
+          "0.5": 0.7892
+        },
+        "group": "SEEN"
+      },
+      "UNSEEN_union": {
+        "n_patients": 25,
+        "n_lesions": 25,
+        "auc_vs_control": 0.9332,
+        "sens": {
+          "0.125": 0.52,
+          "0.25": 0.6,
+          "0.5": 0.64
+        },
+        "group": "UNSEEN"
+      },
+      "__node21_control__": {
+        "n_patients": 562,
+        "n_lesions": 0
+      }
+    },
+    "val": {
+      "chestxray14": {
+        "n_patients": 97,
+        "n_lesions": 145,
+        "auc_vs_control": 0.992,
+        "sens": {
+          "0.125": 0.7172,
+          "0.25": 0.7586,
+          "0.5": 0.8069
+        },
+        "group": "SEEN"
+      },
+      "jsrt": {
+        "n_patients": 23,
+        "n_lesions": 23,
+        "auc_vs_control": 0.9504,
+        "sens": {
+          "0.125": 0.5652,
+          "0.25": 0.6522,
+          "0.5": 0.6957
+        },
+        "group": "UNSEEN"
+      },
+      "openi": {
+        "n_patients": 11,
+        "n_lesions": 16,
+        "auc_vs_control": 0.9987,
+        "sens": {
+          "0.125": 0.6875,
+          "0.25": 0.6875,
+          "0.5": 0.8125
+        },
+        "group": "UNSEEN"
+      },
+      "padchest": {
+        "n_patients": 41,
+        "n_lesions": 47,
+        "auc_vs_control": 0.9604,
+        "sens": {
+          "0.125": 0.6596,
+          "0.25": 0.7021,
+          "0.5": 0.766
+        },
+        "group": "SEEN"
+      },
+      "SEEN_union": {
+        "n_patients": 138,
+        "n_lesions": 192,
+        "auc_vs_control": 0.9826,
+        "sens": {
+          "0.125": 0.7031,
+          "0.25": 0.7448,
+          "0.5": 0.7969
+        },
+        "group": "SEEN"
+      },
+      "UNSEEN_union": {
+        "n_patients": 34,
+        "n_lesions": 39,
+        "auc_vs_control": 0.966,
+        "sens": {
+          "0.125": 0.6154,
+          "0.25": 0.6667,
+          "0.5": 0.7436
+        },
+        "group": "UNSEEN"
+      },
+      "__node21_control__": {
+        "n_patients": 562,
+        "n_lesions": 0
+      }
+    }
+  }
+}

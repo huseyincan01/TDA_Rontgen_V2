@@ -430,6 +430,28 @@ Yayında VinDr sayısı **temiz omurga** ile (0,6663) verilecek.
 V6.4'ten sonraki hiçbir karar test'e bakılarak alınmadı; yine de beyan edildi:
 üçüncü bir "mühür" artık mühür sayılmaz.
 
+**(d) 🔴→🟠 Asıl mesele kendi verimizde: NODE21 açık veri kümelerinden derlenmiş.**
+İlk denetimde *"NODE21 omuranın hiç görmediği veridir"* diye yazmıştım — **yanlıştı.**
+`patient_info.json` şunu söylüyor (4.882 hasta): `node21_control` 3.748 (etiket 0, kökeni
+kayıtlı değil) · `chestxray14` 617 · `padchest` 314 · `jsrt` 149 · `openi` 54. Omurga
+`pc-nih-rsna-siim-vin` ile eğitildiği için **pozitiflerin %82,9'u gördüğü** korpuslardan.
+**Ama** o korpusta yalnız görüntü + rapor etiketi var; **NODE21'in radyolog kutuları yok**
+⇒ resmî IoU metriği kutu ezberine kapalı; etkilenebilecek tek şey duyarlılık.
+
+Ölçüm (kilitli protokol, mühürle birebir; kaynak-ayrıştırmalı):
+
+| Test | n lezyon | AUC | S@0,25 |
+| :--- | ---: | ---: | ---: |
+| GÖRÜLEN (chestxray14 + padchest) | 204 | **0,9698** | **0,7059** |
+| GÖRÜLMEYEN (jsrt + openi) | 25 | **0,9332** | **0,6000** |
+| Fark | | −0,037 | −0,106 |
+
+Val'de aynı yön, daha küçük fark (Δ AUC −0,017). ⇒ **"Etkisi yok" denemez** (yön iki
+bölmede tutarlı), ama **"skorlar sahte" de denemez**: fark ≈ **1 SE** (25 lezyon) ve
+kaynakların cihaz/geometri farkıyla karışık (spacing 0,143–0,331 mm/px). Yayında
+**beyan** edilir; örtüşmeden tamamen arınmış sonuç iddia edilmez. Gizli test setinin
+bileşimi doğrulanamadığı için **"sıfır sızıntı garantisi"** de verilmez.
+
 
 
 
