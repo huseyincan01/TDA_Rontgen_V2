@@ -1855,6 +1855,43 @@ top3 için −0,193 · noisy-OR için −0,202 ⇒ üç toplama kuralında da ay
 * **Betik/kayıt:** [v6_9e_backbone_interaction.py](pipelines/v6_two_stage/v6_9e_backbone_interaction.py) · `artifacts/v6_two_stage/v6_9e_backbone_interaction.json`
 * ⚠️ **Düzeltme:** [LEAK_AUDIT.md](LEAK_AUDIT.md)'nin ilk sürümünde "NODE21 omuranın hiç görmediği veridir" yazıyordu — **yanlıştı**; §9'da düzeltildi.
 
+### V6.9.8 Dinamik yarıçap kafası — kilitli test doğrulaması (V6.9f)
+
+V6.8'de `R>0` maskesiyle eğitilen dinamik yarıçap kafası **val**'de sabit 56 px'i geçmişti
+(rank_metric 0,9185 > 0,9131). Gönderime almadan önce aynı kafayı **kilitli test**te doğruladık.
+
+> ⚠️ **ÜÇÜNCÜ test kullanımı.** Test bölmesi V6.4 + V6.9 mühürleriyle iki kez kullanılmıştı; bu
+> koşu, val'de seçilmiş bir iyileştirmenin tek-atımlık doğrulamasıdır (hiçbir seçim test üzerinde
+> yapılmadı).
+
+| Test (734 hasta / 229 lezyon) | S@0,125 | S@0,25 | S@0,5 | S@1 | S@2 | S@4 | rank_metric |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sabit 56×56 px | 0,6114 | 0,7031 | 0,7642 | 0,8210 | 0,8603 | 0,8952 | **0,8842** |
+| **Dinamik yarıçap** | 0,6114 | 0,7031 | **0,7773** | **0,8341** | **0,8734** | **0,9083** | **0,8842** |
+| Δ | 0,0000 | 0,0000 | **+0,0131** | **+0,0131** | **+0,0131** | **+0,0131** | **0,0000** |
+
+* 🚨 **Val kazancı resmî skorda test'e TAŞINMADI.** rank_metric = 0,75·AUC + 0,25·S@0,25; S@0,25
+  iki kolda da **0,7031** ⇒ resmî skor eşit (0,8842). Val'deki +0,0054 (0,9131 → 0,9185),
+  test'in S@0,125/0,25 noktalarında **tekrarlanmadı**.
+* ✅ **Ama dinamik kutu HİÇBİR noktada zarar vermiyor** ve daha gevşek eşiklerde (S@0,5/1/2/4)
+  **+0,0131** kazandırıyor — bu, FROC-optimal (lezyon bulma) işletim bölgesidir.
+* 🔑 **Ders:** val'de seçilen kutu boyutu, test dağılımına kısmen aşırı uyum sağlamış. Mühürlü
+  testin değeri tam burada: val kazancının genelleşip genelleşmediğini ayırıyor.
+* 🎯 **Karar:** sabit 56 px **muhafazakâr varsayılan olarak kalıyor**; dinamik kutu resmî skoru
+  değiştirmediği için zorunlu değil (yalnızca FROC-optimal dağıtımda opsiyonel +0,013).
+* **Betik/kayıt:** [v6_9f_radius_test.py](pipelines/v6_two_stage/v6_9f_radius_test.py) ·
+  `artifacts/v6_two_stage/v6_9f_radius_test.json`
+
+> ⚠️ **ZORUNLU TODO — Docker Gönderimi Öncesi (V6.9g):** Grand-Challenge sunucusuna fiilî Docker
+> gönderimi yapılacağı vakit, `M5_foundation_fulldata.pt` modelinin yarıçap kafası, V6.8'deki
+> `R>0` (yalnız merkez pikseli) maske düzeltmesiyle donuk gövde üzerinde yeniden eğitilecek
+> ([v6_9g_fulldata_radius.py](pipelines/v6_two_stage/v6_9g_fulldata_radius.py)) ve
+> `submission_docker/process.py` sabit 56×56 px yerine bu öğrenilmiş dinamik kutuyu kullanacak
+> şekilde güncellenecektir. **⚠️ Ancak yukarıdaki V6.9f, dinamik kutunun resmî rank_metric'i
+> DEĞİŞTİRMEDİĞİNİ gösterdi** (0,8842 = 0,8842; yalnızca S@0.5+ noktalarında +0,013). Bu yüzden
+> gönderim öncesi karar yeniden değerlendirilmelidir: FROC-optimal (lezyon bulma) hedefleniyorsa
+> dinamik kutu uygulanır, aksi hâlde sabit 56 px muhafazakâr varsayılan olarak korunur.
+
 
 
 

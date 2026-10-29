@@ -1,0 +1,41 @@
+{
+  "experiment": "V6.9f-radius-test",
+  "test_budget_declaration": "ÜÇÜNCÜ test kullanımı — val'de seçilmiş iyileştirmenin tek-atımlık doğrulaması; test üzerinde hiçbir seçim yapılmadı.",
+  "split": "test",
+  "n_patients": 734,
+  "n_lesions": 229,
+  "radius_head": "submission_fulldata/radius_head_weight1_center_only.pt (V6.8, R>0 maske)",
+  "fixed_56px": {
+    "sens": {
+      "0.125": 0.6114,
+      "0.25": 0.7031,
+      "0.5": 0.7642,
+      "1": 0.821,
+      "2": 0.8603,
+      "4": 0.8952
+    },
+    "auc": 0.9446,
+    "froc_mean_3pt": 0.6929,
+    "rank_metric": 0.8842
+  },
+  "dynamic_radius": {
+    "sens": {
+      "0.125": 0.6114,
+      "0.25": 0.7031,
+      "0.5": 0.7773,
+      "1": 0.8341,
+      "2": 0.8734,
+      "4": 0.9083
+    },
+    "auc": 0.9446,
+    "froc_mean_3pt": 0.6973,
+    "rank_metric": 0.8842
+  },
+  "predicted_r1024": {
+    "p10": 26.17,
+    "p50": 33.32,
+    "p90": 47.66
+  },
+  "delta_rank": 0.0,
+  "note": "Isı haritası değişmez ⇒ AUC iki kolda da aynı olmalı (0,9446 test)."
+}

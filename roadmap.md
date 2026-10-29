@@ -440,3 +440,17 @@ kullanıldığında **iki** katmanlıdır: (i) değerlendirme seti yeni mi, (ii)
 %82,9'u NIH ChestX-ray14 + PadChest'ten. Kutular yeni olduğu için lokalizasyon metriği
 sızıntıya kapalıdır, ama kaynak-ayrıştırmalı ölçüm ve **beyan** zorunludur
 ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9).
+
+**Ek (V6.9f) — dinamik kutu (yarıçap kafası):** V6.8'de `R>0` maskesiyle düzeltilen dinamik
+yarıçap kafası val'de 0,9185 (sabit 56 px: 0,9131) idi; **kilitli testte resmî skor EŞİT**
+(0,8842 = 0,8842), yalnızca S@0.5+ noktalarında +0,013 kazandı ⇒ val kazancı test'e taşınmadı.
+Sabit 56 px muhafazakâr varsayılan olarak kalır ([experiments.md §V6.9.8](experiments.md)).
+
+> ⚠️ **ZORUNLU TODO — Docker Gönderimi Öncesi (V6.9g):** Grand-Challenge sunucusuna fiilî Docker
+> gönderimi yapılacağı vakit, `M5_foundation_fulldata.pt` modelinin yarıçap kafası V6.8'deki
+> `R>0` maske düzeltmesiyle donuk gövde üzerinde yeniden eğitilecek
+> ([v6_9g_fulldata_radius.py](pipelines/v6_two_stage/v6_9g_fulldata_radius.py)) ve
+> `submission_docker/process.py` sabit 56×56 px yerine öğrenilmiş dinamik kutuyu kullanacak
+> şekilde güncellenecektir. **⚠️ Ancak V6.9f, dinamik kutunun resmî rank_metric'i
+> DEĞİŞTİRMEDİĞİNİ gösterdi** (0,8842 = 0,8842) ⇒ bu adım artık zorunlu bir iyileştirme değil,
+> FROC-optimal dağıtım hedefleniyorsa uygulanacak bir **seçenektir**.

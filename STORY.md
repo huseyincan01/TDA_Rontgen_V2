@@ -340,6 +340,11 @@ minimumu **sabit 0**.
 * ⚠️ **Gönderim sözleşmesi değişmedi** (kilitli sabit 56 px, Tuzak A); onarılan kafayı
   gönderime almak tam-veri modelinin yarıçap dalını aynı maske düzeltmesiyle yeniden
   eğitmeyi gerektirir — **ayrı bir sürüm kararı**.
+* 🚨 **V6.9f güncellemesi — val kazancı test'e TAŞINMADI:** aynı kafa **kilitli test**te
+  doğrulandı (üçüncü test kullanımı, tek-atımlık): resmî rank_metric **eşit** (0,8842 = 0,8842),
+  çünkü S@0,25 iki kolda da 0,7031. Yalnızca gevşek eşiklerde (S@0,5/1/2/4) **+0,0131** kazandı.
+  ⇒ val'deki +0,0054'lük kazanç test dağılımına kısmen aşırı uyummuş; sabit 56 px muhafazakâr
+  varsayılan olarak kalır, dinamik kutu yalnızca FROC-optimal dağıtım için opsiyoneldir.
 * 🔒 **Kanıt koruması:** eğitilen kafa **diske yazıldı**
   (`submission_fulldata/radius_head_weight1_center_only.pt`) ve koşu **bağımsız yeniden
   üretildi** (ikinci koşu aynı rank_metric · duyarlılıklar · r yüzdelikleri ⇒ tam

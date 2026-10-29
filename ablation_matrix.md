@@ -942,3 +942,18 @@ V6.9d'nin farkı kaynak cihazıyla karışıktı; ayrıştırmak için iki omurg
 * 🔑 Görülen↔görülmeyen açığı M5'te +0,221, FND'de +0,021 ⇒ CXR ön-eğitimi kaynak-duyarlılığını **~0,20 AUC** azaltıyor.
 * ⚠️ Sınırlar: yalnız val (test mühürlü) · kapasite farkı (11M vs 23M) · görülmeyen grupta 39 lezyon.
 * 🔒 Konu **kapandı** (V6.9c + V6.9d + V6.9e aynı yön); mührü yalnız yeni dış veri veya korpusu NODE21 ile kesişmeyen omurga açar. Ayrıntı: [LEAK_AUDIT.md §10](LEAK_AUDIT.md).
+
+### 17.4 Dinamik yarıçap kafası — kilitli test doğrulaması (V6.9f)
+
+V6.8'de `R>0` maskesiyle eğitilen dinamik yarıçap kafası **val**'de sabit 56 px'i geçmişti
+(0,9185 > 0,9131). Kilitli test doğrulaması (⚠️ üçüncü test kullanımı — tek-atımlık, seçim yok):
+
+| Test (734/229) | S@0,125 | S@0,25 | S@0,5 | S@1 | S@2 | S@4 | rank_metric |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sabit 56×56 | 0,6114 | 0,7031 | 0,7642 | 0,8210 | 0,8603 | 0,8952 | **0,8842** |
+| **Dinamik yarıçap** | 0,6114 | 0,7031 | **0,7773** | **0,8341** | **0,8734** | **0,9083** | **0,8842** |
+
+* 🚨 **Val kazancı resmî skorda test'e taşınmadı:** S@0,25 iki kolda da 0,7031 ⇒ rank_metric
+  eşit (0,8842). Val'deki +0,0054 (0,9131→0,9185) test'in S@0,125/0,25'inde tekrarlanmadı.
+* ✅ **Ama zarar yok, gevşek eşiklerde +0,0131:** S@0,5/1/2/4'te dinamik kutu daha iyi (FROC-optimal bölge).
+* 🎯 **Karar:** sabit 56 px muhafazakâr varsayılan kalır; dinamik kutu resmî skoru artırmadığı için zorunlu değil (opsiyonel).

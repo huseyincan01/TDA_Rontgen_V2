@@ -96,3 +96,16 @@ python submission_docker/smoke_test.py --n 3
   sözleşme); değişen, o sözleşmenin **beklenen performansıdır**.
   Ayrıntı: [../LEAK_AUDIT.md](../LEAK_AUDIT.md) §5.
 * Zaman: GPU'da ~1–2 s/katman; **GPU'suz ~26 s/katman** (CPU varyantı da aynı).
+
+---
+
+> ⚠️ **ZORUNLU TODO — Docker Gönderimi Öncesi (V6.9g):** Grand-Challenge sunucusuna fiilî Docker
+> gönderimi yapılacağı vakit, `M5_foundation_fulldata.pt` modelinin yarıçap kafası, V6.8'deki
+> `R>0` (yalnız merkez pikseli) maske düzeltmesiyle donuk gövde üzerinde yeniden eğitilecek
+> ([v6_9g_fulldata_radius.py](../pipelines/v6_two_stage/v6_9g_fulldata_radius.py)) ve
+> `submission_docker/process.py` sabit 56×56 px yerine bu öğrenilmiş dinamik kutuyu kullanacak
+> şekilde güncellenecektir. **⚠️ Ancak V6.9f (kilitli test) bu adımın resmî skorda zorunlu bir
+> kazanç getirmediğini gösterdi:** dinamik kutu rank_metric'i DEĞİŞTİRMİYOR (0,8842 = 0,8842),
+> yalnızca S@0.5 ve üstünde +0,013 kazandırıyor. Bu yüzden gönderim öncesi karar yeniden
+> değerlendirilmelidir: FROC-optimal (lezyon bulma) hedefleniyorsa dinamik kutu uygulanır,
+> aksi hâlde sabit 56 px muhafazakâr varsayılan olarak korunur.
