@@ -38,16 +38,16 @@ Her iki durumda da nodüllü:kontrol oranı **1:1**'dir.
 
 ### 2.1 Mimari
 
-```
-512×512 kanonik röntgen ([-1024, +1024] aralığı)
-   → ResNet50 omurga (TorchXRayVision, 800 bin göğüs röntgeniyle ön-eğitilmiş)
-      C2, C3, C4, C5 özellik haritaları (1/4, 1/8, 1/16, 1/32)
-   → ASPP (C5 üzerinde, dilation 1/3/6/12 + global havuz) ⇒ büyük ve küçük nodül aynı anda
-   → FPN (C2–C5 yukarı birleştirme) ⇒ 128×128 (1/4 çözünürlük)
-   → ×2 bilinear yükseltme ⇒ 256×256
-   → CenterNet kafası: 2 kanal
-        • ısı haritası (nodül merkezi)
-        • boyut/yarıçap kanalı
+```mermaid
+flowchart TD
+    A["512×512 kanonik röntgen<br/>[-1024, +1024] aralığı"] --> B["ResNet50 omurga<br/>TorchXRayVision · 800 bin göğüs röntgeni ön-eğitimi"]
+    B --> C["C2, C3, C4, C5 özellik haritaları<br/>1/4 · 1/8 · 1/16 · 1/32"]
+    C --> E["ASPP · C5 üzerinde<br/>dilation 1/3/6/12 + global havuz<br/>büyük ve küçük nodül aynı anda"]
+    C --> F["FPN · C2–C5 yukarı birleştirme<br/>128×128 = 1/4 çözünürlük"]
+    F --> G["×2 bilinear yükseltme<br/>256×256"]
+    G --> H["CenterNet kafası · 2 kanal"]
+    H --> I["ısı haritası<br/>nodül merkezi"]
+    H --> J["boyut/yarıçap kanalı"]
 ```
 
 Isı haritası **Gaussian Focal Loss** ile eğitilir (CenterNet standardı: pozitif bölgede
@@ -117,10 +117,10 @@ Her diyagram, **eğitim adaylarından türetilip dondurulmuş** doğum–kalıc�
 (p1–p99) ve **Gaussian yumuşatma** (σ=1,0 piksel) ile **20×20 kalıcılık imgesine** rasterize
 edilir:
 
-```
-2 kesit × 2 homoloji (H0+H1) × 20×20 = 1.600 topolojik öznitelik
-                                        + 4 uzamsal özellik
-                                        = 1.604 boyutlu vektör
+```mermaid
+flowchart LR
+    A["2 kesit<br/>32px + 64px"] --> B["× 2 homoloji<br/>H0 + H1"] --> C["× 20×20 = 1.600<br/>topolojik öznitelik"]
+    C --> D["+ 4 uzamsal özellik"] --> E["= 1.604 boyutlu vektör"]
 ```
 
 4 uzamsal özellik: akciğer içi göreli konum (x, y), hilusa uzaklık, plevraya uzaklık.
@@ -177,19 +177,15 @@ alınmaz (transductive sızıntı yok).
 
 ## 5. Özet akış
 
-```
-4.882 hasta ──(hasta düzeyi bölme)──► 3.414 eğitim · 734 doğrulama · 734 kilitli test
-                                          │
-3.414 eğitim ──(1:1 denge)──► 1.580 (bilimsel) · 2.268 (tam-veri) görüntü
-      │
-      ▼
-1. AŞAMA: ResNet50 + ASPP + FPN + CenterNet (Gaussian focal) — 5 donuk + 13 ince ayar = 18 epoch
-      │  512→256 ısı haritası → 3×3 tepe → NMS 8 px → top-50 aday (sabit 56×56 kutu)
-      ▼
-2. AŞAMA: her aday → 32/64 kesit → GUDHI H0/H1 PI (1600) + 4 uzamsal = 1604
-      │  → HistGradientBoosting (balanced, s1 YOK) → p_TDA
-      ▼
-FÜZYON: S = sigmoid(0,55·z(s1) + 0,45·z(p_TDA))   ← w ve z-referansı val'de dondurulmuş
+```mermaid
+flowchart TD
+    A["4.882 hasta"] -->|"hasta düzeyi bölme"| B["3.414 eğitim · 734 doğrulama · 734 kilitli test"]
+    B -->|"1:1 denge"| C["1.580 bilimsel / 2.268 tam-veri görüntü"]
+    C --> D["1. AŞAMA<br/>ResNet50 + ASPP + FPN + CenterNet<br/>Gaussian focal · 5 donuk + 13 ince ayar = 18 epoch"]
+    D --> E["512→256 ısı haritası<br/>3×3 tepe → NMS 8 px<br/>top-50 aday · sabit 56×56 kutu"]
+    E --> F["2. AŞAMA<br/>her aday → 32/64 kesit<br/>GUDHI H0/H1 PI (1600) + 4 uzamsal = 1604"]
+    F --> G["HistGradientBoosting<br/>balanced · s1 YOK → p_TDA"]
+    G --> H["FÜZYON<br/>S = sigmoid(0,55·z(s1) + 0,45·z(p_TDA))<br/>w ve z-referansı val'de dondurulmuş"]
 ```
 
 **Kilitli test sonucu (sızıntısız, ayarsız):** yalnız 1. aşama rank_metric **0,8842** /

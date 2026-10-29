@@ -30,15 +30,14 @@ göstereceğim.
 Sisteme 1024×1024 piksellik ham bir röntgen giriyor. Bu görüntü, nihai karara ulaşana kadar
 dört duraktan geçiyor:
 
-```
-HAM RÖNTGEN (1024×1024)
-   │
-   ▼ DURAK 1 — Sahneyi temizle, parlaklığı canlandır
-   ▼ DURAK 2 — Termal kamera gibi tara (1. aşama, derin öğrenme)
-   ▼ DURAK 3 — Şüpheli kutulara topolojik büyüteç tut (2. aşama, lokal TDA)
-   ▼ DURAK 4 — İki uzman ortak karar versin (HGB + birleştirme)
-   │
-   ▼ NİHAİ KARAR: bu hastada nodül var mı, varsa nerede
+```mermaid
+flowchart TD
+    A["HAM RÖNTGEN<br/>1024 × 1024"] --> B
+    B["DURAK 1 · Ön-işleme<br/>PSPNet akciğeri ayırır<br/>maske 15 px genişler<br/>parlaklık %1–%99'a ölçeklenir"] --> C
+    C["DURAK 2 · 1. Aşama (derin öğrenme)<br/>ResNet50 → ASPP + FPN → CenterNet<br/>tümör merkezleri 'sıcak nokta' olur<br/>en güçlü 50 kutu seçilir"] --> D
+    D["DURAK 3 · 2. Aşama (lokal TDA)<br/>32×32 + 64×64 kesit<br/>GUDHI ile H0 tepecik + H1 delik<br/>→ 1.604 sayılık şekil vektörü"] --> E
+    E["DURAK 4 · Birleştirme<br/>HGB skoru + 1. aşama güveni<br/>0,55 · görsel + 0,45 · topolojik"] --> F
+    F["NİHAİ KARAR<br/>nodül var mı,<br/>varsa nerede"]
 ```
 
 **Durak 1 — Sahneyi Temizleme ve Parlaklığı Canlandırma.**
@@ -81,11 +80,19 @@ bölgeler, H0) ve **delik/döngüler** (kapalı yapılar, H1), her birinin *hang
 Bu noktaları 20×20'lik bir ızgaraya düşürüyoruz (x ekseni = doğduğu parlaklık, y ekseni = ne kadar
 uzun yaşadığı) ve her hücrede ne kadar "güç" biriktiğini topluyoruz. Ortaya çıkan 20×20 = 400 sayılık
 tablo, kesitin **şekil haritası**: tümör tek, dar ve yüksek bir tepe üretir; damar ise geniş, dağınık
-ve dallı bir "sırt çizgisi". Bu haritayı tepecikler için (400) ve delikler için (400) ayrı, iki pencere
-(32×32 ve 64×64) için de ayrı çıkarıyoruz — toplam 4 harita = **1.600 sayı**. Üstüne kutunun akciğer
-içindeki yerini söyleyen 4 sayı (x, y, hilusa ve plevraya uzaklık) ekliyoruz. Sonuç, her kutu için
-**1.604 sayıdan oluşan bir vektör**: iki ölçekte, iki homoloji boyutunda, kesitin parlaklık şeklinin
-sayısal özeti + konumu.
+ve dallı bir "sırt çizgisi". Vektörün tam hesabı şöyle:
+
+```mermaid
+flowchart LR
+    A["20 × 20 ızgara<br/>= 400 sayı"] --> B["× 2 homoloji<br/>(H0 tepecik + H1 delik)"]
+    B --> C["× 2 pencere<br/>(32×32 çekirdek + 64×64 çevre)"]
+    C --> D["= 1.600 topolojik sayı"]
+    D --> E["+ 4 konum (x, y, hilus, plevra)"]
+    E --> F["= 1.604 boyutlu vektör"]
+```
+
+Bu vektör iki ölçekte, iki homoloji boyutunda kesitin parlaklık şeklini ve konumunu özetler; yani
+her kutu için, retina gibi piksellere değil **şekle** bakan bir imzadır.
 
 **Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
@@ -117,6 +124,12 @@ boyunca omurganın yalnızca üst bloklarını çok düşük öğrenme hızıyla
 sönümlenerek) açıyoruz. Toplam 18 epoch; BatchNorm istatistikleri baştan sona donuk tutuluyor ki 800
 bin röntgenden gelen normalizasyon bilgisi hiç bozulmasın. Bu kademeli yaklaşıma "diferansiyel ince
 ayar" diyoruz.
+
+```mermaid
+flowchart LR
+    A["Faz 1<br/>1–5. epoch<br/>omurga DONUK<br/>yalnız yeni katmanlar"] --> B["Faz 2<br/>6–18. epoch<br/>üst bloklar açık<br/>düşük öğrenme hızı"]
+    B --> C["Toplam 18 epoch<br/>Cosine Annealing<br/>BatchNorm hep donuk"]
+```
 
 **Adım 3 — 2. Aşamanın Zor-Negatiflerle Eğitimi.** 2. aşamayı rastgele "kolay" akciğer parçalarıyla
 eğitmek ona hiçbir şey öğretmezdi. Bunun yerine, 1. aşamayı eğitim hastalarının üzerinde çalıştırdık
