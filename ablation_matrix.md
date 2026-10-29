@@ -970,3 +970,17 @@ Tahmin edilen yarıçap R̂, 5. uzamsal özellik olarak HGB'ye eklendi (1605 öz
 
 * ❌ Yarıçap özelliği **zarar veriyor** (R̂ yalnız nodül merkezinde eğitildi → yanlış alarmlarda gürültü).
 * 🎯 Sabit 32/64 TDA penceresi + 1604 özellik **doğru seçimmiş**; yarıçap-uyarlamalı 2. aşama reddedildi.
+
+### 17.6 Uyumlu 2. aşama — eski M5 kalıntısı temizlendi (V6.9i)
+
+Eski `stage2_final_tda_hgb.joblib`, M5 (ImageNet) adaylarıyla eğitilmişti; foundation adaylarıyla
+yeniden eğitilen uyumlu bundle, kilitli testte:
+
+| Kilitli test (734/229) | rank | AUC | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: |
+| Eski bundle (M5 adaylı) | 0,8970 | 0,9645 | 0,6943 | 0,7729 |
+| **Uyumlu bundle (foundation adaylı)** | **0,9045** | **0,9687** | **0,7118** | **0,7904** |
+
+* ✅ rank **+0,0075** · AUC **+0,0042** · S@0,25/S@0,5 **+0,0175** (yalnız S@0,125'te −0,009).
+* 🔒 Eski bundle korundu; yeni `stage2_foundation_tda_hgb.joblib` (1604 özellik, s1 YOK, w=0,55).
+* ⚠️ Dördüncü test kullanımı; bu koşudan sonra test kapanır.

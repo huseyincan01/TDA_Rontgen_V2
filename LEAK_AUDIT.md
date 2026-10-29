@@ -143,6 +143,13 @@ dokunulmamış **test** bölmesinde (734 hasta / 229 lezyon) **bir kez** koşuld
    0,9645 > 0,9446 · Sens@0,5 0,7729 > 0,7642; yalnız Sens@0,25'te geride). ⇒ **V6.6.4'ün
    "2. aşamayı atla" önerisi val'e özgüymüş**; mühür bunu yakaladı.
 
+> 🔄 **V6.9i güncellemesi (bu tablonun sonrası):** Mühürde kullanılan `stage2_final_tda_hgb.joblib`,
+> eski M5 (ImageNet) adaylarıyla eğitilmişti. HGB'yi foundation'ın kendi adaylarıyla yeniden eğiten
+> uyumlu bundle (`stage2_foundation_tda_hgb.joblib`), kilitli testte füzyonu **0,8970 → 0,9045**
+> (rank) ve **0,9645 → 0,9687** (AUC) seviyesine taşıdı (4. test kullanımı, tek-atımlık). Ayrıntı:
+> `experiments.md V6.9.10`. Bu, §5.1'in ana hükmünü (val iyimserliği ~0,02–0,03) değiştirmez; yalnızca
+> dürüst dış-değeri hafifçe yukarı taşır.
+
 ### 5.2 Mühür kaydındaki iki teknik uyarı (dürüstlük)
 
 * **`legacy_fusion.patient_auc.noisyor` = 0,6432 GEÇERSİZ.** Eski protokol bloğunda füzyon

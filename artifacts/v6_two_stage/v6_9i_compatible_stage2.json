@@ -1,0 +1,50 @@
+{
+  "experiment": "V6.9i-compatible-stage2",
+  "test_budget_declaration": "DÖRDÜNCÜ test kullanımı — dağılım-uyum düzeltmesinin tek-atımlık doğrulaması; test üzerinde seçim yok. Bu koşudan sonra test KAPANIR.",
+  "bundle": "checkpoints/stage2_foundation_tda_hgb.joblib",
+  "old_bundle_protected": "stage2_final_tda_hgb.joblib DEĞİŞMEDİ (SHA-256 korumalı)",
+  "trained_on": "train split 1580 hasta (1:1) · 74482 aday · %1.72 pozitif",
+  "features": "1604 (1600 PI + 4 uzamsal) · s1 YOK (Tuzak B) · yarıçap YOK",
+  "fusion": {
+    "w": 0.55,
+    "z_ref": {
+      "s1_mean": 0.026985976845026016,
+      "s1_std": 0.038500506430864334,
+      "tda_mean": 0.24212024434698068,
+      "tda_std": 0.1704624497350107,
+      "w": 0.55
+    },
+    "box": "sabit 56×56 px"
+  },
+  "test": {
+    "stage1_only": {
+      "sens": {
+        "0.125": 0.6114,
+        "0.25": 0.7031,
+        "0.5": 0.7642,
+        "1": 0.821,
+        "2": 0.8603,
+        "4": 0.8952
+      },
+      "auc": 0.9446,
+      "froc_mean_3pt": 0.6929,
+      "rank_metric": 0.8842
+    },
+    "fusion": {
+      "sens": {
+        "0.125": 0.6245,
+        "0.25": 0.7118,
+        "0.5": 0.7904,
+        "1": 0.8297,
+        "2": 0.869,
+        "4": 0.8908
+      },
+      "auc": 0.9687,
+      "froc_mean_3pt": 0.7089,
+      "rank_metric": 0.9045
+    }
+  },
+  "smoke": false,
+  "bundle_sha256": "e87318b59b496e8f8f3392f5257875387e05240cdca58adb372679605be9ad6b",
+  "bundle_bytes": 1753902
+}

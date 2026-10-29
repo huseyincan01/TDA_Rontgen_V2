@@ -84,7 +84,7 @@ görüntüleri asla hem eğitimde hem testte yer almaz; yani **hasta sızıntıs
 | **Aday yakalama (1. aşama)** | Gerçek nodüllerin **%98–99'u** ilk 50 aday kutu içinde |
 | **Küçük bölgede piksel vs. topoloji (2. aşama)** | Piksel tabanlı küçük CNN ≈**0,65** · lokal TDA tek başına ≈**0,93** (hasta AUC) |
 | **Kilitli test — yalnız 1. aşama** | Hasta AUC **0,945** · resmî metrik benzetimi **0,884** |
-| **Kilitli test — 1.+2. aşama (TDA füzyonu)** | Hasta AUC **0,965** · resmî metrik benzetimi **0,897** |
+| **Kilitli test — 1.+2. aşama (TDA füzyonu)** | Hasta AUC **0,969** · resmî metrik benzetimi **0,905** |
 | **Dış veri (VinDr-CXR, Vietnam; sıfır eğitim)** | Hasta AUC ≈**0,65–0,66** |
 
 Kısaca: "hasta AUC" (0 ile 1; 0,5 = şans, 1,0 = kusursuz) modelin *"bu hastada nodül var mı?"*
@@ -100,8 +100,8 @@ gerçek puanlama yöntemini (hem doğru yerini bulma hem doğru sınıflandırma
    bakan küçük bir CNN ≈0,65'te kalırken, kesitin **şeklini** özetleyen topolojik temsil tek
    başına ≈0,93'e ulaşıyor — yani bu küçük ölçekte ayırt edici bilgi dokudan çok **şekil**de.
 3. **Kilitli test ve tamamlayıcılık:** Sızıntısız 734 hastalık test setimizde sistem hasta
-   düzeyinde **0,965** AUC'ye ulaşıyor. Topolojik katman, derin modelin emin olmadığı kısmı
-   tamamlıyor: hasta AUC **0,945'ten 0,965'e**, resmî metrik **0,884'ten 0,897'ye** yükseliyor.
+   düzeyinde **0,969** AUC'ye ulaşıyor. Topolojik katman, derin modelin emin olmadığı kısmı
+   tamamlıyor: hasta AUC **0,945'ten 0,969'a**, resmî metrik **0,884'ten 0,905'e** yükseliyor.
    Göğüs röntgeniyle ön-eğitimli omurga, genel görüntü ön-eğitimli omurgaya göre belirgin
    biçimde daha iyi (aday yakalamada %99'a karşı %98). Ayrıca daha önceki bir sürümümüzde,
    5 bölgeli global temsil modeli ile lokal dedektör birleştirildiğinde, tamamlayıcılık

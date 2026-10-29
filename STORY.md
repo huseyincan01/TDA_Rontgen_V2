@@ -236,11 +236,11 @@ uid 1000), ağırlıklar gömülü, **`--network=none` altında test edildi** (3
 
 **Bildiğimiz:**
 * Kurum içinde güçlü bir hasta düzeyi triyaj sistemi var — **dürüst (test) değer: füzyon
-  AUC 0,9645**, yalnız 1. aşama 0,9446. Val'de ölçülen 0,9879/0,9793 **seçilmiş** sayılardır
-  (V6.9 mührü: −0,015…−0,023).
-* Lokalizasyon katmanı çalışıyor: **dürüst rank_metric 0,8842** (1. aşama) / **0,8970**
-  (füzyonla); onarılmış yarıçap kafasıyla val'de 0,9185. Val'in 0,9131'i seçim yanlılığı
-  taşıyor (V6.9: −0,029).
+  AUC 0,9687** (uyumlu 2. aşamayla), yalnız 1. aşama 0,9446. Val'de ölçülen 0,9879/0,9793
+  **seçilmiş** sayılardır (V6.9 mührü: −0,015…−0,023).
+* Lokalizasyon katmanı çalışıyor: **dürüst rank_metric 0,8842** (1. aşama) / **0,9045**
+  (uyumlu 2. aşama füzyonu); onarılmış yarıçap kafasıyla val'de 0,9185. Val'in 0,9131'i
+  seçim yanlılığı taşıyor (V6.9: −0,029).
 * **TDA'nın gerçek katkısı global/arka plan topolojisinde**; lokal nodül topolojisinde
   değil (E3.6: 0,6866). Dış merkez iddiası **ölçüldü ve sınırlı**: VinDr AUC 0,64–0,67
   bandında (temiz omurgayla **0,6663**); kontaminasyon şişmesi **yok** (12.6b′).

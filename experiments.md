@@ -1924,6 +1924,31 @@ yalnızca R̂ skaleri eklenir; train 400+400, val 734, class_weight balanced, w=
   E3.6 boyut confound'u) bu negatif sonuçla daha az cazip hâle geldi.
 * **Kayıt:** `artifacts/v6_two_stage/v6_9h_radius_feature.json`
 
+### V6.9.10 Uyumlu 2. aşama — eski M5 kalıntısının temizlenmesi + kilitli test (V6.9i)
+
+**Kök neden:** `stage2_final_tda_hgb.joblib`, **eski M5 (ImageNet) dedektörünün** aday dağılımıyla
+eğitilmişti; oysa 1. aşamada artık `M5_foundation` kullanıyoruz. HGB'yi foundation'ın **kendi train
+adaylarıyla** (790+790 hasta, 1604 özellik, s1 YOK = Tuzak B) yeniden eğitmek bu uyumsuzluğu giderir.
+
+| Kilitli test (734/229) | rank_metric | AUC | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Eski bundle (M5 adaylı HGB) | 0,8970 | 0,9645 | 0,6332 | 0,6943 | 0,7729 |
+| **Uyumlu bundle (foundation adaylı HGB)** | **0,9045** | **0,9687** | 0,6245 | **0,7118** | **0,7904** |
+| Δ | **+0,0075** | **+0,0042** | −0,0087 | **+0,0175** | **+0,0175** |
+
+* ✅ **Uyum düzeltmesi gerçek bir kazanç:** rank_metric **+0,0075**, AUC **+0,0042**; S@0,25 ve
+  S@0,5'te **+0,0175**. Yalnızca S@0,125'te −0,009 (sınırda) ve S@1'de −0,004 gerileme — net pozitif.
+* 🔑 **Eski M5 kalıntısı gerçek bir engelmiş:** HGB'nin eğitim dağılımı (M5 adayları) ile çıkarım
+  dağılımı (foundation adayları) arasındaki uyumsuzluk, test'te **0,0075 rank**'e mal oluyordu.
+  V6.9h'nin "bonus bulgusu" (val 0,9174 → 0,9238) bunu önceden işaret etmişti.
+* 🔒 **Koruma:** eski `stage2_final_tda_hgb.joblib` **DEĞİŞMEDİ** (SHA-256 korumalı bilimsel artifact);
+  yeni bundle `checkpoints/stage2_foundation_tda_hgb.joblib` olarak ayrıca kaydedildi
+  (`stage1_score_included=False` teyitli, w=0,55 kilitli, z-ref val'den donduruldu).
+* ⚠️ **DÖRDÜNCÜ test kullanımı** — dağılım-uyum düzeltmesinin tek-atımlık doğrulaması; test üzerinde
+  seçim yok. Bu koşudan sonra test bölmesi **tamamen kapanır**.
+* **Betik/kayıt:** [v6_9i_compatible_stage2.py](pipelines/v6_two_stage/v6_9i_compatible_stage2.py) ·
+  `artifacts/v6_two_stage/v6_9i_compatible_stage2.json`
+
 
 
 

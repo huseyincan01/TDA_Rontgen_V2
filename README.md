@@ -34,7 +34,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 
 | | |
 | :--- | :--- |
-| **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9645** (füzyon) / **0,9446** (1. aşama) · rank_metric **0,8970** / **0,8842** (V6.9, ön-kayıtlı tek atım) · ⚠️ pozitiflerin **%82,9'u** omurganın gördüğü kaynaklardan (kutular yeni) — beyan: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9 |
+| **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9687** (füzyon, uyumlu 2. aşama) / **0,9446** (1. aşama) · rank_metric **0,9045** / **0,8842** (V6.9i) · ⚠️ pozitiflerin **%82,9'u** omurganın gördüğü kaynaklardan (kutular yeni) — beyan: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9 |
 | **Val'de ölçülen (seçilmiş) sonuç** | Füzyon AUC **0,9879** · rank_metric **0,9131** (56 px) · **0,9185** (onarılmış yarıçap, V6.8) — val'de 296 değerlendirme yapıldı ⇒ **hafif iyimser** |
 | **Lokalizasyon (V6.6, val)** | Yalnız Aşama-1: Recall@K20/K30 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
 | **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
@@ -48,12 +48,13 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 1. **Kural 9 — leaderboard karşılaştırması yok.** Verimiz NODE21'in **halka açık eğitim
    setidir** (4.882 hasta); resmî test setleri (281 + 298) **özeldir**. Kendi iç
    bölmemiz resmî test değildir ⇒ sıralama karşılaştırması **geçersizdir**.
-2. **Test bütçesi: 2/2 kullanıldı ve kapandı.** İlki V6.4 mührü (0,9876), ikincisi V6.9
-   mührü (0,8842 / 0,9645) — ikisi de **ayarsız, tek atım**. Üçüncü bir "mühür" mühür
-   sayılmaz; yeni bir test sonucu ancak yeni bir veri kümesiyle üretilebilir.
+2. **Test bütçesi: 4/4 kullanıldı ve kapandı.** V6.4 mührü (0,9876) · V6.9 mührü (0,8842 / 0,9645)
+   · V6.9f (yarıçap doğrulaması, Δ=0) · V6.9i (uyumlu 2. aşama → **0,9045 / 0,9687**) — hepsi
+   **ayarsız, tek atım**. Beşinci bir kullanım kabul edilmez; yeni bir test sonucu ancak yeni bir
+   veri kümesiyle üretilebilir.
 3. **Bilimsel checkpoint'ler korunur.** `M5_centernet.pt`, `M6_fcos.pt`,
-   `M5_foundation.pt`, `stage2_final_tda_hgb.joblib` SHA-256 ile teyitlidir; tam-veri
-   gönderim modelleri ayrı dizinde (`submission_fulldata/`) tutulur.
+   `M5_foundation.pt`, `stage2_final_tda_hgb.joblib`, `stage2_foundation_tda_hgb.joblib`
+   SHA-256 ile teyitlidir; tam-veri gönderim modelleri ayrı dizinde (`submission_fulldata/`) tutulur.
 4. **Sayı çelişkisi:** öncelik sırası → `ablation_matrix.md` › `roadmap.md §13` ›
    `experiments.md`. En güncel çalışma `exp/v4-directional-radial` dalındadır.
 5. **"Seçilmiş" ≠ "dürüst".** Val'de alınan sayılar **seçilmiş**tir (296 değerlendirme +
