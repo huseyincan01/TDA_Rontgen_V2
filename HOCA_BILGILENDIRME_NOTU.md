@@ -106,7 +106,7 @@ flowchart LR
 Böylece her şüpheli kutu için, sadece ham piksellere değil doğrudan **o bölgenin geometrik
 şekline** bakan **1.600 sayılık** bir parmak izi elde ederiz.
 
-**Vektörün içeriği:** 1.600 sayının tamamı, 4 kalıcılık imgesinden (32×32 çekirdek H0, 32×32 çekirdek H1, 64×64 çevre H0, 64×64 çevre H1) gelen 4 × 400 değerdir. Kutunun akciğerdeki konumunu da (x/y yeri, akciğer merkezine ve akciğer dış sınırına uzaklığı) bir dönem bu vektöre ek 4 sayı olarak koymuştuk (1.604); ancak ölçtüğümüzde nihai skora katkı sağlamadıkları (±0,001) ve aday sıralamasında şekil kanıtını bir miktar bastırdıkları görüldü, bu yüzden sadelik adına çıkarıldı.
+**Vektörün içeriği:** 1.600 sayının tamamı, 4 kalıcılık imgesinden (32×32 çekirdek H0, 32×32 çekirdek H1, 64×64 çevre H0, 64×64 çevre H1) gelen 4 × 400 değerdir; herhangi bir konum varsayımı içermez, doğrudan yerel şekli temsil eder.
 
 **Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
@@ -253,12 +253,12 @@ ImageNet gövdesiyle kıyasladık. Sonuç tam tersini gösterdi: Hazır gövdeni
 sağlamlaştırma etkisiyle) ortaya çıktı.
 
 **4. Dürüst sınırlılıklar.**
-Çalışmamızın sınırları da nettir: Topolojik katman hasta düzeyindeki ayrımı ve orta yanlış-alarm
-noktalarını (`S@0.25` ve `S@0.50`) belirgin biçimde güçlendirirken, en katı yanlış-alarm eşiğinde
-(`S@0.125`) çok küçük bir duyarlılık tavizi verebiliyor. Kutu boyutu konusunda her tümöre kendi
-büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setinde sabit 56×56 kutuyu geçse de
-(`0,9185` vs `0,9131`) kilitli test setinde S@0.25 kutu duyarlılığını değiştirmediği için (%70,3) daha
-sade olan sabit kutuyu varsayılan olarak koruduk.
+Çalışmamızın sınırları da nettir: Topolojik katman hasta düzeyindeki ayrımı (**0,945 → 0,966**) ve
+kritik yanlış-alarm noktasını (**S@0.25: %70,3 → %72,1**) belirgin biçimde güçlendirirken, çok katı
+yanlış-alarm eşiğinde (**S@0.125**) küçük bir duyarlılık tavizi verebiliyor. Kutu boyutu konusunda
+her tümöre kendi büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setinde sabit
+56×56 kutuyu geçse de kilitli test setinde S@0.25 kutu duyarlılığını değiştirmediği için (%70,3)
+daha sade olan sabit kutuyu varsayılan olarak koruduk.
 
 ---
 
