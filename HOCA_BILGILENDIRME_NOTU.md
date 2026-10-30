@@ -188,7 +188,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | Ölçüt | Sonuç | Ne anlama geliyor |
 | :--- | :---: | :--- |
 | 1. Aşama aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama tarayıcı model ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
-| Küçük kutuda piksel CNN vs. lokal TDA | **0,646 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN zayıf kalırken (`0,646`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
+| Küçük kutuda piksel CNN vs. lokal TDA | **0,652 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN ≈şansın biraz üstünde kalırken (`0,652`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
 | Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te kutu duyarlılığı **+1,7 puan** artıyor |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,638 (sıfır-eğitim) → 0,794 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,79** düzeyine çıkıyor |
@@ -197,7 +197,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
 
 1. Küçük şüpheli kutularda ayırt edici bilgi ham piksel dokusunda değil **geometrik şekilde**
-   yatmaktadır (`0,646` vs `0,926`).
+   yatmaktadır (`0,652` vs `0,926`).
 2. Topolojik katman kilitli test setinde 1. aşama tarayıcı modelin eksik bıraktığı kısmı
    tamamlayarak genel başarıyı `0,945`'ten `0,966`'ya taşımaktadır.
 3. Harici testlerdeki sıfır-eğitim farkı (`0,638` vs `0,932–0,975`), modelin başka bir hastaneye

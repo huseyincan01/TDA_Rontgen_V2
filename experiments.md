@@ -1945,7 +1945,8 @@ adaylarıyla** (790+790 hasta, 1604 özellik, s1 YOK = Tuzak B) yeniden eğitmek
   yeni bundle `checkpoints/stage2_foundation_tda_hgb.joblib` olarak ayrıca kaydedildi
   (`stage1_score_included=False` teyitli, w=0,55 kilitli, z-ref val'den donduruldu).
 * ⚠️ **DÖRDÜNCÜ test kullanımı** — dağılım-uyum düzeltmesinin tek-atımlık doğrulaması; test üzerinde
-  seçim yok. Bu koşudan sonra test bölmesi **tamamen kapanır**.
+  seçim yok. (O tarihte "test kapanır" beyan edildi; **V6.9m ile beşinci kullanım yapıldı** — güncel
+  sayaç: [LEAK_AUDIT.md](LEAK_AUDIT.md) §6.)
 * **Betik/kayıt:** [v6_9i_compatible_stage2.py](pipelines/v6_two_stage/v6_9i_compatible_stage2.py) ·
   `artifacts/v6_two_stage/v6_9i_compatible_stage2.json`
 

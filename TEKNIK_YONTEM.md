@@ -89,7 +89,9 @@ Toplam **18 epoch**, batch 4, Cosine Annealing ile 1e-5'e kadar azalan öğrenme
 ### 3.1 Aday havuzu ve etiketleme
 
 Eğitilmiş 1. aşama modeli **eğitim hastalarında** çalıştırılır; hasta başına **50 şüpheli kutu**
-(top-50) alınır. Uygulamada 1.580 eğitim hastasından **74.482 aday** toplanmıştır.
+(top-50) alınır. Uygulamada 1.580 eğitim hastasından **74.950 aday** toplanmıştır (dağıtılan saf
+1.600 modelinin eğitim havuzu; eski 1.604 bundle'ı farklı bir kontrol permütasyonuyla 74.482 aday
+kullanmıştı — aynı boyut, ikisi de train-only).
 
 Her aday, gerçek nodül kutularıyla (Kriter-1: merkez bbox içinde) karşılaştırılarak etiketlenir:
 

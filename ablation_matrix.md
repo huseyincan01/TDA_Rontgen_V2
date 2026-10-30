@@ -983,7 +983,8 @@ yeniden eğitilen uyumlu bundle, kilitli testte:
 
 * ✅ rank **+0,0075** · AUC **+0,0042** · S@0,25/S@0,5 **+0,0175** (yalnız S@0,125'te −0,009).
 * 🔒 Eski bundle korundu; yeni `stage2_foundation_tda_hgb.joblib` (1604 özellik, s1 YOK, w=0,55).
-* ⚠️ Dördüncü test kullanımı; bu koşudan sonra test kapanır.
+* ⚠️ Dördüncü test kullanımı (o tarihte "test kapanır" beyan edildi; **V6.9m ile beşinci kullanım
+  yapıldı** — güncel sayaç için [LEAK_AUDIT.md](LEAK_AUDIT.md) §6).
 
 ### 17.7 Çift-katmanlı few-shot site kalibrasyonu (V6.9j)
 

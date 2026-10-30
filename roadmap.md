@@ -476,3 +476,16 @@ kaynak-dışı genelleme iddiasında **LOSO** sayıları kullanılır ([LEAK_AUD
 > `artifacts/v6_two_stage/v6_9k4_*.json` gibi **ayrı ad alanına** yazılmalı (ana mimariye
 > sızmamalı). İlgili kayıtlar: [LEAK_AUDIT.md](LEAK_AUDIT.md) §10 "Açık iş",
 > [experiments.md](experiments.md) §V6.9.12, [ablation_matrix.md](ablation_matrix.md) §17.8.
+
+> ⚠️ **ZORUNLU TODO — Konteyner 1.604'te kaldı (mimari uyum denetimi V6.9o bulgusu):**
+> Bilimsel hat saf 1.600 kullanıyor (`stage2_foundation_tda_hgb_pure1600.joblib`), **ama dağıtılan
+> konteyner hâlâ 1.604**: `submission_config.json → stage2.bundle =
+> submission_fulldata/stage2_tda_hgb_fulldata.joblib` (`n_features_in_ = 1604`) ve
+> `v6_7_submission_infer.py:97-103` dört uzamsal sütunu hesaplayıp `concat([tda, spa])` yapıyor.
+> **Neden şimdi yapılmadı:** fulldata stage-2 bundle'ı yeniden eğitim gerektiriyor (kullanıcı
+> "yeni eğitim başlatma" dedi). **Yapılırsa:** `v6_7_build_fulldata_stage2.py` saf 1.600 ile
+> koşturulup `submission_fulldata/stage2_tda_hgb_fulldata_pure1600.joblib` üretilmeli,
+> `v6_7_submission_infer.py` içindeki `spa` dalı kaldırılmalı, `submission_config.json` yeni
+> sha256 ile güncellenmeli ve `smoke_test.py` yeniden koşturulmalı. Not: dış-domainde 4 konum
+> sütunu **hafif faydalı** olduğu için (VinDr sıfır-eğitim −0,018) bu geçiş isteğe bağlı bir
+> tercihtir; bilimsel raporlanan sayılarla **uyum** için gereklidir.
