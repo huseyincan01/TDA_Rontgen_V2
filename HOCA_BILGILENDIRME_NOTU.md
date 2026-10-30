@@ -100,20 +100,13 @@ belirgin bir tepe izi bırakırken, damar ve kaburga gölgeleri dağınık ve ç
 flowchart LR
     A["20 × 20 tablo<br/>= 400 sayı"] --> B["× 2 şekil özelliği<br/>(H0 tepecik + H1 halka)"]
     B --> C["× 2 pencere<br/>(32×32 çekirdek + 64×64 çevre)"]
-    C --> D["= 1.600 sayı<br/>SAF ŞEKİL PARMAK İZİ"]
+    C --> D["= 1.600 topolojik sayı<br/>(saf şekil parmak izi)"]
 ```
 
 Böylece her şüpheli kutu için, sadece ham piksellere değil doğrudan **o bölgenin geometrik
 şekline** bakan **1.600 sayılık** bir parmak izi elde ederiz.
 
-> 📌 **Neden 1.604 değil 1.600?** Önceki sürümde bu 1.600 sayıya **4 konum sütunu** ekleniyordu
-> (kutunun akciğer içindeki x/y konumu, akciğer merkezine uzaklığı, akciğer sınırına uzaklığı).
-> Bunları ayrı ayrı ölçtük: nihai skora **ölçülebilir bir katkı sağlamadılar** (fark ±0,001,
-> işaretler tutarsız), üstelik aday düzeyinde şekil kanıtını bir miktar **bastırdılar**
-> (0,939 → 0,924). "Gereksiz karmaşıklık eklemeyelim" ilkesiyle **çıkardık**; sistem artık
-> %100 saf topolojik şekil üzerinde çalışıyor. Bu sadeleştirme resmî ölçütte **eşit** sonuç
-> verdi (0,9047 vs 0,9045), tek bedeli en sıkı yanlış-alarm eşiğinde ~2,6 puan duyarlılık oldu —
-> bunu aşağıda dürüstçe yazıyorum.
+**Vektörün içeriği:** 1.600 sayının tamamı, 4 kalıcılık imgesinden (32×32 çekirdek H0, 32×32 çekirdek H1, 64×64 çevre H0, 64×64 çevre H1) gelen 4 × 400 değerdir. Kutunun akciğerdeki konumunu da (x/y yeri, akciğer merkezine ve akciğer dış sınırına uzaklığı) bir dönem bu vektöre ek 4 sayı olarak koymuştuk (1.604); ancak ölçtüğümüzde nihai skora katkı sağlamadıkları (±0,001) ve aday sıralamasında şekil kanıtını bir miktar bastırdıkları görüldü, bu yüzden sadelik adına çıkarıldı.
 
 **Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
@@ -172,10 +165,10 @@ flowchart LR
 **Adım 3 — 2. Aşama Şekil Modelinin "Zor-Negatiflerle" Eğitimi.** 2. aşamadaki HGB karar modelini
 rastgele seçilmiş boş ve kolay akciğer parçalarıyla eğitmek ona hiçbir şey öğretmezdi. Bunun
 yerine, eğittiğimiz 1. aşama tarayıcı modeli eğitim hastalarının üzerinde çalıştırdık ve ürettiği
-**74.482 şüpheli kutuyu** topladık. Gerçek tümörün üstüne denk gelen kutuları **Pozitif (1)**,
+**74.950 şüpheli kutuyu** topladık. Gerçek tümörün üstüne denk gelen kutuları **Pozitif (1)**,
 1. aşama modelinin yanılıp tümör sandığı damar ve kaburga kesişimlerini ise **Zor-Negatif (0)**
-olarak etiketledik. HGB modelini tam olarak bu zorlu örnekler üzerinde (1 gerçek tümöre karşılık
-yaklaşık 49 yanlış alarm düştüğü için pozitif sınıfa otomatik dengeleme ağırlığı vererek) eğittik.
+olarak etiketledik. HGB modelini tam olarak bu zorlu örnekler üzerinde (havuzun yalnızca **%1,71'i
+pozitif**, yani yaklaşık 1:58; bu yüzden pozitif sınıfa otomatik dengeleme ağırlığı vererek) eğittik.
 Böylece 2. aşama, 1. aşamanın **gerçekten karıştırdığı** kemik/damar gölgelerini şekillerinden
 ayırmayı öğrendi.
 
@@ -197,7 +190,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | 1. Aşama aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama tarayıcı model ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
 | Küçük kutuda piksel CNN vs. lokal TDA | **0,646 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN zayıf kalırken (`0,646`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
-| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te **+1,7 puan** |
+| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te kutu duyarlılığı **+1,7 puan** artıyor |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,656 (sıfır-eğitim) → 0,799 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,80** düzeyine çıkıyor |
 | Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; eğitimden tamamen izole) | **0,940 (Top-1) / 0,977 (Noisy-OR) AUC · %94,0 Recall@50** (sıfır-eğitim) | Dış hastanenin görüntüleri JPEG gibi sıkıştırılmamış, yüksek kaliteli (12-bit `.mha`) olduğunda sistem **hiç kalibrasyon yapmadan (sıfır-eğitimle)** yüksek başarısını koruyor |
 
@@ -243,17 +236,6 @@ ulaştı. Daha da önemlisi, yalnız 2. aşama Lokal TDA puanına bakıldığın
 topolojik şekil özetimiz yüksek kaliteli röntgenlerde hastaneden hastaneye kayıpsız
 taşınmaktadır.
 
-```mermaid
-flowchart TD
-    A["VinDr · Vietnam<br/>3× küçültülmüş 8-bit JPEG"] --> B["sıfır-eğitim<br/>AUC 0,656"]
-    B --> C{"Sorun: yabancı hastane mi,<br/>yoksa JPEG kaybı mı?"}
-    C -->|"bunu ayırmak için"| D["JSRT · Japonya<br/>12-bit kayıpsız .mha<br/>eğitimden TAMAMEN çıkarıldı"]
-    D --> E["sıfır-eğitim<br/>AUC 0,940 · 0,977<br/>Recall@50 %94,0"]
-    E --> F["✔ Görüntü kalitesi korununca<br/>sistem düşmüyor"]
-    B --> G["Düşük kaliteli cihaz:<br/>çift-katmanlı saha kalibrasyonu"]
-    G --> H["AUC 0,799"]
-```
-
 **2. Düşük Kaliteli Hastane Verisinde Saha Kalibrasyonu (Çift-katmanlı uyarlama).**
 Peki görüntü kalitesinin düşük olduğu (8-bit JPEG Vietnam verisi gibi) bir hastaneye sistem
 kurulduğunda ne yapılmalı? Bunu test ettiğimizde; sadece 2. aşamayı yerel örneklerle kalibre
@@ -278,21 +260,9 @@ büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setin
 (`0,9185` vs `0,9131`) kilitli test setinde S@0.25 kutu duyarlılığını değiştirmediği için (%70,3) daha
 sade olan sabit kutuyu varsayılan olarak koruduk.
 
-Bir de **temsili sadeleştirdik**: 1.600 topolojik sayıya eklediğimiz 4 konum sütununun nihai
-skora katkısı ölçülemediği için onları çıkardık. Bu karar **resmî ölçütte eşit** sonuç verdi
-(0,9047 vs 0,9045) — ama **bedava değil**: en sıkı yanlış-alarm eşiğinde (S@0,5) duyarlılık
-0,7904'ten 0,7642'ye, yani **2,6 puan** düştü; buna karşılık S@0,25'te 0,87 puan kazandık.
-Yani sadeleştirmenin bedeli **eşiğe bağlı**: gevşek ayarda kazanıyor, sıkı ayarda kaybediyor.
-Bunu gizlemeden yazıyorum; klinik kullanımda "çok az yanlış alarm" rejimi hedeflenirse o 2,6
-puan önemli olabilir.
-
 ---
 
-## 6. Sonuç ve Danışmak İstediklerim
-
-Bu çalışmada, "derin öğrenme ile hızlı tarama" ve "topolojik veri analizi ile şekil inceleme"
-fikirlerini birleştirerek göğüs röntgeninde nodül bulan uçtan uca bir sistem kurmayı; bu sistemi
-sızıntı kontrolleriyle denetlemeyi ve sınırlarını dürüstçe ölçmeyi öğrendim.
+## 6. Danışmak İstediklerim
 
 Bir lisans öğrencisi olarak bu noktadan sonra nasıl bir yol izlemem gerektiğini — bu çalışmanın bir
 akademik yayına, bildiriye ya da daha kapsamlı bir projeye dönüşüp dönüşemeyeceğini — sizden
