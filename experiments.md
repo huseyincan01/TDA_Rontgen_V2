@@ -2059,9 +2059,9 @@ taşınmıyor** — TDA'nın kaynak-taşınabilirliği lehine bağımsız kanıt
   (`M5_nojsrt.pt`), ayrı bundle (`stage2_nojsrt_tda_hgb.joblib`), ayrı JSON. Betik ana
   artifact'lerin SHA-256'sını koşu öncesi/sonrası doğrular: **değişmedi**
   (`isolation.unchanged = true`). Amaç yalnızca ölçüm ve dokümantasyondur.
-* ⚠️ **Açık iş:** birebir eşleştirilmiş bütçe kontrolü (aynı 1.366 görüntüyle JSRT'yi koruyup 107
-  chestxray14 pozitifini çıkarmak) ≈1 ek eğitim koşusu maliyetinde olduğu için yapılmadı; sonuçların
-  hiçbiri buna bağlı değil.
+* 📌 **TODO (bilinçli olarak yapılmadı):** birebir eşleştirilmiş bütçe kontrolü (aynı 1.366
+  görüntüyle JSRT'yi koruyup 107 chestxray14 pozitifini çıkarmak) ≈1 ek eğitim koşusu
+  maliyetinde; sonuçların hiçbiri buna bağlı değil. Ayrıntı: [roadmap.md](roadmap.md) §14.
 * **Betik/kayıt:** [v6_9k_leave_jsrt_out.py](pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py) ·
   [v6_9k2_val_control.py](pipelines/v6_two_stage/v6_9k2_val_control.py) ·
   [v6_9k3_bootstrap.py](pipelines/v6_two_stage/v6_9k3_bootstrap.py) ·

@@ -507,13 +507,16 @@ veriyle elde edilebilecek **dört** bağımsız test yapıldı (V6.9c, d, e, **k
 **Mührü yeniden açacak şey** (exit criteria): (a) yeni ve **gerçekten dış** bir veri kümesi,
 (b) korpusu NODE21 kaynaklarıyla **kanıtlanabilir biçimde kesişmeyen** bir omurga (ör. yalnız
 MIMIC-CH ile eğitilmiş DenseNet) ile aynı deneyin tekrarı, veya (c) **eşleştirilmiş bütçe**
-kontrolü (aşağıdaki açık iş).
+kontrolü (aşağıdaki TODO).
 
-**Açık iş (kayıtlı, yapılmadı):** LOSO'nun "veri azalması" kontrastı V6.9k2'de *miktar* için
-ölçüldü (Δ≈0). Daha da sıkı bir kontrol, **aynı 1.366 bütçeyle JSRT'yi koruyup 107 başka
-kaynak pozitifini (ör. chestxray14) çıkarmak** olurdu; bu, "kaynak kimliği" ile "kaynak sayısı"nı
-birebir eşleştirirdi. Maliyeti ≈1 ek eğitim koşusu (~20 dk) olduğu için bu turda yapılmadı ve
-sonuçların **hiçbiri** buna bağlı değildir.
+**📌 TODO — bilinçli olarak yapılmadı (eşleştirilmiş bütçe kontrolü):** LOSO'nun "veri azalması"
+kontrastı V6.9k2'de *miktar* için ölçüldü (val(−JSRT)'de Δ≈0). Daha da sıkı bir kontrol, **aynı
+1.366 bütçeyle JSRT'yi koruyup 107 başka kaynak pozitifini (ör. chestxray14) çıkarmak** olurdu;
+bu, "kaynak kimliği" ile "kaynak sayısı"nı birebir eşleştirir ve DiD'yi tam nedensel hâle getirir.
+Maliyeti ≈1 ek eğitim koşusu (~20 dk) + aday/özellik (~15 dk). **Bu turda yapılmadı** ve
+sonuçların **hiçbiri** buna bağlı değildir (V6.9k2 miktar etkisini zaten ≈0 buldu). Uygulanacaksa
+çıktı `artifacts/v6_two_stage/v6_9k4_*.json` gibi **ayrı ad alanına** yazılmalı, ana mimariye
+sızmamalıdır. Kayıt: [roadmap.md](roadmap.md) §14 (V6.9k TODO).
 
 **Mühür kaydı (SHA-256):**
 

@@ -1041,5 +1041,6 @@ K20 +0,0048, K50 −0,0048, hasta AUC **+0,0013** ⇒ "sadece daha az veri" aç�
   genelleme* iddiasında **LOSO** sayıları kullanılır (Recall@K10 0,8523 · K50 0,9396 · AUC 0,9395).
 * ⚠️ **§17.3 ile çelişmez:** o test omurganın **ön-eğitim korpusu** hakkındaydı (etkileşim −0,200);
   bu test **NODE21'in kendi kaynak kompozisyonu** hakkındadır.
-* ⚠️ **Açık iş:** birebir eşleştirilmiş bütçe kontrolü (JSRT'yi koru, 107 chestxray14 çıkar) —
-  ≈1 ek eğitim koşusu; sonuçların hiçbiri buna bağlı değil.
+* 📌 **TODO (bilinçli olarak yapılmadı):** birebir eşleştirilmiş bütçe kontrolü (JSRT'yi koru,
+  107 chestxray14 çıkar) — ≈1 ek eğitim koşusu; sonuçların hiçbiri buna bağlı değil.
+  Ayrıntı: [roadmap.md](roadmap.md) §14.

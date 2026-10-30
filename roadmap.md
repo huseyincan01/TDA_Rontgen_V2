@@ -454,3 +454,25 @@ Sabit 56 px muhafazakâr varsayılan olarak kalır ([experiments.md §V6.9.8](ex
 > şekilde güncellenecektir. **⚠️ Ancak V6.9f, dinamik kutunun resmî rank_metric'i
 > DEĞİŞTİRMEDİĞİNİ gösterdi** (0,8842 = 0,8842) ⇒ bu adım artık zorunlu bir iyileştirme değil,
 > FROC-optimal dağıtım hedefleniyorsa uygulanacak bir **seçenektir**.
+
+**Ek (V6.9k) — Leave-JSRT-Out:** JSRT hastalarının 107'si NODE21 `train` bölmesindeydi ⇒
+kaynak-dışı genelleme iddiası için JSRT eğitimden **tamamen** çıkarılıp iki aşama aynı reçeteyle
+yeniden eğitildi (izole: ayrı checkpoint/bundle, ana artifact SHA-256'ları değişmedi). JSRT dış
+testinde (149 hasta, hepsi yabancı) **Recall@K10 0,8523 · K50 0,9396 · hasta AUC 0,9395**.
+Ana modelle farkın büyük kısmı **in-sample** ezber; hiç görülmeyen 42 hastada kalan fark
+**−0,0432** [−0,0809; −0,0064] ve **veri azalmasıyla açıklanamıyor** (JSRT-dışı val'de iki model
+eşit: Δ +0,0013) ⇒ fark-farkı **−0,0435**. **Kural:** kilitli test sayıları `in-fold` etiketlenir,
+kaynak-dışı genelleme iddiasında **LOSO** sayıları kullanılır ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7).
+
+> 📌 **TODO — bilinçli olarak YAPILMADI (V6.9k eşleştirilmiş bütçe kontrolü):** LOSO'nun
+> "veri azalması" bileşeni V6.9k2'de *miktar* için ölçüldü (val(−JSRT)'de Δ ≈ 0). Daha sıkı
+> kontrol, **aynı 1.366 görüntü bütçesiyle JSRT'yi koruyup 107 *başka* kaynak pozitifini
+> (ör. chestxray14) çıkarmak** olurdu; bu, "kaynak kimliği" ile "kaynak sayısı"nı birebir
+> eşleştirip DiD'yi tam nedensel hâle getirir. Maliyet ≈ 1 eğitim koşusu (~20 dk) + aday/özellik
+> (~15 dk). **Neden yapılmadı:** sonuçların hiçbiri bu kontrole bağlı değil (V6.9k2 miktar
+> etkisini zaten ≈ 0 buldu) ve mevcut hüküm bu kontrol olmadan da muhafazakâr yönde.
+> **Yapılırsa:** `v6_9k_leave_jsrt_out.py`'ye `--exclude-source` / `--budget` parametreleri
+> eklenip ikinci bir LOSO koşusu + `v6_9k2` tipi val kontrastı çalıştırılmalı; çıktı
+> `artifacts/v6_two_stage/v6_9k4_*.json` gibi **ayrı ad alanına** yazılmalı (ana mimariye
+> sızmamalı). İlgili kayıtlar: [LEAK_AUDIT.md](LEAK_AUDIT.md) §10 "Açık iş",
+> [experiments.md](experiments.md) §V6.9.12, [ablation_matrix.md](ablation_matrix.md) §17.8.
