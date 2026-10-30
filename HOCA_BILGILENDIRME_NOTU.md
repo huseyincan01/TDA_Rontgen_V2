@@ -236,6 +236,17 @@ ulaştı. Daha da önemlisi, yalnız 2. aşama Lokal TDA puanına bakıldığın
 topolojik şekil özetimiz yüksek kaliteli röntgenlerde hastaneden hastaneye kayıpsız
 taşınmaktadır.
 
+```mermaid
+flowchart TD
+    A["VinDr · Vietnam<br/>3× küçültülmüş 8-bit JPEG"] --> B["sıfır-eğitim<br/>AUC 0,656"]
+    B --> C{"Sorun: yabancı hastane mi,<br/>yoksa JPEG kaybı mı?"}
+    C -->|"bunu ayırmak için"| D["JSRT · Japonya<br/>12-bit kayıpsız .mha<br/>eğitimden TAMAMEN çıkarıldı"]
+    D --> E["sıfır-eğitim<br/>AUC 0,940 · 0,977<br/>Recall@50 %94,0"]
+    E --> F["✔ Görüntü kalitesi korununca<br/>sistem düşmüyor"]
+    B --> G["Düşük kaliteli cihaz:<br/>çift-katmanlı saha kalibrasyonu"]
+    G --> H["AUC 0,799"]
+```
+
 **2. Düşük Kaliteli Hastane Verisinde Saha Kalibrasyonu (Çift-katmanlı uyarlama).**
 Peki görüntü kalitesinin düşük olduğu (8-bit JPEG Vietnam verisi gibi) bir hastaneye sistem
 kurulduğunda ne yapılmalı? Bunu test ettiğimizde; sadece 2. aşamayı yerel örneklerle kalibre
