@@ -1,0 +1,82 @@
+{
+  "experiment": "V6.9k3-bootstrap",
+  "question": "LOSO − ANA farkı eşleştirilmiş bootstrap ile anlamlı mı?",
+  "design": {
+    "jsrt_eval": 42,
+    "controls": 250,
+    "val_pos": 149,
+    "reps": 2000,
+    "seed": 2026
+  },
+  "point_estimates": {
+    "M5_nojsrt": {
+      "label_auc_stage1": 0.9006,
+      "label_auc_fusion": 0.7907,
+      "patient_auc_stage1": 0.8535,
+      "patient_auc_fusion": 0.92,
+      "val_recall_at_K": {
+        "K10": 0.9567,
+        "K20": 0.9856,
+        "K50": 0.9952
+      },
+      "val_patient_auc_stage1": 0.9761
+    },
+    "M5_foundation": {
+      "label_auc_stage1": 0.9094,
+      "label_auc_fusion": 0.8416,
+      "patient_auc_stage1": 0.8966,
+      "patient_auc_fusion": 0.936,
+      "val_recall_at_K": {
+        "K10": 0.9663,
+        "K20": 0.9808,
+        "K50": 1.0
+      },
+      "val_patient_auc_stage1": 0.9748
+    }
+  },
+  "delta_point": {
+    "label_auc_stage1": -0.0088,
+    "label_auc_fusion": -0.0509,
+    "patient_auc_stage1": -0.0431,
+    "patient_auc_fusion": -0.016,
+    "val_recall_at_K": {
+      "K10": -0.0096,
+      "K20": 0.0048,
+      "K50": -0.0048
+    },
+    "val_patient_auc_stage1": 0.0013
+  },
+  "paired_bootstrap_jsrt": {
+    "label_auc_stage1": {
+      "mean": -0.0092,
+      "lo95": -0.0776,
+      "hi95": 0.0673,
+      "share_negative": 0.602
+    },
+    "label_auc_fusion": {
+      "mean": -0.0509,
+      "lo95": -0.1226,
+      "hi95": 0.0192,
+      "share_negative": 0.92
+    },
+    "patient_auc_stage1": {
+      "mean": -0.0432,
+      "lo95": -0.0809,
+      "hi95": -0.0064,
+      "share_negative": 0.988
+    },
+    "patient_auc_fusion": {
+      "mean": -0.0157,
+      "lo95": -0.0405,
+      "hi95": 0.011,
+      "share_negative": 0.883
+    }
+  },
+  "did_delta_minus_val_delta_stage1_auc": {
+    "mean": -0.0435,
+    "lo95": -0.0813,
+    "hi95": -0.0067,
+    "share_negative": 0.985
+  },
+  "note": "JSRT dış testi = NODE21 val+test içindeki JSRT hastaları (42 hasta); bunların hiçbiri LOSO eğitiminde yok. Kontroller val'den (250, seed 42). DiD: Δ(JSRT) − Δ(val, JSRT-dışı) — 1. aşama hasta AUC'si."
+}

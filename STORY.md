@@ -475,10 +475,22 @@ M5'te +0,221 iken FND'de +0,021 ⇒ **CXR ön-eğitimi kaynak-duyarlılığını
 azaltıyor.** Bu tablo, örtüşmenin *şişirdiği* değil ön-eğitimin *sağlamlaştırdığı* bir
 tablodur.
 
-🔒 **Konu kapandı.** Üç bağımsız ölçüm (dış VinDr · iç kaynak-ayrıştırmalı · etkileşim)
-aynı yönü gösteriyor; mevcut veriyle yeni ölçüm talebi kapatıldı. Mührü yalnız (a) yeni ve
-gerçekten dış bir veri kümesi ya da (b) korpusu NODE21 kaynaklarıyla kesişmeyen bir omurga
-(ör. yalnız MIMIC-CH) açabilir. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §10.
+⚠️ **Ama bu tablo yalnız "omurganın ön-eğitimi" sorusunu cevaplıyor.** Daha sonra (V6.9k)
+daha keskin bir soru sorduk: NODE21'in **kendi içinde** JSRT hastalarının 107'si zaten eğitim
+kümesindeydi. JSRT'yi eğitimden **tamamen çıkarıp** sistemi yeniden eğittiğimizde JSRT dış
+testinde **Recall@K10 0,8523 · K50 0,9396 · hasta AUC 0,9395** çıktı. Ana modelle farkın büyük
+kısmı **in-sample** ezber (149 hastanın 107'si eğitimde); hiç görülmeyen **42 hastada** kalan
+fark **−0,043 AUC** [−0,081; −0,006] ve bu **veri azalmasıyla açıklanamıyor** (JSRT-dışı val'de
+iki model eşit: Δ +0,001). ⇒ "Örtüşme şişirmiyor" hükmü **omurga ön-eğitimi** için geçerli;
+**kaynak kompozisyonu** için küçük ama gerçek bir avantaj var ve bu beyan edilmelidir.
+Kilitli test sayıları **in-fold** etiketlenmeli; kaynak-dışı genelleme iddiasında **LOSO**
+sayıları kullanılmalı. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7.
+
+🔒 **Konu kapandı.** Dört bağımsız ölçüm (dış VinDr · iç kaynak-ayrıştırmalı · etkileşim ·
+**Leave-JSRT-Out**) aynı çerçeveyi çiziyor: omurga ön-eğitimi şişirmiyor, kaynak kompozisyonu
+küçük bir avantaj sağlıyor ve bu beyan ediliyor. Mührü yalnız (a) yeni ve gerçekten dış bir veri
+kümesi, (b) korpusu NODE21 kaynaklarıyla kesişmeyen bir omurga (ör. yalnız MIMIC-CH), ya da
+(c) eşleştirilmiş bütçe kontrolü açabilir. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §10.
 
 
 

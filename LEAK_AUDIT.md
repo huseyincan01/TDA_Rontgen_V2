@@ -367,6 +367,101 @@ Aynı tablo top3 için −0,193 ve noisy-OR için −0,202 — üç toplama kura
 **Kayıt:** `artifacts/v6_two_stage/v6_9e_backbone_interaction.json` ·
 [`v6_9e_backbone_interaction.py`](pipelines/v6_two_stage/v6_9e_backbone_interaction.py)
 
+### 9.7 Leave-JSRT-Out — kaynak ezberi testi (V6.9k / k2 / k3) 🟠
+
+§9.3–§9.6 **omurganın ön-eğitim örtüşmesini** ölçtü. Ama bir soru açıkta kaldı: JSRT
+hastalarının **107'si NODE21'in kendi `train` bölmesindeydi** ⇒ modelimiz JSRT kaynağından
+*başka hastaları* eğitimde gördü. "JSRT'de iyi çıkmamız" bundan mı geliyor? Bunu test etmenin
+tek yolu, **JSRT'yi eğitimden tamamen çıkarıp** iki aşamayı yeniden eğitmek ve JSRT'yi VinDr gibi
+%100 yabancı bir dış test yapmaktır.
+
+| JSRT dağılımı | train | val | test | toplam |
+| :--- | ---: | ---: | ---: | ---: |
+| hasta (hepsi nodüllü, kontrol YOK) | 107 | 23 | 19 | **149** |
+
+**Kurulum.** LOSO eğitimi: `train − JSRT` ⇒ **683 nodüllü + 683 kontrol = 1.366 görüntü** (1:1,
+ana mimariyle **aynı** dengeleme kuralı). PI aralıkları LOSO adaylarından **yeniden türetildi**,
+z-referansı val'in **JSRT-dışı** hastalarından donduruldu. Anlatım ve protokol (3 ölçek + flip TTA,
+NMS 8 px, top-50, sabit 56×56 kutu, 1604 özellik, s1-YOK, HGB `max_iter=200 lr=0.08 balanced`,
+w=0,55) ana mimariyle **birebir aynıdır**. Negatif havuzu val kontrollerinden (250, seed 42);
+**test bölmesine dokunulmadı**.
+
+**Sonuç 1 — LOSO modelinin JSRT'deki gerçek dış performansı (149 hasta, hepsi yabancı):**
+
+| LOSO (JSRT hiç eğitimde yok) | Recall@K10 | @K20 | @K50 | hasta AUC (füzyon, top1) | (noisy-OR) |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **JSRT dış test** | **0,8523** | **0,8792** | **0,9396** | **0,9395** | **0,9767** |
+
+**Sonuç 2 — ana model ile farkı (aynı 149 hasta):**
+
+| Ölçüt | LOSO | ANA | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K10 | 0,8523 | 0,9396 | **−0,0873** |
+| Recall@K20 | 0,8792 | 0,9732 | −0,0940 |
+| Recall@K50 | 0,9396 | 0,9799 | −0,0403 |
+| Aday AUC — yalnız 1. aşama | 0,8714 | 0,9208 | −0,0494 |
+| Aday AUC — TDA | 0,6802 | 0,7966 | −0,1164 |
+| Aday AUC — füzyon | 0,8072 | 0,9154 | −0,1082 |
+| Hasta AUC (füzyon, top1) | 0,9395 | 0,9674 | −0,0279 |
+
+⚠️ **Bu −0,087'lik farkın büyük kısmı "ezber"in ta kendisidir ama hile değildir:** 149 hastanın
+**107'si ana modelin eğitim kümesindeydi** (kutularıyla birlikte). Yani bu 107 hasta ana model için
+*in-sample*, LOSO için *out-of-sample*dır. Karşılaştırmanın dürüst olanı, **hiçbir modelin
+eğitiminde olmayan 42 JSRT hastası** (val+test) üzerinden yapılır.
+
+**Sonuç 3 — temiz alt küme (42 JSRT hastası, eşleştirilmiş bootstrap, 2.000 tekrar):**
+
+| Δ = LOSO − ANA (42 hasta) | ortalama | %95 GA | P(Δ<0) |
+| :--- | ---: | :---: | ---: |
+| Aday AUC — 1. aşama | −0,0092 | [−0,0776, +0,0673] | 0,602 |
+| Aday AUC — füzyon | −0,0509 | [−0,1226, +0,0192] | 0,920 |
+| **Hasta AUC — 1. aşama** | **−0,0432** | **[−0,0809, −0,0064]** | **0,988** |
+| Hasta AUC — füzyon | −0,0157 | [−0,0405, +0,0110] | 0,883 |
+
+**Sonuç 4 — "sadece veri azaldı" açıklaması elendi (V6.9k2).** LOSO eğitim seti %13,5 küçüktür.
+Aynı iki modeli **JSRT içermeyen** val hastalarında kıyasladık (149 poz / 208 lezyon / 250 kontrol):
+
+| val(−JSRT) | Recall@K10 | @K20 | @K50 | Hasta AUC |
+| :--- | ---: | ---: | ---: | ---: |
+| LOSO | 0,9567 | 0,9856 | 0,9952 | 0,9761 |
+| ANA | 0,9663 | 0,9808 | 1,0000 | 0,9748 |
+| **Δ** | −0,0096 | +0,0048 | −0,0048 | **+0,0013** |
+
+⇒ Daha az veri, **JSRT-dışı** veride ölçülebilir bir kayıp üretmiyor (Δ ≈ 0). Buna karşılık
+**fark-farkı** (DiD = Δ(JSRT) − Δ(val), 1. aşama hasta AUC) **−0,0435** [−0,0813, −0,0067],
+P(<0) = 0,985 ⇒ JSRT'ye **özgü** bir avantaj var.
+
+🔑 **Avantaj tamamen 1. aşamada; TDA'da DEĞİL.** Yalnız TDA skoruyla hasta AUC'si LOSO'da
+**0,9581**, ANA'da **0,9572** (Δ **+0,0009**) — yani lokal topolojik temsil **kaynağa karşı
+dirençlidir**. Kaynak ezberi derin dedektörün ısı haritasında taşınır; şekil tanımlayıcısında
+taşınmaz. Bu, "TDA kaynaklar arasında daha taşınabilir bir temsil" savını destekleyen bağımsız
+bir kanıttır.
+
+**Hüküm (dürüstlük beyanı):**
+
+1. 🟠 **Kaynak düzeyinde ezber/uyarlanma GERÇEK ve ölçüldü.** Ana mimarinin JSRT hastalarındaki
+   avantajı iki bileşene ayrılır: (i) eğitimde gördüğü 107 hasta için **in-sample ezber**
+   (149 hasta üzerindeki −0,087'lik Recall@K10 farkının ana kaynağı), (ii) hiç görmediği 42 JSRT
+   hastası için **küçük ama sıfırdan farklı** kaynak avantajı (hasta AUC ≈ **+0,043**, %95 GA
+   0'ı dışlıyor).
+2. 🟢 **Bu, ana sonuçları geçersiz kılmaz ama iddia sınırını değiştirir.** NODE21 kilitli testi
+   (734 hasta) karışık kaynaklıdır ve **in-fold**'dur; oradaki 0,9446/0,9687 sayıları bu tanımla
+   doğrudur. Ancak **"JSRT gibi yeni bir merkeze dış genelleme"** iddiası için doğru sayı
+   **LOSO**'dur: **Recall@K10 0,8523 · K50 0,9396 · hasta AUC 0,9395 (top1) / 0,9767 (noisy-OR)**.
+3. ⚠️ **§9.6'nın hükmü geçerliliğini korur** — o test *omurganın ön-eğitim korpusu* hakkındaydı ve
+   etkileşim negatifti. Bu yeni test *NODE21'in kendi kaynak kompozisyonu* hakkındadır ve tersine
+   küçük bir pozitif avantaj bulmuştur. İkisi çelişmez; **iki ayrı örtüşme türüdür** ve yayın
+   metninde ayrı ayrı yazılmalıdır.
+4. 🔒 **İzolasyon:** LOSO modeli, TDA aralıkları ve HGB'si ana mimariye **sızmaz** — ayrı ad alanı
+   (`M5_nojsrt.pt`, `stage2_nojsrt_tda_hgb.joblib`). Betik, ana artifact'lerin SHA-256'sını koşunun
+   başında ve sonunda doğrular; **değişmediler** (`v6_9k_leave_jsrt_out.json → isolation.unchanged`).
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9k_leave_jsrt_out.json` ·
+`v6_9k2_val_control.json` · `v6_9k3_bootstrap.json` ·
+[`v6_9k_leave_jsrt_out.py`](pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py) ·
+[`v6_9k2_val_control.py`](pipelines/v6_two_stage/v6_9k2_val_control.py) ·
+[`v6_9k3_bootstrap.py`](pipelines/v6_two_stage/v6_9k3_bootstrap.py)
+
 ---
 
 ## 10. 🔒 KAPANIŞ — ön-eğitim örtüşmesi konusu mühürlendi
@@ -379,25 +474,46 @@ Aynı tablo top3 için −0,193 ve noisy-OR için −0,202 — üç toplama kura
 | **V6.9c** | Dış örtüşme (VinDr): 3 omurga, yalnız korpus değişti | Fark gürültü bandında (top1 +0,004; nOR'da temiz omurga **daha iyi**) |
 | **V6.9d** | İç örtüşme: kilitli hattın görülen/görülmeyen kaynaklarda performansı | 0,9698 vs 0,9332 AUC (Δ −0,037, ≈1 SE, cihaz farkıyla karışık) |
 | **V6.9e** | **Etkileşim:** FND−M5 farkı görülen vs görülmeyen kaynaklarda | **−0,200** [−0,299, −0,109], P(>0)=0 ⇒ avantaj görülmeyen kaynaklarda **daha büyük** |
+| **V6.9k** | **İç kaynak (JSRT) tamamen eğitimden çıkarıldı**, JSRT dış test | LOSO JSRT: Recall@K10 **0,8523** · K50 **0,9396** · hasta AUC **0,9395**; ana modele göre temiz alt kümede Δ −0,043 [−0,081, −0,006] ⇒ **kaynak düzeyinde küçük ama gerçek bir avantaj VAR** (§9.7) |
 
 **Mühürlü kararlar (yayın metni bunları kullanacak):**
 
 1. **İddia edilmeyecek:** *"Sonuçlar ön-eğitim örtüşmesinden tamamen arınıktır"* — kanıtlanamaz.
-2. **İddia edilecek:** *"Örtüşme vardır ve beyan edilmiştir; ancak kaynak-ayrıştırmalı ve
-   etkileşim ölçümleri, skorların örtüşme kaynaklı şiştiğine dair kanıt göstermemiştir
-   (etkileşim −0,200, %95 GA 0'ı dışlıyor, ters yönde)."*
-3. **Raporlanacak tablolar:** §9.3 (kaynak-ayrıştırmalı) + §9.6 (etkileşim) birlikte.
-4. **VinDr:** sayı **temiz omurgayla** (0,6663) verilecek; "zero-shot" etiketi kontamine
+2. **İddia edilecek (omurga ön-eğitimi):** *"Omurganın ön-eğitim korpusu NODE21 pozitiflerinin
+   %82,9'uyla örtüşmektedir; ancak kaynak-ayrıştırmalı ve etkileşim ölçümleri, skorların **bu
+   örtüşme** yüzünden şiştiğine dair kanıt göstermemiştir (etkileşim −0,200, %95 GA 0'ı dışlıyor,
+   ters yönde)."*
+3. **İddia edilecek (NODE21 içi kaynak kompozisyonu) — V6.9k ile eklendi:** *"NODE21'in kendi
+   kaynak kompozisyonu nedeniyle, aynı kaynaktan başka hastaların eğitimde bulunması **ölçülebilir
+   ve küçük** bir avantaj sağlar (temiz alt kümede hasta AUC ≈ +0,043; fark-farkı −0,0435
+   [−0,0813, −0,0067]). Bu nedenle **kaynak-dışı genelleme** iddialarında LOSO sayıları
+   kullanılacaktır: Recall@K10 0,8523 · hasta AUC 0,9395."*
+4. **Raporlanacak tablolar:** §9.3 (kaynak-ayrıştırmalı) + §9.6 (etkileşim) + **§9.7 (LOSO)**
+   birlikte; üçü **üç ayrı soruya** cevap verir, birbirinin yerine geçmez.
+5. **VinDr:** sayı **temiz omurgayla** (0,6663) verilecek; "zero-shot" etiketi kontamine
    satırlarda kullanılmayacak.
-5. **Yarışma/sıralama:** gizli test setinin bileşimi doğrulanamadığı için **"sıfır sızıntı
-   garantisi"** verilmeyecek.
+6. **Yarışma/sıralama:** gizli test setinin bileşimi doğrulanamadığı için **"sıfır sızıntı
+   garantisi"** verilmeyecek. NODE21 kilitli test sayıları **in-fold** olarak etiketlenecek.
 
 **Bu mühür neyi kapatıyor?** Örtüşme konusunda **yeni ölçüm taleplerini** kapatıyor: mevcut
-veriyle elde edilebilecek üç bağımsız test yapıldı ve üçü de aynı yönü gösteriyor.
+veriyle elde edilebilecek **dört** bağımsız test yapıldı (V6.9c, d, e, **k**).
 
-**Mührü yeniden açacak tek şey** (exit criteria): (a) yeni ve **gerçekten dış** bir veri
-kümesi, ya da (b) korpusu NODE21 kaynaklarıyla **kanıtlanabilir biçimde kesişmeyen** bir
-omurga (ör. yalnız MIMIC-CH ile eğitilmiş DenseNet) ile aynı deneyin tekrarı.
+> ⚠️ **V6.9k mühürü kısmen yeniden açtı (dürüst kayıt):** §10'un ilk hâli "örtüşme skoru
+> şişirmiyor" diyordu. V6.9k, bunun **omurga ön-eğitimi** için doğru, **NODE21 içi kaynak
+> kompozisyonu** için ise **fazla iyimser** olduğunu gösterdi. İki tür örtüşme ayrıştırıldı ve
+> karar metni buna göre düzeltildi. Bu, mühür disiplininin çalıştığının kanıtıdır: yeni ve
+> **gerçekten dış** bir test (LOSO) yapıldı ve hüküm güncellendi.
+
+**Mührü yeniden açacak şey** (exit criteria): (a) yeni ve **gerçekten dış** bir veri kümesi,
+(b) korpusu NODE21 kaynaklarıyla **kanıtlanabilir biçimde kesişmeyen** bir omurga (ör. yalnız
+MIMIC-CH ile eğitilmiş DenseNet) ile aynı deneyin tekrarı, veya (c) **eşleştirilmiş bütçe**
+kontrolü (aşağıdaki açık iş).
+
+**Açık iş (kayıtlı, yapılmadı):** LOSO'nun "veri azalması" kontrastı V6.9k2'de *miktar* için
+ölçüldü (Δ≈0). Daha da sıkı bir kontrol, **aynı 1.366 bütçeyle JSRT'yi koruyup 107 başka
+kaynak pozitifini (ör. chestxray14) çıkarmak** olurdu; bu, "kaynak kimliği" ile "kaynak sayısı"nı
+birebir eşleştirirdi. Maliyeti ≈1 ek eğitim koşusu (~20 dk) olduğu için bu turda yapılmadı ve
+sonuçların **hiçbiri** buna bağlı değildir.
 
 **Mühür kaydı (SHA-256):**
 
@@ -407,8 +523,11 @@ omurga (ör. yalnız MIMIC-CH ile eğitilmiş DenseNet) ile aynı deneyin tekrar
 | `artifacts/v6_two_stage/v6_9e_backbone_interaction.json` | `2cb66f1f5e003c7c10b77b77355c538d2813a518c82e74eda5e28ddaffc4c2e9` |
 | `artifacts/v6_two_stage/v6_9d_source_overlap.json` | `7c427d9208567ac8522a36c63e73eee55133f2b91c70dcad70a6c19e03b2adf5` |
 | `artifacts/v6_two_stage/v6_9c_contamination.json` | `cbd3950236e48111f8783f01ddb0f37a6300a3c06b5d7f7495b53bf2e63b9746` |
+| `artifacts/v6_two_stage/v6_9k_leave_jsrt_out.json` | `e46a19f9d634361177243afe23686c88c5941c04e674d35f69a7dd35f611c364` |
+| `artifacts/v6_two_stage/v6_9k2_val_control.json` | `fcdc128e8f2de5d294512c8de5911f08ca4025a0b619fe1b0a45319a184db474` |
+| `artifacts/v6_two_stage/v6_9k3_bootstrap.json` | `4c9faa293b9d35ec6fdde67f449a1edd8ddd09bab26260c951076a5824c580ec` |
 
-**Mühür tarihi:** Ekim 2026 · **Durum:** 🔒 KAPALI
+**Mühür tarihi:** Ekim 2026 · **Durum:** 🔒 KAPALI (V6.9k sonrası hüküm güncellendi)
 
 ---
 
@@ -424,6 +543,14 @@ omurga (ör. yalnız MIMIC-CH ile eğitilmiş DenseNet) ile aynı deneyin tekrar
 | `artifacts/v6_two_stage/v6_9c_contamination.json` | VinDr kontaminasyon deneyi (3 omurga, §8) |
 | `artifacts/v6_two_stage/v6_9d_source_overlap.json` | NODE21 iç kaynak örtüşmesi, kaynak-ayrıştırmalı (§9) |
 | [`pipelines/v6_two_stage/v6_9d_source_overlap.py`](pipelines/v6_two_stage/v6_9d_source_overlap.py) | Kaynak-ayrıştırmalı değerlendirme betiği |
+| `artifacts/v6_two_stage/v6_9k_leave_jsrt_out.json` | **Leave-JSRT-Out**: JSRT dış test sonuçları + izolasyon denetimi (§9.7) |
+| `artifacts/v6_two_stage/v6_9k2_val_control.json` | LOSO'nun "veri azalması" kontrastı, val(−JSRT) (§9.7) |
+| `artifacts/v6_two_stage/v6_9k3_bootstrap.json` | Eşleştirilmiş bootstrap %95 GA + fark-farkı (§9.7) |
+| `artifacts/v6_two_stage/checkpoints/M5_nojsrt.pt` | LOSO 1. aşama checkpoint'i (**ana mimariye sızmaz**) |
+| `artifacts/v6_two_stage/checkpoints/stage2_nojsrt_tda_hgb.joblib` | LOSO 2. aşama bundle'ı (**ana mimariye sızmaz**) |
+| [`pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py`](pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py) | LOSO eğitim + dış test betiği |
+| [`pipelines/v6_two_stage/v6_9k2_val_control.py`](pipelines/v6_two_stage/v6_9k2_val_control.py) | Val kontrast betiği |
+| [`pipelines/v6_two_stage/v6_9k3_bootstrap.py`](pipelines/v6_two_stage/v6_9k3_bootstrap.py) | Bootstrap betiği |
 
-*Son güncelleme: V6.9 (Ekim 2026) — §9 kaynak örtüşmesi eklendi*
+*Son güncelleme: V6.9k (Ekim 2026) — §9.7 Leave-JSRT-Out eklendi, §10 hükmü güncellendi*
 

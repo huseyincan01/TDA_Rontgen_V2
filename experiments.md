@@ -1985,6 +1985,88 @@ omurgayı YENİDEN geçmez (≈10× hız). 2. katman LR'si küçük N'de sıfır
 * ⚙️ **Hız:** omurga önbelleği sayesinde re-score ~60–90s → **~10–20s**; tam koşu ~1 saatin altına indi.
 * **Kayıt:** `artifacts/v6_two_stage/v6_9j_dual_stage_fewshot.json`
 
+### V6.9.12 Leave-JSRT-Out — kaynak ezberi testi + %100 yabancı JSRT dış testi (V6.9k · k2 · k3)
+
+**Soru:** NODE21'in `train` bölmesinde **JSRT hastalarının 107'si** vardı. JSRT'yi eğitimden
+**tamamen** çıkarıp iki aşamayı yeniden eğitirsek JSRT performansı ne olur? Yani JSRT'deki iyi
+sayılarımız *kaynak ezberinden* mi geliyor?
+
+**Kurulum (ana mimariyle birebir aynı reçete, değişen tek şey JSRT'nin yokluğu):**
+
+| | Ana mimari | LOSO |
+| :--- | :--- | :--- |
+| 1. aşama | `M5_foundation` | `M5_nojsrt` (sıfırdan, aynı hiperparametreler) |
+| Eğitim seti | 790 + 790 = **1.580** | 683 + 683 = **1.366** (`train − JSRT`, 1:1) |
+| Epoch / lr / batch | 5 donuk + 13 FT · 1e-3/1e-4 · 4 | **aynı** (`tr.*` sabitleri import edilir) |
+| PI aralıkları | V6.1'den devralınan | **LOSO adaylarından yeniden türetildi** (JSRT görmez) |
+| z-referansı | val (tümü) | val **(− JSRT)** |
+| 2. aşama | HGB 1604, s1-YOK, `200/0.08/balanced` | **aynı** |
+| Füzyon / kutu | w=0,55 · 56×56 px | **aynı** |
+
+**Sonuç A — LOSO modelinin JSRT dış testi (149 hasta, hepsi yabancı):**
+
+| Recall@K10 | @K20 | @K50 | hasta-yakalama@50 | hasta AUC (top1) | (noisy-OR) |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| **0,8523** | **0,8792** | **0,9396** | **0,9396** | **0,9395** | **0,9767** |
+
+**Sonuç B — ana model aynı 149 hastada (Δ = LOSO − ANA):**
+
+| Ölçüt | LOSO | ANA | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K10 | 0,8523 | 0,9396 | −0,0873 |
+| Recall@K20 | 0,8792 | 0,9732 | −0,0940 |
+| Recall@K50 | 0,9396 | 0,9799 | −0,0403 |
+| Aday AUC — 1. aşama | 0,8714 | 0,9208 | −0,0494 |
+| Aday AUC — TDA | 0,6802 | 0,7966 | −0,1164 |
+| Aday AUC — füzyon | 0,8072 | 0,9154 | −0,1082 |
+| Hasta AUC (füzyon, top1) | 0,9395 | 0,9674 | −0,0279 |
+
+**Sonuç C — temiz alt küme (42 JSRT hastası; 107'si ana modelin *eğitim* hastasıydı):**
+eşleştirilmiş bootstrap (2.000 tekrar, aynı hastalar birlikte yeniden örneklenir):
+
+| Δ (LOSO − ANA) | ortalama | %95 GA | P(Δ<0) |
+| :--- | ---: | :---: | ---: |
+| Aday AUC — 1. aşama | −0,0092 | [−0,0776, +0,0673] | 0,602 |
+| Aday AUC — füzyon | −0,0509 | [−0,1226, +0,0192] | 0,920 |
+| **Hasta AUC — 1. aşama** | **−0,0432** | **[−0,0809, −0,0064]** | **0,988** |
+| Hasta AUC — füzyon | −0,0157 | [−0,0405, +0,0110] | 0,883 |
+
+**Sonuç D — "sadece veri azaldı" elendi (V6.9k2), val(−JSRT):** 149 poz / 208 lezyon / 250 kontrol
+
+| | Recall@K10 | @K20 | @K50 | Hasta AUC |
+| :--- | ---: | ---: | ---: | ---: |
+| LOSO | 0,9567 | 0,9856 | 0,9952 | 0,9761 |
+| ANA | 0,9663 | 0,9808 | 1,0000 | 0,9748 |
+| **Δ** | −0,0096 | +0,0048 | −0,0048 | **+0,0013** |
+
+**Fark-farkı (DiD) = Δ(JSRT) − Δ(val), 1. aşama hasta AUC = −0,0435** [−0,0813, −0,0067],
+P(<0) = 0,985.
+
+**Sonuç E — avantaj 1. aşamada, TDA'da değil:** hasta düzeyi AUC (top1) **yalnız TDA skoruyla**
+LOSO **0,9581** / ANA **0,9572** (Δ **+0,0009**). **Yalnız 1. aşama skoruyla** ise Δ **−0,0864**.
+Yani kaynak ezberi derin dedektörün ısı haritasında taşınıyor, **lokal topolojik tanımlayıcıda
+taşınmıyor** — TDA'nın kaynak-taşınabilirliği lehine bağımsız kanıt.
+
+* 🟠 **Kaynak düzeyinde ezber GERÇEK ve iki bileşenli:** 149 hasta üzerindeki −0,087'lik
+  Recall@K10 farkının ana kaynağı, 107 JSRT hastasının ana modelin **eğitim kümesinde** olması
+  (in-sample). Hiç görülmeyen 42 hastada ise fark küçülüyor ama **sıfırlanmıyor**: hasta AUC
+  ≈ +0,043 (GA 0'ı dışlıyor; veri azalmasıyla açıklanamıyor — val'de Δ≈0).
+* 🟢 **Kilitli test sayıları geçerli ama *in-fold* olarak etiketlenmeli.** "Yeni bir merkeze dış
+  genelleme" iddiası için doğru sayı LOSO'dur: **Recall@K10 0,8523 · K50 0,9396 · AUC 0,9395**.
+* ⚠️ **§9.6 ile çelişmez:** o test *omurganın ön-eğitim korpusu* hakkındaydı (etkileşim −0,200).
+  Bu test *NODE21'in kendi kaynak kompozisyonu* hakkındadır. İki ayrı örtüşme türü.
+* 🔒 **İZOLASYON (kritik):** LOSO modeli/TDA'sı/HGB'si ana mimariye **sızmaz** — ayrı checkpoint
+  (`M5_nojsrt.pt`), ayrı bundle (`stage2_nojsrt_tda_hgb.joblib`), ayrı JSON. Betik ana
+  artifact'lerin SHA-256'sını koşu öncesi/sonrası doğrular: **değişmedi**
+  (`isolation.unchanged = true`). Amaç yalnızca ölçüm ve dokümantasyondur.
+* ⚠️ **Açık iş:** birebir eşleştirilmiş bütçe kontrolü (aynı 1.366 görüntüyle JSRT'yi koruyup 107
+  chestxray14 pozitifini çıkarmak) ≈1 ek eğitim koşusu maliyetinde olduğu için yapılmadı; sonuçların
+  hiçbiri buna bağlı değil.
+* **Betik/kayıt:** [v6_9k_leave_jsrt_out.py](pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py) ·
+  [v6_9k2_val_control.py](pipelines/v6_two_stage/v6_9k2_val_control.py) ·
+  [v6_9k3_bootstrap.py](pipelines/v6_two_stage/v6_9k3_bootstrap.py) ·
+  `artifacts/v6_two_stage/v6_9k{,2,3}_*.json`
+
 
 
 

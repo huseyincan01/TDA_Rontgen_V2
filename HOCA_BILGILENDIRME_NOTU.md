@@ -213,6 +213,23 @@ gösterdi: Hazır gövdenin asıl büyük faydası, daha önce gördüğü kayna
 görmediği** zorlu kaynaklarda (JSRT ve OpenI veri setlerinde **+0,325 AUC** artışla) ortaya çıktı.
 Yani ön-eğitim ezber değil, farklı röntgen tiplerine karşı sağlamlık kazandırıyor.
 
+**Peki kendi veri setimizin İÇİNDEKİ kaynak tekrarı?** Burada bir şeyi itiraf etmem gerekiyor:
+NODE21 dört açık kaynaktan derlenmiş ve bunlardan biri olan Japon JSRT setinin **107 hastası
+doğrudan benim eğitim kümemin içindeydi**. Yani "JSRT'de çok iyi çıkıyoruz" cümlesi, kendi
+eğitim verimin bir parçası hakkında konuşmak olabilirdi. Bunu test etmek için JSRT'yi eğitimden
+**tamamen çıkarıp** sistemi aynı reçeteyle sıfırdan eğittim ve JSRT'yi hiç görmediğim bir
+hastane gibi test ettim. Sonuç iki katmanlı: eğitimde gördüğüm 107 hastada doğal olarak daha
+iyiyim — buna ezber denir, hile değildir ama dışarıya genellenebilir bir başarı da değildir.
+Hiç görmediğim **42 JSRT hastasında** ise kayıp küçülüyor ama sıfırlanmıyor: aynı kaynaktan
+başka hastaları görmek bana yaklaşık **0,04 AUC**'lük küçük ve ölçülebilir bir avantaj sağlıyor.
+Bunun "sadece daha az veriyle eğittim" açıklaması olmadığını da sınadım: aynı iki modeli JSRT
+içermeyen doğrulama hastalarında karşılaştırdığımda fark **sıfır** çıktı. O yüzden raporda şu
+ayrımı yapacağım: kendi test kümemdeki 0,969'luk sayı **"kendi içinde" geçerlidir**; ama "yeni
+bir merkeze dış genelleme" iddiası için, JSRT'yi hiç görmeyen modelin sayılarını kullanacağım:
+**ilk 10 kutuda %85, ilk 50 kutuda %94, hasta düzeyi AUC 0,94**. (Bu deney ana sistemden tamamen
+ayrı tutuldu; ne modeli ne de topolojik sözlüğü ana mimariye karıştırılmadı — yalnızca ölçüm
+amaçlıydı.)
+
 **Yeni hastaneye saha kurulumu (Çift-katmanlı kalibrasyon).** Sistem hiç görmediği Vietnam
 verisine (düşük kaliteli 8-bit JPEG röntgenlere) götürüldüğünde, sadece 2. aşamayı yerel
 örneklerle kalibre etmek skoru `0,70`'e, sadece 1. aşama başlığını ince ayarlamak ise `0,73`'e

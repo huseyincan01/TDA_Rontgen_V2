@@ -192,3 +192,43 @@ flowchart TD
 AUC **0,9446** → iki aşamalı füzyon rank_metric **0,9045** / AUC **0,9687**.
 Ayrıntı: [experiments.md](experiments.md) · [ablation_matrix.md](ablation_matrix.md) ·
 [LEAK_AUDIT.md](LEAK_AUDIT.md).
+
+---
+
+## 6. Dış Genelleme — Bir Kaynağı Tamamen Dışarıda Bırakmak (LOSO)
+
+Yukarıdaki bütün sayılar **kendi veri setimiz içinde** ölçülmüştür: NODE21 dört açık kaynaktan
+derlenmiştir ve model bu kaynakların **hepsinden** hasta görür. "Yeni bir merkeze ne kadar
+genelleniyor?" sorusunun dürüst cevabı için, bir kaynağı **eğitimden tamamen çıkarmak** gerekir.
+
+JSRT (Japon kaynağı, 149 hasta; 107'si `train`, 23'ü `val`, 19'u `test`) bu test için seçildi:
+
+```mermaid
+flowchart TD
+    A["NODE21 train<br/>790 nodüllü + 790 kontrol"] -->|"JSRT'nin 107 hastası ÇIKARILIR"| B["LOSO train<br/>683 + 683 = 1.366"]
+    B --> C["1. aşama: M5_nojsrt<br/>2. aşama: stage2_nojsrt<br/>(PI aralıkları da JSRT görmez)"]
+    C --> D["JSRT dış test<br/>149 hasta · hepsi YABANCI"]
+    A2["ANA mimari<br/>M5_foundation + stage2_foundation"] --> E["aynı 149 hasta<br/>(salt-okunur kıyas)"]
+    D --> F["Δ = LOSO − ANA"]
+    E --> F
+```
+
+**Sonuç.** LOSO modelinin JSRT'deki gerçek dış performansı: **Recall@K10 0,8523 · K20 0,8792 ·
+K50 0,9396 · hasta AUC 0,9395 (top1) / 0,9767 (noisy-OR)**.
+
+| Ölçüt (JSRT, 149 hasta) | LOSO | ANA | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K10 | 0,8523 | 0,9396 | −0,0873 |
+| Recall@K50 | 0,9396 | 0,9799 | −0,0403 |
+| Hasta AUC (füzyon, top1) | 0,9395 | 0,9674 | −0,0279 |
+
+⚠️ Bu farkın **büyük kısmı in-sample ezberdir**: 149 hastanın **107'si ana modelin eğitim
+kümesindeydi**. Hiçbir modelin eğitiminde olmayan **42 JSRT hastasında** fark küçülür:
+1. aşama hasta AUC **−0,0432** [−0,0809; −0,0064]. Bu fark **veri azalmasıyla açıklanamaz** —
+aynı iki model JSRT-dışı doğrulama hastalarında **eşittir** (Δ **+0,0013**) ⇒ fark-farkı
+**−0,0435** [−0,0813; −0,0067].
+
+**Kullanım kuralı.** Kilitli test sayıları **`in-fold`** olarak etiketlenir (veri seti içinde
+geçerli). *Kaynak-dışı genelleme* iddiasında **LOSO** sayıları kullanılır. Ayrıntı ve izolasyon
+denetimi: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7 ·
+[`v6_9k_leave_jsrt_out.py`](pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py).

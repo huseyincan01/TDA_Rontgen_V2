@@ -1005,3 +1005,41 @@ hasta AUC (noisy-OR, mean±std):
   kafasını sahada yeniden kalibre etmek.
 * ✅ İki katman tamamlayıcı (Kol3 − Kol2 ≈ +0,03…+0,07, N≥40).
 * 📉 N=160 bile 0,799 < kurum içi 0,969 ⇒ domain-shift tam kapanmaz.
+
+### 17.8 Leave-JSRT-Out — kaynak ezberi testi (V6.9k · k2 · k3) 🟠
+
+JSRT hastalarının **107'si** NODE21 `train` bölmesindeydi. JSRT'yi eğitimden **tamamen** çıkarıp
+iki aşamayı aynı reçeteyle yeniden eğittik; JSRT **%100 yabancı dış test** oldu (149 hasta).
+Ana mimariye **sızmaz**: ayrı checkpoint/bundle, ana artifact SHA-256'ları değişmedi.
+
+**JSRT dış testi (149 hasta) — negatif gerektirmeyen ölçütler:**
+
+| | Recall@K10 | @K20 | @K50 | hasta-yakalama@50 | hasta AUC (top1) | (noisy-OR) |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **LOSO** (JSRT hiç eğitimde yok) | **0,8523** | **0,8792** | **0,9396** | **0,9396** | **0,9395** | **0,9767** |
+| ANA (in-fold karışık) | 0,9396 | 0,9732 | 0,9799 | 0,9799 | 0,9674 | 0,9880 |
+| Δ | −0,0873 | −0,0940 | −0,0403 | −0,0403 | −0,0279 | −0,0113 |
+
+**Temiz alt küme (42 JSRT hastası; 107'si ANA'nın *eğitim* hastasıydı) — eşleştirilmiş bootstrap:**
+
+| Δ = LOSO − ANA | ortalama | %95 GA | P(Δ<0) |
+| :--- | ---: | :---: | ---: |
+| Aday AUC — 1. aşama | −0,0092 | [−0,0776, +0,0673] | 0,602 |
+| Aday AUC — füzyon | −0,0509 | [−0,1226, +0,0192] | 0,920 |
+| **Hasta AUC — 1. aşama** | **−0,0432** | **[−0,0809, −0,0064]** | **0,988** |
+| Hasta AUC — füzyon | −0,0157 | [−0,0405, +0,0110] | 0,883 |
+
+**Veri-azalması kontrastı (val −JSRT, V6.9k2):** LOSO ile ANA **eşit** — Recall@K10 Δ −0,0096,
+K20 +0,0048, K50 −0,0048, hasta AUC **+0,0013** ⇒ "sadece daha az veri" açıklaması elenir.
+**DiD** (Δ(JSRT) − Δ(val), 1. aşama AUC) = **−0,0435** [−0,0813, −0,0067], P(<0) = 0,985.
+
+* 🟠 **Kaynak ezberi gerçek ama küçük ve iki bileşenli:** (i) 107 eğitim hastası için **in-sample**
+  ezber — 149 hasta üzerindeki −0,087'lik farkın ana kaynağı; (ii) hiç görülmeyen 42 hastada
+  **kaynak düzeyinde** kalan ≈ **+0,043 hasta AUC** avantajı (GA 0'ı dışlıyor, veri azalmasıyla
+  açıklanamıyor).
+* 🟢 **Kullanım kuralı:** NODE21 kilitli test sayıları **in-fold** etiketiyle verilir; *kaynak-dışı
+  genelleme* iddiasında **LOSO** sayıları kullanılır (Recall@K10 0,8523 · K50 0,9396 · AUC 0,9395).
+* ⚠️ **§17.3 ile çelişmez:** o test omurganın **ön-eğitim korpusu** hakkındaydı (etkileşim −0,200);
+  bu test **NODE21'in kendi kaynak kompozisyonu** hakkındadır.
+* ⚠️ **Açık iş:** birebir eşleştirilmiş bütçe kontrolü (JSRT'yi koru, 107 chestxray14 çıkar) —
+  ≈1 ek eğitim koşusu; sonuçların hiçbiri buna bağlı değil.
