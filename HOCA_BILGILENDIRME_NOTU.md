@@ -189,8 +189,8 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | :--- | :---: | :--- |
 | 1. Aşama aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama tarayıcı model ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
 | Küçük kutuda piksel CNN vs. lokal TDA | **0,646 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN zayıf kalırken (`0,646`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
-| Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC · 0,884 yarışma skoru** | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
-| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,969 AUC · 0,905 yarışma skoru** (S@0.25 %71,2 · S@0.50 %79,0) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC +2,4 puan, resmî yarışma skoru +2,1 puan artıyor |
+| Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
+| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,969 AUC** (S@0.25 %71,2 · S@0.50 %79,0) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,4 puan**, kutu yakalama duyarlılığı S@0.50'de **+2,6 puan** (S@0.25'te +0,9 puan) artıyor |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,656 (sıfır-eğitim) → 0,799 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,80** düzeyine çıkıyor |
 | Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; eğitimden tamamen izole) | **0,940 (Top-1) / 0,977 (Noisy-OR) AUC · %94,0 Recall@50** (sıfır-eğitim) | Dış hastanenin görüntüleri JPEG gibi sıkıştırılmamış, yüksek kaliteli (12-bit `.mha`) olduğunda sistem **hiç kalibrasyon yapmadan (sıfır-eğitimle)** yüksek başarısını koruyor |
 
@@ -257,7 +257,7 @@ sağlamlaştırma etkisiyle) ortaya çıktı.
 noktalarını (`S@0.25` ve `S@0.50`) belirgin biçimde güçlendirirken, en katı yanlış-alarm eşiğinde
 (`S@0.125`) çok küçük bir duyarlılık tavizi verebiliyor. Kutu boyutu konusunda her tümöre kendi
 büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setinde sabit 56×56 kutuyu geçse de
-(`0,9185` vs `0,9131`) kilitli test setinde resmî yarışma puanını değiştirmediği için (`0,884`) daha
+(`0,9185` vs `0,9131`) kilitli test setinde S@0.25 kutu duyarlılığını değiştirmediği için (%70,3) daha
 sade olan sabit kutuyu varsayılan olarak koruduk.
 
 ---
