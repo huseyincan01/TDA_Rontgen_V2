@@ -1127,7 +1127,7 @@ Aynı karşılaştırma, **5-zon küçük CNN + RBF-SVM ensemble** ve **ince aya
 
 ### V6.1/V6.2 — 2. Aşama: lokal TDA + uzamsal öncül + FP eleme (val, 734 hasta)
 
-Temsil: aday merkezli **32×32 (çekirdek) + 64×64 (çevre)** H0/H1 PI (1600 boyut, **c_lungref ölçeği korunur**; yerel min-max yok) + 4 uzamsal özellik (rel_x, rel_y, hilus, plevra) + 64×64 yama.
+Temsil: aday merkezli **32×32 (çekirdek) + 64×64 (çevre)** H0/H1 PI (1600 boyut, **c_lungref ölçeği korunur**; yerel min-max yok) + 4 uzamsal özellik (rel_x, rel_y, `hilus` = **akciğer bbox merkezine** uzaklık, `plevra` = **akciğer maskesi sınırına** uzaklık — ikisi de **vekil**, anatomik hilus/plevra tespiti yok; bkz. [TEKNIK_YONTEM.md](TEKNIK_YONTEM.md) §3.2) + 64×64 yama.
 
 | Ayar | Model | Hasta AUC (Top-1 / Top-3 / Noisy-OR) | FROC @0.5/1/2/4 FP |
 | :--- | :--- | :---: | :---: |

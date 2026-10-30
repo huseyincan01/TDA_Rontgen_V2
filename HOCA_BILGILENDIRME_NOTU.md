@@ -101,7 +101,7 @@ flowchart LR
     A["20 × 20 tablo<br/>= 400 sayı"] --> B["× 2 şekil özelliği<br/>(H0 tepecik + H1 halka)"]
     B --> C["× 2 pencere<br/>(32×32 çekirdek + 64×64 çevre)"]
     C --> D["= 1.600 topolojik sayı"]
-    D --> E["+ 4 konum bilgisi<br/>(x, y, merkez, duvar)"]
+    D --> E["+ 4 konum bilgisi<br/>(x, y, akciğer merkezine uzaklık,<br/>akciğer sınırına uzaklık)"]
     E --> F["= 1.604 boyutlu<br/>şekil parmak izi"]
 ```
 

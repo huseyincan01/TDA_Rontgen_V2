@@ -323,7 +323,7 @@ Filtrasyon ölçeklemesi `scaled = piksel × 255 / 65535` sabitiyle yapılıyord
 5-zon TDA temsili lokalize etmez (§4.7); lokalizasyon **ayrı bir aday üretici + lokal TDA FP eleme** katmanıyla sağlanır:
 
 1. **Aşama-1 (aday üretici):** CenterNet (M5) ve FCOS (M6); K=50 aday/görüntü. Val oracle recall@50 = **0,978** (M5) / **0,983** (M5+M6). VinDr'de bbox recall@K50 = **0,900** ⇒ dedektör lokalizasyonu taşıyor.
-2. **Aşama-2 (lokal TDA + FP eleme):** Her aday için 32/64 px kırpıntılardan kübik H0/H1 kalıcılık imgeleri (2×2×20×20) + uzamsal öncel (hilus/plevra mesafesi, akciğer-içi konum) → HistGradientBoosting; füzyon LR ([aşama-1 skoru, TDA skoru]). Kübik homoloji, aday kırpıntısı başına **on-the-fly** hesaplanır (görüntü/kırpıntı diske yazılmaz).
+2. **Aşama-2 (lokal TDA + FP eleme):** Her aday için 32/64 px kırpıntılardan kübik H0/H1 kalıcılık imgeleri (2×2×20×20) + uzamsal öncel (**akciğer-alanı merkezine uzaklık** ve **maske sınırına uzaklık** — hilus/plevra **vekillleri** — ve akciğer-içi konum) → HistGradientBoosting; füzyon LR ([aşama-1 skoru, TDA skoru]). Kübik homoloji, aday kırpıntısı başına **on-the-fly** hesaplanır (görüntü/kırpıntı diske yazılmaz).
 3. **Seçim ve mühür:** Tüm hiperparametre/eşik seçimi validation'da; test seti **tek seferlik ön-kayıtlı** mühürle değerlendirildi.
 
 | Model (test: 734 hasta / 229 lezyon) | Hasta AUC | FROC @0,5 / 1 / 2 / 4 FP |

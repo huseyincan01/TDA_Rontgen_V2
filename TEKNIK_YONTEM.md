@@ -123,7 +123,26 @@ flowchart LR
     C --> D["+ 4 uzamsal özellik"] --> E["= 1.604 boyutlu vektör"]
 ```
 
-4 uzamsal özellik: akciğer içi göreli konum (x, y), hilusa uzaklık, plevraya uzaklık.
+4 uzamsal özellik: akciğer içi göreli konum (x, y), **akciğer alanı merkezine uzaklık (hilus
+vekili)** ve **akciğer maskesi sınırına uzaklık (plevra vekili)**.
+
+> ⚠️ **Bu iki "mesafe" anatomik ölçüm değil, geometrik vekildir.** Gerçek hilus (ana damar kökü)
+> **tespit edilmez**; mediasten/hilus noktası çıkarılmaz. Tanımlar
+> ([`v6_1_stage2.py`](pipelines/v6_two_stage/v6_1_stage2.py) `_spatial()`):
+>
+> | Özellik | Kodda nasıl hesaplanır | Gerçekte ne |
+> | :--- | :--- | :--- |
+> | `rel_x`, `rel_y` | `(cx − x0)/w`, `(cy − y0)/h` — **akciğer maskesi bbox'ı** içinde normalize konum | Akciğer alanı içindeki göreli konum |
+> | `hilus` | `‖(cx,cy) − bbox merkezi‖ / bbox köşegeni` | **Bbox merkezine** uzaklık (medial orta hat + orta yükseklik) — hilusun *vekilidir*, hilusun kendisi değil |
+> | `plevra` | `distance_transform_edt(akciğer maskesi)[cy,cx] / 30` | **En yakın akciğer-dışı piksele** uzaklık |
+>
+> İki sınırlama açıkça kaydedilir: (i) `hilus` özelliği **hilusun üstünde/altında** ama medialde
+> olan adayları da "hilusa yakın" sayar (y ekseni tam doğru değil); (ii) `plevra` sınır dönüşümü
+> göğüs duvarı, diyafram **ve mediasten** sınırlarını birlikte sayar ⇒ "duvara yakın" ile
+> "mediastene yakın" bu tek sayıda karışır (`rel_x` kısmen ayırır). Ayrıca **30 px** kalibre
+> edilmiş bir mesafe değil, normalizasyon ölçeğidir. Maske kaynağı PSPNet'tir; "5 bölge" gerçek
+> lob segmentasyonu değil, akciğer yüksekliğinin dikey dilimidir (sağ: 3, sol: 2) ve uzamsal
+> özelliklerde **yalnızca birleşim** (`zone > 0`) kullanılır.
 
 > ⚠️ Kesitler **yeniden boyutlandırılmaz** ve sabit 32/64 px'tir. Sebep ölçülmüştür: interpolasyon
 > (bilinear resize) H1 döngülerini siler — V5.1'de ölçek normalizasyonu TDA'yı 0,9211 → 0,8539'a
