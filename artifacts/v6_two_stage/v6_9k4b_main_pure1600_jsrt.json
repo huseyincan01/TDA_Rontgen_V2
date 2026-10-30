@@ -1,0 +1,21 @@
+{
+  "experiment": "V6.9k4b-main-pure1600-jsrt",
+  "note": "Ana model (M5_foundation + pure1600) JSRT 149'da TDA-tek hasta AUC.",
+  "jsrt_n": 149,
+  "controls": 250,
+  "tda_only": {
+    "top1": 0.968,
+    "top3": 0.9866,
+    "noisyor": 0.9883
+  },
+  "fusion": {
+    "top1": 0.9808,
+    "top3": 0.9929,
+    "noisyor": 0.9928
+  },
+  "recall_at_K": {
+    "K10": 0.9396,
+    "K20": 0.9732,
+    "K50": 0.9799
+  }
+}

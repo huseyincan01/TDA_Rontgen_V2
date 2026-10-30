@@ -397,7 +397,12 @@ w=0,55) ana mimariyle **birebir aynıdır**. Negatif havuzu val kontrollerinden 
 
 | LOSO (JSRT hiç eğitimde yok) | Recall@K10 | @K20 | @K50 | hasta AUC (füzyon, top1) | (noisy-OR) |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| **JSRT dış test** | **0,8523** | **0,8792** | **0,9396** | **0,9395** | **0,9767** |
+| **JSRT dış test — saf 1.600 (V6.9k4, güncel temsil)** | **0,8523** | **0,8792** | **0,9396** | **0,9316** | **0,9749** |
+| JSRT dış test — 1.604 (V6.9k, ilk koşu) | 0,8523 | 0,8792 | 0,9396 | 0,9395 | 0,9767 |
+
+> ℹ️ Yakalama metrikleri **birebir aynı** (yalnız 1. aşamaya bağlı). Füzyon AUC'si saf 1.600'de
+> 0,008 düşük; nedeni 4 konum sütununun çıkarılması — bu bedelin **domain-dışında daha büyük**
+> olduğu ölçüldü ([experiments.md](experiments.md) §V6.9.15 · [ablation_matrix.md](ablation_matrix.md) §17.11).
 
 **Sonuç 2 — ana model ile farkı (aynı 149 hasta):**
 
@@ -438,11 +443,13 @@ Aynı iki modeli **JSRT içermeyen** val hastalarında kıyasladık (149 poz / 2
 **fark-farkı** (DiD = Δ(JSRT) − Δ(val), 1. aşama hasta AUC) **−0,0435** [−0,0813, −0,0067],
 P(<0) = 0,985 ⇒ JSRT'ye **özgü** bir avantaj var.
 
-🔑 **Avantaj tamamen 1. aşamada; TDA'da DEĞİL.** Yalnız TDA skoruyla hasta AUC'si LOSO'da
-**0,9581**, ANA'da **0,9572** (Δ **+0,0009**) — yani lokal topolojik temsil **kaynağa karşı
-dirençlidir**. Kaynak ezberi derin dedektörün ısı haritasında taşınır; şekil tanımlayıcısında
-taşınmaz. Bu, "TDA kaynaklar arasında daha taşınabilir bir temsil" savını destekleyen bağımsız
-bir kanıttır.
+🔑 **Avantaj büyük ölçüde 1. aşamada; TDA'da DEĞİL.** Yalnız TDA skoruyla (saf 1.600) hasta
+AUC'si LOSO'da **0,9501**, ana modelde **0,9680** (Δ **0,0179**); füzyonda ise Δ **0,0492**.
+Yani kaynak avantajının ~⅔'si **dedektörün ısı haritasında**, yalnız ~⅓'ü şekil uzmanının
+puanında. Lokal topolojik temsil kaynağa **belirgin biçimde daha dirençlidir**, ama "hiç
+etkilenmiyor" denemez — 1.604 sürümünde bu Δ **+0,0009** (pratikte sıfır) idi; fark, saf 1.600'de
+konum sütunları çıkınca TDA'nın aday yerleşimine daha bağımlı hâle gelmesinden kaynaklanıyor.
+Her iki sürümde de **nitel sonuç aynı**: ezber ağırlıklı olarak dedektörde taşınır.
 
 **Hüküm (dürüstlük beyanı):**
 

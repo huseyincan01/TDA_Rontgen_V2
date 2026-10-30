@@ -1092,3 +1092,25 @@ foundation adaylarında (790+790) eğitildi; z-ref val'den donduruldu.
   yalnız doğrulama. [LEAK_AUDIT.md](LEAK_AUDIT.md) §6 güncellendi.
 * **Kayıt:** `artifacts/v6_two_stage/v6_9m_pure1600_seal.json` ·
   [v6_9m_pure1600_seal.py](pipelines/v6_two_stage/v6_9m_pure1600_seal.py)
+
+### 17.11 Konum özelliklerinin DIŞ-DOMAIN değeri (V6.9k4 · V6.9j2)
+
+1.604 → 1.600 geçişinin tüm satırlar için yeniden ölçümü (aynı 1. aşama, aynı aday havuzu,
+aynı fold/FT/shrinkage/w):
+
+| Ortam | Ölçüt | saf 1.600 | 1.604 | Δ |
+| :--- | :--- | ---: | ---: | ---: |
+| NODE21 kilitli test | füzyon AUC | 0,9661 | 0,9687 | −0,0026 |
+| NODE21 kilitli test | rank_metric | **0,9047** | 0,9045 | **+0,0002** |
+| JSRT (LOSO dış test, 149) | füzyon AUC top1 | 0,9316 | 0,9395 | −0,0079 |
+| JSRT (LOSO dış test, 149) | Recall@K50 | **0,9396** | 0,9396 | **0** |
+| VinDr sıfır-eğitim | hasta AUC | **0,6376** | 0,6559 | **−0,0183** |
+| VinDr N=160 (Kol3) | hasta AUC | 0,7935 | 0,7992 | −0,0057 |
+
+* 🟠 **Konum özellikleri kurum içinde gereksiz, domain-dışında hafif faydalıydı.** Bedel en
+  büyük **VinDr sıfır-eğitimde (−0,018)**. Yorum: 4 konum sütunu, görünüm modeli zayıflarken
+  işe yarayan **ucuz bir konum önsavı** sağlıyordu.
+* 🟢 Occam kararı korunuyor (resmî ölçüt eşit, temsil sade, kod tek yol); eski bundle'lar silinmedi.
+* 🔑 JSRT'de kaynak avantajı **TDA'da değil dedektörde**: TDA-tek Δ **0,018** vs füzyon Δ **0,049**.
+* **Kayıt:** `v6_9k4_loso_pure1600.json` · `v6_9k4b_main_pure1600_jsrt.json` ·
+  `v6_9j2_vindr_pure1600.json`

@@ -2164,6 +2164,63 @@ z-ref **val**'den donduruldu, `checkpoints/stage2_foundation_tda_hgb_pure1600.jo
 * **Betik/kayıt:** [v6_9m_pure1600_seal.py](pipelines/v6_two_stage/v6_9m_pure1600_seal.py) ·
   `artifacts/v6_two_stage/v6_9m_pure1600_seal.json`
 
+### V6.9.15 Dış test satırlarının saf 1.600 ile yeniden ölçümü (V6.9k4 · V6.9j2)
+
+**Neden.** §V6.9.13–14'te ana mimari saf 1.600'e geçti, ama **VinDr (V6.9j)** ve **JSRT-LOSO
+(V6.9k)** satırları eski **1.604** temsille ölçülmüştü (`n_features_in_ = 1604` doğrulandı).
+Tabloda iki farklı temsil karışmasın diye ikisi de yeniden ölçüldü. 1. aşama, aday havuzu,
+5-fold CV, FT (`deepcopy`), shrinkage ve w=0,55 **aynı**; yalnız 2. aşama matrisi 1.600'e indi.
+
+**JSRT — Leave-JSRT-Out dış testi (149 hasta, hepsi yabancı), [v6_9k4_loso_pure1600.py](pipelines/v6_two_stage/v6_9k4_loso_pure1600.py):**
+
+| JSRT (149 hasta) | saf 1.600 | 1.604 (V6.9k) | Δ |
+| :--- | ---: | ---: | ---: |
+| Recall@K10 / K20 / K50 | 0,8523 / 0,8792 / **0,9396** | 0,8523 / 0,8792 / 0,9396 | **0** |
+| Hasta-yakalama@50 | **0,9396** | 0,9396 | **0** |
+| Aday AUC — TDA | 0,6601 | 0,6802 | −0,0201 |
+| Aday AUC — füzyon | 0,8063 | 0,8072 | −0,0009 |
+| **Hasta AUC (füzyon, top1)** | **0,9316** | 0,9395 | **−0,0079** |
+| **Hasta AUC (füzyon, noisy-OR)** | **0,9749** | 0,9767 | −0,0018 |
+
+⇒ **Yakalama metrikleri birebir aynı** (bunlar 1. aşamaya bağlı; 2. aşama değişmedi).
+Füzyon AUC'si 0,008 düşük. 1.604 kolu V6.9k sayılarını **birebir** üretti (0,9395/0,9767) ⇒
+karşılaştırma zemini sağlam.
+
+**JSRT — TDA-tek puan (kaynak-taşınabilirlik), [v6_9k4b_main_pure1600_jsrt.py](pipelines/v6_two_stage/v6_9k4b_main_pure1600_jsrt.py):**
+
+| JSRT 149 · hasta AUC (top1) | TDA-tek | Füzyon |
+| :--- | ---: | ---: |
+| LOSO (JSRT'yi hiç görmedi) | **0,9501** | 0,9316 |
+| Ana model (JSRT'nin 107'sini gördü) | 0,9680 | 0,9808 |
+| **Δ** | **0,0179** | **0,0492** |
+
+🔑 **Kaynak avantajının büyük kısmı dedektörde, TDA'da değil** (Δ 0,049 vs 0,018) — V6.9k'nin
+bulgusunun saf 1.600 ile tekrarı.
+
+**VinDr — 5-fold few-shot, [v6_9j2_vindr_pure1600.py](pipelines/v6_two_stage/v6_9j2_vindr_pure1600.py):**
+
+| N | saf 1.600 (Kol1/Kol2/Kol3) | 1.604 V6.9j (Kol1/Kol2/Kol3) | Δ Kol3 |
+| ---: | :--- | :--- | ---: |
+| 0 | **0,6376** | 0,6559 | **−0,0183** |
+| 10 | 0,6423 / 0,6717 / 0,6801 | 0,6573 / 0,6863 / 0,6863 | −0,0062 |
+| 20 | 0,6451 / 0,6740 / 0,6873 | 0,6575 / 0,6869 / 0,6952 | −0,0079 |
+| 40 | 0,6632 / 0,6981 / **0,7396** | 0,6748 / 0,7105 / 0,7424 | −0,0028 |
+| 80 | 0,6904 / 0,7131 / **0,7719** | 0,7008 / 0,7180 / 0,7751 | −0,0032 |
+| 160 | 0,6877 / 0,7237 / **0,7935** | 0,6928 / 0,7297 / 0,7992 | **−0,0057** |
+
+⚠️ **Önemli ve dürüst bir bulgu — konum özellikleri *domain-dışında* daha değerliymiş.**
+Saf 1.600'e geçiş kurum içinde neredeyse bedelsizdi (NODE21 test AUC −0,0026), ama **VinDr
+sıfır-eğitimde −0,018**, JSRT füzyonunda −0,008 kaybettirdi. Yorum: 4 konum sütunu, görünüm
+modeli domain dışında zayıflarken işe yarayan **ucuz bir konum önsavı** sağlıyordu. Yani Occam
+kararı **kurum içi performans için doğru, dış genelleme için hafif maliyetli**dir; bu bedel
+[LEAK_AUDIT.md](LEAK_AUDIT.md) ve makale metninde birlikte raporlanmalıdır.
+
+* 🟢 **Karar:** ana mimari saf 1.600 olarak kalır (resmî ölçüt eşit, kod ve temsil daha sade).
+  Eski 1.604 bundle'ları **silinmedi**; dış-domain öncelikli bir dağıtım gerekirse geri dönülebilir.
+* 📌 **Kullanım kuralı:** §4 tablosundaki tüm satırlar artık **aynı** (saf 1.600) temsile aittir.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9k4_loso_pure1600.json` · `v6_9k4b_main_pure1600_jsrt.json` ·
+  `v6_9j2_vindr_pure1600.json`
+
 
 
 
