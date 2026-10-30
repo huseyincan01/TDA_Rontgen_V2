@@ -1,0 +1,139 @@
+{
+  "experiment": "V6.9p-tp-fp-figure",
+  "matching_rule": "IoU > 0.20, aynı hasta; aynı GT'ye 2. vuruş ne TP ne FP",
+  "box": "sabit 56×56 px",
+  "patients": [
+    {
+      "pid": "n0961",
+      "tag": "Temiz başarı — TP",
+      "note": "IoU 0.86",
+      "n_gt": 3,
+      "n_candidates": 50,
+      "s1": {
+        "top5": [
+          "TP",
+          "TP",
+          "FP",
+          "TP",
+          "FP"
+        ],
+        "n_tp_top5": 3,
+        "n_fp_top5": 2,
+        "top1_score": 0.6483,
+        "best_iou_top5": 0.8619
+      },
+      "fus": {
+        "top5": [
+          "TP",
+          "TP",
+          "FP",
+          "TP",
+          "FP"
+        ],
+        "n_tp_top5": 3,
+        "n_fp_top5": 2,
+        "top1_score": 10.3781,
+        "best_iou_top5": 0.8619
+      }
+    },
+    {
+      "pid": "n0029",
+      "tag": "Kaçırma (FN) — hiçbir aday GT'ye oturmuyor",
+      "note": "en iyi IoU 0.00 < 0,20",
+      "n_gt": 1,
+      "n_candidates": 50,
+      "s1": {
+        "top5": [
+          "FP",
+          "FP",
+          "FP",
+          "FP",
+          "FP"
+        ],
+        "n_tp_top5": 0,
+        "n_fp_top5": 5,
+        "top1_score": 0.1692,
+        "best_iou_top5": 0.0
+      },
+      "fus": {
+        "top5": [
+          "FP",
+          "FP",
+          "FP",
+          "FP",
+          "FP"
+        ],
+        "n_tp_top5": 0,
+        "n_fp_top5": 5,
+        "top1_score": 2.4542,
+        "best_iou_top5": 0.0
+      }
+    },
+    {
+      "pid": "n1058",
+      "tag": "2. aşama sıralamayı düzeltti",
+      "note": "1. aşama top-1 = FP → füzyon top-1 = TP",
+      "n_gt": 2,
+      "n_candidates": 50,
+      "s1": {
+        "top5": [
+          "FP",
+          "TP",
+          "TP",
+          "FP",
+          "FP"
+        ],
+        "n_tp_top5": 2,
+        "n_fp_top5": 3,
+        "top1_score": 0.3742,
+        "best_iou_top5": 0.8295
+      },
+      "fus": {
+        "top5": [
+          "TP",
+          "FP",
+          "TP",
+          "FP",
+          "FP"
+        ],
+        "n_tp_top5": 2,
+        "n_fp_top5": 3,
+        "top1_score": 5.406,
+        "best_iou_top5": 0.8295
+      }
+    },
+    {
+      "pid": "c0002",
+      "tag": "Temiz kontrol — yalnız FP",
+      "note": "GT yok, adaylar yanlış alarm",
+      "n_gt": 0,
+      "n_candidates": 50,
+      "s1": {
+        "top5": [
+          "FP",
+          "FP",
+          "FP",
+          "FP",
+          "FP"
+        ],
+        "n_tp_top5": 0,
+        "n_fp_top5": 5,
+        "top1_score": 0.0709,
+        "best_iou_top5": 0.0
+      },
+      "fus": {
+        "top5": [
+          "FP",
+          "FP",
+          "FP",
+          "FP",
+          "FP"
+        ],
+        "n_tp_top5": 0,
+        "n_fp_top5": 5,
+        "top1_score": 0.7175,
+        "best_iou_top5": 0.0
+      }
+    }
+  ]
+}
