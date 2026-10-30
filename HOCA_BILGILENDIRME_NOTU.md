@@ -202,7 +202,9 @@ Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
    tamamlayarak genel başarıyı `0,945`'ten `0,969`'a taşımaktadır.
 3. Harici testlerdeki sıfır-eğitim farkı (`0,656` vs `0,940–0,977`), modelin başka bir hastaneye
    gittiğinde düşmesinin ana sebebinin "yabancı hastane" değil, **görüntünün 8-bit JPEG ile
-   sıkıştırılıp çözünürlüğünün düşürülmesi** olduğunu kanıtlamaktadır.
+   sıkıştırılıp çözünürlüğünün düşürülmesi** olduğunu **kuvvetle göstermektedir**; ancak iki veri
+   setinin hasta ve cihaz yapısı da farklı olduğundan, bunun doğrudan kanıtı için aynı hastanenin
+   16-bit DICOM arşiviyle tekrar ölçüm gerekir.
 
 ---
 
@@ -214,11 +216,12 @@ doğru anlamak için sistemi zorlu denetimlerden geçirdik:
 **1. Neden Vietnam (VinDr) Verisinde Sıfır-Eğitimde Düşüş Yaşandı ve Bunu Test Etmek İçin Neden
 JSRT'yi İzole Ettik?**
 Elimizdeki harici Vietnam (VinDr-CXR) veri kümesi, açık kaynakta paylaşılan **3 kat küçültülmüş ve
-8-bit JPEG olarak sıkıştırılmış** bir kopyaydı (orijinal 16-bit kayıpsız DICOM arşivi 550 GB olduğu
-ve kısıtlı/onaylı erişim gerektirdiği için yalnızca 400 dosyalık yüksek kaliteli versiyonuna açık
-API'ler üzerinden erişemedik). JPEG sıkıştırması görüntüyü 8×8 piksellik bloklara bölerek ince doku
-geçişlerini bozduğu için, 2. aşamadaki topolojik hesaplamamız (TDA) bu yapay blok kenarlarından
-olumsuz etkilendi ve sıfır-eğitim başarısı `0,656 AUC` seviyesinde kaldı.
+8-bit JPEG olarak sıkıştırılmış** bir kopyaydı (orijinal 16-bit kayıpsız DICOM arşivi
+**onlarca/yüzlerce GB** büyüklüğünde olduğu ve kısıtlı/onaylı erişim gerektirdiği için yalnızca
+400 dosyalık yüksek kaliteli versiyonuna açık API'ler üzerinden erişemedik). JPEG sıkıştırması
+görüntüyü 8×8 piksellik bloklara bölerek ince doku geçişlerini bozduğu için, 2. aşamadaki topolojik
+hesaplamamız (TDA) bu yapay blok kenarlarından olumsuz etkilendi ve sıfır-eğitim başarısı
+`0,656 AUC` seviyesinde kaldı.
 
 Bunun üzerine kendimize şu soruyu sorduk: *"Eğer hiç görmediğimiz yabancı bir hastanenin röntgenleri
 bozuk JPEG değil de, eğitimdeki gibi kayıpsız 12-bit `.mha` kalitesinde olsaydı ne olurdu?"*
