@@ -37,6 +37,16 @@ ham CXR
   → /output/nodules.json  ("Multiple 2D bounding boxes")
 ```
 
+> ⚠️ **Bilimsel hatla tek fark — 2. aşama temsili.** Bu konteyner, tam-veri 2. aşama
+> bundle'ı (`stage2_tda_hgb_fulldata.joblib`, **1.604** = 1600 PI + 4 konum sütunu) ile
+> çalışır. Bilimsel hat ise **V6.9m'den beri saf 1.600** kullanıyor
+> (`stage2_foundation_tda_hgb_pure1600.joblib`; konum sütunları V6.9l'de katkısız/zararlı
+> bulunup çıkarıldı). 1. aşama, TTA, NMS, 56 px kutu ve w=0,55 **aynıdır**. Eşitleme
+> (fulldata stage-2'yi 1.600 ile yeniden eğitmek) **bilinçli olarak ertelendi** — gerekçe ve
+> adımlar: [roadmap.md](../roadmap.md) TODO. NODE21'deki etkisi ölçüldü: rank_metric
+> 0,9045 → 0,9047 (eşit), AUC −0,0026, S@0,5 −0,0262
+> ([experiments.md](../experiments.md) §V6.9.14).
+
 ## Girdi / Çıktı
 
 | | |
