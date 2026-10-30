@@ -2222,6 +2222,39 @@ kararı **kurum içi performans için doğru, dış genelleme için hafif maliye
 * **Kayıt:** `artifacts/v6_two_stage/v6_9k4_loso_pure1600.json` · `v6_9k4b_main_pure1600_jsrt.json` ·
   `v6_9j2_vindr_pure1600.json`
 
+### V6.9.16 JSRT hasta AUC'sinin kontrol havuzuna duyarlılığı (V6.9q)
+
+**Kuşku (haklı):** JSRT'nin 149 görüntüsünün **tamamı pozitif**. Hasta AUC'si için negatifler
+`node21_control`'dan alınıyor; model bu dağılımı **bastırmayı öğrendi**, JSRT arka planını hiç
+görmedi ⇒ özellikle `noisy-OR` (50 kutuyu birleştiren) şişmiş olabilir. Yeni eğitim yapılmadan,
+aynı skorlar üzerinden üç test:
+
+| JSRT hasta AUC (füzyon, saf 1.600) | Top-1 | Noisy-OR |
+| :--- | ---: | ---: |
+| 250 kontrol (mevcut) | 0,9316 | 0,9749 |
+| **spacing ≥ 0,28 mm/px** — JSRT ile aynı fiziksel piksel boyutu (135 kontrol) | **0,9413** | **0,9815** |
+| hasta-içi arka plan normalizasyonu | 0,5534 | 0,1337 |
+
+Spacing dağılımı: JSRT p5/p50/p95 = **0,282 / 0,309 / 0,347** mm/px (%96'sı ≥0,28) · kontrollerin
+%54'ü ≥0,28.
+
+* 🟢 **Şişme kanıtlanmadı.** Havuzu JSRT'nin fiziksel ölçeğine daraltmak AUC'yi düşürmüyor,
+  **+0,010 (top1) / +0,007 (noisy-OR)** yükseltiyor. Yani 0,975 havuz seçiminden gelmiyor.
+* 🔴 **Hasta-içi normalizasyon sinyali yok ediyor** (0,13–0,55). Sınıfları ayıran şey adayın
+  *göreli* değil **mutlak** kanıt düzeyi; kendi medyanına bölünce "güçlü lezyon" ile "gürültülü
+  arka plan" aynı görünüyor. (noisy-OR 0,13'e iniyor çünkü kontrollerin çok sayıda orta-skorlu
+  adayı normalize edilince yükseliyor.)
+* 🔑 **AUC ile Recall@K çelişmiyor, farklı soru soruyorlar:** AUC "bu hasta nodüllü mü?"
+  (tarama; noisy-OR beş adayın **en iyisini** ödüllendirir, doğru tümör olması gerekmez),
+  Recall@K "kutuyu tümörün üstüne koydun mu?" (lokalizasyon). 0,975 vs %94,0 bu yüzden doğal.
+* ✅ **Kontrol havuzundan bağımsız (asıl güvenilir) JSRT ölçütleri:** ilk 10 kutuda **%85,2** ·
+  ilk 50'de **%94,0** (1. aşama sıralaması; füzyon sıralamasıyla K10 %75,8 · K50 %94,0) ·
+  **JSRT-içi aday AUC 0,871 (s1) / 0,806 (füzyon)** · top-1 kutusunun tümörde olma oranı **%53,7**.
+* 📌 **Belge kuralı:** HOCA notunda JSRT satırı artık **yakalama + Top-1 AUC** ile veriliyor;
+  `noisy-OR` öne çıkarılmıyor ve kontrol havuzu asimetrisi açıkça not ediliyor.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9q_jsrt_control_sensitivity.json` ·
+  [v6_9q_jsrt_control_sensitivity.py](pipelines/v6_two_stage/v6_9q_jsrt_control_sensitivity.py)
+
 
 
 

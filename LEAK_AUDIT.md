@@ -404,6 +404,34 @@ w=0,55) ana mimariyle **birebir aynıdır**. Negatif havuzu val kontrollerinden 
 > 0,008 düşük; nedeni 4 konum sütununun çıkarılması — bu bedelin **domain-dışında daha büyük**
 > olduğu ölçüldü ([experiments.md](experiments.md) §V6.9.15 · [ablation_matrix.md](ablation_matrix.md) §17.11).
 
+**Sonuç 1b — hasta AUC'si KONTROL HAVUZUNA duyarlı mı? (V6.9q)** ⚠️ Metodolojik uyarı
+
+JSRT'nin **149 görüntüsünün tamamı pozitif** olduğu için hasta AUC'si ancak ortak bir sağlıklı
+kontrol havuzuyla hesaplanabilir; o havuz (`node21_control`) modelin eğitimde **bastırmayı
+öğrendiği** bir dağılımdır ⇒ `noisy-OR`'un (50 kutuyu birleştiren skor) yapay olarak şişmesi
+mümkündür. Bu **test edildi** (yeni eğitim yok, aynı skorlar):
+
+| JSRT hasta AUC (füzyon) | Top-1 | Noisy-OR |
+| :--- | ---: | ---: |
+| Tüm 250 kontrol | 0,9316 | 0,9749 |
+| **Yalnız spacing ≥ 0,28 mm/px** (JSRT ile aynı fiziksel piksel boyutu; 135 kontrol) | **0,9413** | **0,9815** |
+| Hasta-içi arka plan normalizasyonu (kendi medyan/std'si ile) | 0,5534 | **0,1337** |
+
+**Hüküm:** şişme **kanıtlanmadı** — kontrol havuzunu JSRT'nin fiziksel ölçeğine daraltmak AUC'yi
+*düşürmüyor*, hafifçe **yükseltiyor** (+0,010 / +0,007). Hasta-içi normalizasyon ise sinyali
+**yok ediyor** (0,13–0,55): sınıfları ayıran şey adayın *göreli* değil **mutlak** kanıt düzeyi.
+⇒ 0,975 vs %94,0 yakalama çelişkisi **kontrol havuzundan değil, metriğin sorusundan** kaynaklanır:
+AUC "bu hasta nodüllü mü?" (tarama), Recall@K ise "kutuyu tümörün üstüne koydun mu?"
+(lokalizasyon) diye sorar. Noisy-OR beş adayın en iyisini ödüllendirir ⇒ doğru tümörü değil,
+*herhangi bir yüksek skorlu adayı* ödüllendirir.
+
+🔑 **Kontrol havuzundan tamamen bağımsız (asıl güvenilir) JSRT ölçütleri:** ilk 10 kutuda **%85,2**,
+ilk 20'de %87,9, ilk 50'de **%94,0** (1. aşama sıralamasıyla; füzyon sıralamasıyla K10 %75,8 ·
+K50 %94,0) · **JSRT-içi aday AUC 0,871 (1. aşama) / 0,806 (füzyon)** — aynı görüntünün gerçek
+tümör adayları ile diğer 49 adayının ayrımı · en yüksek skorlu kutunun tümörde olma oranı **%53,7**.
+Kayıt: `artifacts/v6_two_stage/v6_9q_jsrt_control_sensitivity.json` ·
+[v6_9q_jsrt_control_sensitivity.py](pipelines/v6_two_stage/v6_9q_jsrt_control_sensitivity.py)
+
 **Sonuç 2 — ana model ile farkı (aynı 149 hasta):**
 
 | Ölçüt | LOSO | ANA | Δ |

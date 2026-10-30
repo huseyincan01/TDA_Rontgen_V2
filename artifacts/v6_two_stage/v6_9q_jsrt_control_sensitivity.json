@@ -1,0 +1,103 @@
+{
+  "experiment": "V6.9q-jsrt-control-sensitivity",
+  "concern": "JSRT'nin 149 görüntüsü de pozitif; AUC için kullanılan node21_control havuzu modelin eğitimde bastırmayı öğrendiği bir dağılımdır ⇒ noisy-OR şişebilir. Kontrol havuzundan bağımsız metrikler ve duyarlılık testi.",
+  "model": "M5_nojsrt + stage2_nojsrt_tda_hgb_pure1600 (1600, saf topolojik)",
+  "spacing": {
+    "jsrt_p5_p50_p95": [
+      0.282,
+      0.309,
+      0.347
+    ],
+    "jsrt_ge_0.28_share": 0.96,
+    "control_ge_0.28_share": 0.54
+  },
+  "A_control_free": {
+    "n_patients": 149,
+    "n_lesions": 149,
+    "recall_at_K": {
+      "s1": {
+        "K10": 0.8523,
+        "K20": 0.8792,
+        "K50": 0.9396
+      },
+      "fus": {
+        "K10": 0.7584,
+        "K20": 0.7987,
+        "K50": 0.9396
+      }
+    },
+    "top1_box_is_tumor_rate": 0.5369,
+    "candidate_auc_within_jsrt": {
+      "s1": 0.8714,
+      "fus": 0.8063
+    },
+    "note": "Bu metriklerde node21_control HİÇ kullanılmaz."
+  },
+  "B_C_control_pool": {
+    "s1|top1|raw|all250": {
+      "auc": 0.8384,
+      "n_control": 250
+    },
+    "s1|top1|raw|spacing_ge_0.28": {
+      "auc": 0.8631,
+      "n_control": 135
+    },
+    "s1|top1|selfnorm|all250": {
+      "auc": 0.7041,
+      "n_control": 250
+    },
+    "s1|top1|selfnorm|spacing_ge_0.28": {
+      "auc": 0.7223,
+      "n_control": 135
+    },
+    "s1|noisyor|raw|all250": {
+      "auc": 0.8528,
+      "n_control": 250
+    },
+    "s1|noisyor|raw|spacing_ge_0.28": {
+      "auc": 0.8788,
+      "n_control": 135
+    },
+    "s1|noisyor|selfnorm|all250": {
+      "auc": 0.4321,
+      "n_control": 250
+    },
+    "s1|noisyor|selfnorm|spacing_ge_0.28": {
+      "auc": 0.4835,
+      "n_control": 135
+    },
+    "fus|top1|raw|all250": {
+      "auc": 0.9316,
+      "n_control": 250
+    },
+    "fus|top1|raw|spacing_ge_0.28": {
+      "auc": 0.9413,
+      "n_control": 135
+    },
+    "fus|top1|selfnorm|all250": {
+      "auc": 0.5534,
+      "n_control": 250
+    },
+    "fus|top1|selfnorm|spacing_ge_0.28": {
+      "auc": 0.5888,
+      "n_control": 135
+    },
+    "fus|noisyor|raw|all250": {
+      "auc": 0.9749,
+      "n_control": 250
+    },
+    "fus|noisyor|raw|spacing_ge_0.28": {
+      "auc": 0.9815,
+      "n_control": 135
+    },
+    "fus|noisyor|selfnorm|all250": {
+      "auc": 0.1337,
+      "n_control": 250
+    },
+    "fus|noisyor|selfnorm|spacing_ge_0.28": {
+      "auc": 0.1701,
+      "n_control": 135
+    }
+  },
+  "verdict_note": "Asıl güvenilir dış ölçüt kontrol havuzundan bağımsız olanlardır: kutu yakalama (K10/K50) ve JSRT-içi aday AUC."
+}
