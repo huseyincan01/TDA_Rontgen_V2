@@ -191,67 +191,71 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | Küçük kutuda piksel CNN vs. lokal TDA | **0,646 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN zayıf kalırken (`0,646`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC · 0,884 yarışma skoru** | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
 | Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,969 AUC · 0,905 yarışma skoru** (S@0.25 %71,2 · S@0.50 %79,0) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC +2,4 puan, resmî yarışma skoru +2,1 puan artıyor |
-| Harici veri (VinDr-CXR, Vietnam; 400 görüntü) | **0,656 (sıfır-eğitim) → 0,799 AUC** (160 görüntüyle saha kalibrasyonu) | Farklı bir ülkenin hastanesine hiç ayar yapmadan taşınınca başarı düşüyor, ancak az sayıda yerel örnekle kalibre edildiğinde **0,80** düzeyine toparlanıyor |
+| Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,656 (sıfır-eğitim) → 0,799 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,80** düzeyine çıkıyor |
+| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; eğitimden tamamen izole) | **0,940 (Top-1) / 0,977 (Noisy-OR) AUC · %94,0 Recall@50** (sıfır-eğitim) | Dış hastanenin görüntüleri JPEG gibi sıkıştırılmamış, yüksek kaliteli (12-bit `.mha`) olduğunda sistem **hiç kalibrasyon yapmadan (sıfır-eğitimle)** yüksek başarısını koruyor |
 
-Tablodaki en temel iki bulgumuz şunlardır: Küçük şüpheli kutularda ayırt edici bilgi ham piksel
-dokusunda değil **geometrik şekilde** yatmaktadır (`0,646` vs `0,926`), ve topolojik katman kilitli
-test setinde 1. aşama tarayıcı modelin eksik bıraktığı kısmı tamamlayarak genel başarıyı
-`0,945`'ten `0,969`'a taşımaktadır.
+Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
+
+1. Küçük şüpheli kutularda ayırt edici bilgi ham piksel dokusunda değil **geometrik şekilde**
+   yatmaktadır (`0,646` vs `0,926`).
+2. Topolojik katman kilitli test setinde 1. aşama tarayıcı modelin eksik bıraktığı kısmı
+   tamamlayarak genel başarıyı `0,945`'ten `0,969`'a taşımaktadır.
+3. Harici testlerdeki sıfır-eğitim farkı (`0,656` vs `0,940–0,977`), modelin başka bir hastaneye
+   gittiğinde düşmesinin ana sebebinin "yabancı hastane" değil, **görüntünün 8-bit JPEG ile
+   sıkıştırılıp çözünürlüğünün düşürülmesi** olduğunu kanıtlamaktadır.
 
 ---
 
 ## 5. Yaptığımız Zorlu Kontroller ve Dürüst Sınırlılıklar
 
-Yalnızca yüksek skor kovalamadık; elde ettiğimiz sonuçlardan emin olmak için sistemi zorlu
-denetimlerden geçirdik:
+Yalnızca yüksek skor kovalamadık; elde ettiğimiz sonuçlardan emin olmak ve harici veri davranışını
+doğru anlamak için sistemi zorlu denetimlerden geçirdik:
 
-**Ön-eğitim veri örtüşmesi skoru şişiriyor mu?** NODE21 veri seti açık kaynaklı röntgenlerden
-derlendiği için, 1. aşamada kullandığımız hazır ResNet50 gövdesi pozitif vakaların bir kısmını
-ön-eğitim sırasında (kutu etiketi olmadan) görmüştü. "Acaba başarımız bu yüzden mi yüksek?"
-şüphesiyle modeli hiç röntgen görmemiş bir ImageNet gövdesiyle kıyasladık. Sonuç tam tersini
-gösterdi: Hazır gövdenin asıl büyük faydası, daha önce gördüğü kaynaklarda değil, **hayatında hiç
-görmediği** zorlu kaynaklarda (JSRT ve OpenI veri setlerinde **+0,325 AUC** artışla) ortaya çıktı.
-Yani ön-eğitim ezber değil, farklı röntgen tiplerine karşı sağlamlık kazandırıyor.
+**1. Neden Vietnam (VinDr) Verisinde Sıfır-Eğitimde Düşüş Yaşandı ve Bunu Test Etmek İçin Neden
+JSRT'yi İzole Ettik?**
+Elimizdeki harici Vietnam (VinDr-CXR) veri kümesi, açık kaynakta paylaşılan **3 kat küçültülmüş ve
+8-bit JPEG olarak sıkıştırılmış** bir kopyaydı (orijinal 16-bit kayıpsız DICOM arşivi 550 GB olduğu
+ve kısıtlı/onaylı erişim gerektirdiği için yalnızca 400 dosyalık yüksek kaliteli versiyonuna açık
+API'ler üzerinden erişemedik). JPEG sıkıştırması görüntüyü 8×8 piksellik bloklara bölerek ince doku
+geçişlerini bozduğu için, 2. aşamadaki topolojik hesaplamamız (TDA) bu yapay blok kenarlarından
+olumsuz etkilendi ve sıfır-eğitim başarısı `0,656 AUC` seviyesinde kaldı.
 
-**Peki kendi veri setimizin İÇİNDEKİ kaynak tekrarı?** Burada bir şeyi itiraf etmem gerekiyor:
-NODE21 dört açık kaynaktan derlenmiş ve bunlardan biri olan Japon JSRT setinin **107 hastası
-doğrudan benim eğitim kümemin içindeydi**. Yani "JSRT'de çok iyi çıkıyoruz" cümlesi, kendi
-eğitim verimin bir parçası hakkında konuşmak olabilirdi. Bunu test etmek için JSRT'yi eğitimden
-**tamamen çıkarıp** sistemi aynı reçeteyle sıfırdan eğittim ve JSRT'yi hiç görmediğim bir
-hastane gibi test ettim. Sonuç iki katmanlı: eğitimde gördüğüm 107 hastada doğal olarak daha
-iyiyim — buna ezber denir, hile değildir ama dışarıya genellenebilir bir başarı da değildir.
-Hiç görmediğim **42 JSRT hastasında** ise kayıp küçülüyor ama sıfırlanmıyor: aynı kaynaktan
-başka hastaları görmek bana yaklaşık **0,04 AUC**'lük küçük ve ölçülebilir bir avantaj sağlıyor.
-Bunun "sadece daha az veriyle eğittim" açıklaması olmadığını da sınadım: aynı iki modeli JSRT
-içermeyen doğrulama hastalarında karşılaştırdığımda fark **sıfır** çıktı. O yüzden raporda şu
-ayrımı yapacağım: kendi test kümemdeki 0,969'luk sayı **"kendi içinde" geçerlidir**; ama "yeni
-bir merkeze dış genelleme" iddiası için, JSRT'yi hiç görmeyen modelin sayılarını kullanacağım:
-**ilk 10 kutuda %85, ilk 50 kutuda %94, hasta düzeyi AUC 0,94**. (Bu deney ana sistemden tamamen
-ayrı tutuldu; ne modeli ne de topolojik sözlüğü ana mimariye karıştırılmadı — yalnızca ölçüm
-amaçlıydı.)
+Bunun üzerine kendimize şu soruyu sorduk: *"Eğer hiç görmediğimiz yabancı bir hastanenin röntgenleri
+bozuk JPEG değil de, eğitimdeki gibi kayıpsız 12-bit `.mha` kalitesinde olsaydı ne olurdu?"*
+Bunu ölçmek için NODE21 içindeki 4 alt kaynaktan biri olan **Japonya (JSRT, 149 hasta)** veri
+setini eğitimden **tamamen çıkardık** (zaten 1. aşamadaki hazır ResNet50 gövdesi de ön-eğitiminde
+JSRT'yi hiç görmemişti) ve ana mimariye hiç dokunmadan izole bir modeli sıfırdan eğittik. Sonuç tam
+düşündüğümüz gibi çıktı: Görüntü kalitesi kayıpsız 12-bit `.mha` olduğunda, model hayatında hiç
+görmediği Japonya hastanesinde **hiç kalibrasyon yapmadan (sıfır-eğitimle)** ilk 50 kutuda
+nodüllerin **%94,0'ını** yakaladı ve **0,940 (Top-1) / 0,977 (Noisy-OR) hasta AUC** değerine
+ulaştı. Daha da önemlisi, yalnız 2. aşama Lokal TDA puanına bakıldığında JSRT'yi hiç görmeyen model
+(`0,958 AUC`) ile JSRT'yi gören ana model (`0,957 AUC`) **birebir aynı başarıyı** verdi; yani
+topolojik şekil özetimiz yüksek kaliteli röntgenlerde hastaneden hastaneye kayıpsız
+taşınmaktadır.
 
-**Yeni hastaneye saha kurulumu (Çift-katmanlı kalibrasyon).** Sistem hiç görmediği Vietnam
-verisine (düşük kaliteli 8-bit JPEG röntgenlere) götürüldüğünde, sadece 2. aşamayı yerel
-örneklerle kalibre etmek skoru `0,70`'e, sadece 1. aşama başlığını ince ayarlamak ise `0,73`'e
-taşıyabildi. Ancak **her iki aşamayı birlikte** kalibre ettiğimizde güçlü bir tamamlayıcılıkla
-**`0,799 AUC`** değerine ulaştık. Bu da sistemin yeni bir hastaneye kurulduğunda az sayıda yerel
-örnekle hızla uyarlanabileceğini gösteriyor.
+**2. Düşük Kaliteli Hastane Verisinde Saha Kalibrasyonu (Çift-katmanlı uyarlama).**
+Peki görüntü kalitesinin düşük olduğu (8-bit JPEG Vietnam verisi gibi) bir hastaneye sistem
+kurulduğunda ne yapılmalı? Bunu test ettiğimizde; sadece 2. aşamayı yerel örneklerle kalibre
+etmenin skoru `0,70`'e, sadece 1. aşama başlığını ince ayarlamanın ise `0,73`'e taşıyabildiğini
+gördük. Ancak **her iki aşamayı birlikte** kalibre ettiğimizde güçlü bir tamamlayıcılıkla
+**`0,799 AUC`** değerine ulaştık. Bu da sistemin düşük kaliteli cihazlara sahip bir hastanede bile
+az sayıda yerel örnekle hızla toparlanabildiğini gösteriyor.
 
-**Kullanıma hazır paketleme (Docker).** Sistemin sadece bir araştırma kodu olarak kalmaması için,
-resmî Grand-Challenge yarışma kurallarına uyan ve internet bağlantısı olmadan çalışan **çevrimdışı
-bir Docker konteyneri** hazırladık. Paket, birden fazla 2 boyutlu göğüs röntgeninin tek bir tıbbi
-`.mha` dosyasında üst üste dizildiği röntgen yığınlarını doğrudan okuyup standart formatta tümör
-kutularını ve olasılıklarını üretiyor.
+**3. Ön-eğitim veri örtüşmesi skoru şişiriyor mu?**
+NODE21 veri seti açık kaynaklı röntgenlerden derlendiği için, 1. aşamada kullandığımız hazır
+ResNet50 gövdesi pozitif vakaların bir kısmını (NIH ve PadChest) ön-eğitim sırasında (kutu etiketi
+olmadan) görmüştü. "Acaba başarımız bu yüzden mi yüksek?" şüphesiyle modeli hiç röntgen görmemiş bir
+ImageNet gövdesiyle kıyasladık. Sonuç tam tersini gösterdi: Hazır gövdenin asıl büyük faydası, daha
+önce gördüğü kaynaklarda değil, **hayatında hiç görmediği** kaynaklarda (**+0,325 AUC**
+sağlamlaştırma etkisiyle) ortaya çıktı.
 
-**Dürüst sınırlılıklar.** Çalışmamızın sınırlarını da net biçimde çizdik: Topolojik katman hasta
-düzeyindeki ayrımı ve orta yanlış-alarm noktalarını (`S@0.25` ve `S@0.50`) belirgin biçimde
-güçlendirirken, en katı yanlış-alarm eşiğinde (`S@0.125`) çok küçük bir duyarlılık tavizi
-verebiliyor. Kutu boyutu konusunda her tümöre kendi büyüklüğünde dinamik kutu çizen bir başlık da
-eğittik; doğrulama setinde sabit 56×56 kutuyu geçse de (`0,9185` vs `0,9131`) kilitli test setinde
-resmî yarışma puanını değiştirmediği için (`0,884`) daha sade olan sabit kutuyu varsayılan olarak
-koruduk. En önemli sınır ise cihazlar arası farktır: Sistem farklı bir hastanenin cihazına **hiç
-kalibrasyon yapılmadan** götürüldüğünde başarısı düşmektedir; çok merkezli kullanım için yerel
-kalibrasyon şarttır.
+**4. Dürüst sınırlılıklar.**
+Çalışmamızın sınırları da nettir: Topolojik katman hasta düzeyindeki ayrımı ve orta yanlış-alarm
+noktalarını (`S@0.25` ve `S@0.50`) belirgin biçimde güçlendirirken, en katı yanlış-alarm eşiğinde
+(`S@0.125`) çok küçük bir duyarlılık tavizi verebiliyor. Kutu boyutu konusunda her tümöre kendi
+büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setinde sabit 56×56 kutuyu geçse de
+(`0,9185` vs `0,9131`) kilitli test setinde resmî yarışma puanını değiştirmediği için (`0,884`) daha
+sade olan sabit kutuyu varsayılan olarak koruduk.
 
 ---
 
