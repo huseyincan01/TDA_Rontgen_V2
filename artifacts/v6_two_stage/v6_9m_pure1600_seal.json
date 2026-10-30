@@ -1,0 +1,112 @@
+{
+  "experiment": "V6.9m-pure1600-seal",
+  "question": "2. aşama temsili saf 1.600 topolojik boyuta indirildiğinde kilitli testte ne olur? (V6.9l: konum özellikleri katkısız/zararlı ⇒ Occam)",
+  "test_budget_declaration": "BEŞİNCİ test kullanımı (öncekiler V6.4 · V6.9 · V6.9f · V6.9i). Mimari karar V6.9l'de yalnız VAL'de alındı; bu koşu tek-atımlık doğrulamadır. Test üzerinde seçim YOK.",
+  "representation": "2 kesit (32/64) × 2 homoloji (H0/H1) × 20×20 PI = 1600",
+  "spatial_features_removed": [
+    "rel_x",
+    "rel_y",
+    "akciger_bbox_merkezine_uzaklik",
+    "akciger_maskesi_sinirina_uzaklik"
+  ],
+  "bundles": {
+    "pure1600": "artifacts\\v6_two_stage\\checkpoints\\stage2_foundation_tda_hgb_pure1600.joblib",
+    "ref1604_protected": "artifacts\\v6_two_stage\\checkpoints\\stage2_foundation_tda_hgb.joblib",
+    "pure1600_sha256": "98fd633b11db841af9b8a5c01a4f06cb9f9726128b9d425c9ba5aab54b9bd01c",
+    "ref1604_sha256": "e87318b59b496e8f8f3392f5257875387e05240cdca58adb372679605be9ad6b",
+    "pure1600_bytes": 1756118
+  },
+  "trap_B": "stage1_score_included = False (her iki kolda)",
+  "fusion": {
+    "w": 0.55,
+    "box_px": 56,
+    "z_ref_pure1600": {
+      "s1_mean": 0.026985976845026016,
+      "s1_std": 0.038500506430864334,
+      "tda_mean": 0.2369370460510254,
+      "tda_std": 0.17270119488239288,
+      "w": 0.55
+    },
+    "z_ref_ref1604": {
+      "s1_mean": 0.026985976845026016,
+      "s1_std": 0.038500506430864334,
+      "tda_mean": 0.24212024434698068,
+      "tda_std": 0.1704624497350107,
+      "w": 0.55
+    }
+  },
+  "test": {
+    "n_patients": 734,
+    "n_lesions": 229,
+    "n_candidates": 34209
+  },
+  "arms": {
+    "pure1600": {
+      "n_features": 1600,
+      "tda_only": {
+        "sens": {
+          "0.125": 0.0655,
+          "0.25": 0.1048,
+          "0.5": 0.179,
+          "1": 0.2533,
+          "2": 0.3886,
+          "4": 0.5328
+        },
+        "auc": 0.942,
+        "froc_mean_3pt": 0.1164,
+        "rank_metric": 0.7327
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.607,
+          "0.25": 0.7205,
+          "0.5": 0.7642,
+          "1": 0.8297,
+          "2": 0.8515,
+          "4": 0.8777
+        },
+        "auc": 0.9661,
+        "froc_mean_3pt": 0.6972,
+        "rank_metric": 0.9047
+      }
+    },
+    "ref1604": {
+      "n_features": 1604,
+      "tda_only": {
+        "sens": {
+          "0.125": 0.0611,
+          "0.25": 0.1354,
+          "0.5": 0.214,
+          "1": 0.31,
+          "2": 0.4498,
+          "4": 0.5852
+        },
+        "auc": 0.9452,
+        "froc_mean_3pt": 0.1368,
+        "rank_metric": 0.7428
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.6245,
+          "0.25": 0.7118,
+          "0.5": 0.7904,
+          "1": 0.8297,
+          "2": 0.869,
+          "4": 0.8908
+        },
+        "auc": 0.9687,
+        "froc_mean_3pt": 0.7089,
+        "rank_metric": 0.9045
+      }
+    }
+  },
+  "delta_pure1600_minus_ref1604": {
+    "auc": -0.0026,
+    "rank_metric": 0.0002,
+    "tda_auc": -0.0032,
+    "S025": 0.0087,
+    "S05": -0.0262
+  },
+  "verdict": "DEPLOY: saf 1600",
+  "smoke": false
+}

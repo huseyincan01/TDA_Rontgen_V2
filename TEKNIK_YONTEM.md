@@ -120,15 +120,22 @@ edilir:
 ```mermaid
 flowchart LR
     A["2 kesit<br/>32px + 64px"] --> B["× 2 homoloji<br/>H0 + H1"] --> C["× 20×20 = 1.600<br/>topolojik öznitelik"]
-    C --> D["+ 4 uzamsal özellik"] --> E["= 1.604 boyutlu vektör"]
 ```
 
-4 uzamsal özellik: akciğer içi göreli konum (x, y), **akciğer alanı merkezine uzaklık (hilus
-vekili)** ve **akciğer maskesi sınırına uzaklık (plevra vekili)**.
+**Güncel temsil: 1.600 boyutlu SAF topolojik vektör.** (2 kesit × 2 homoloji × 20×20 PI.)
+Daha önceki sürümlerde buna **4 uzamsal konum sütunu** ekleniyordu (`rel_x`, `rel_y`,
+akciğer alanı merkezine uzaklık = "hilus vekili", akciğer maskesi sınırına uzaklık =
+"plevra vekili") ⇒ 1.604. **V6.9l ablasyonu** bu 4 sütunun hasta düzeyinde katkı
+sağlamadığını (±0,001 AUC; işaretler ters) ve aday düzeyinde **zarar verdiğini**
+(TDA-tek AUC 0,9387 → 0,9242) gösterdi ⇒ Occam'ın usturası gereği **çıkarıldı** (V6.9m).
+Ayrıntı ve kilitli test sonucu: [experiments.md](experiments.md) §V6.9.13–14.
 
-> ⚠️ **Bu iki "mesafe" anatomik ölçüm değil, geometrik vekildir.** Gerçek hilus (ana damar kökü)
-> **tespit edilmez**; mediasten/hilus noktası çıkarılmaz. Tanımlar
-> ([`v6_1_stage2.py`](pipelines/v6_two_stage/v6_1_stage2.py) `_spatial()`):
+> ⚠️ **TARİHSEL KAYIT — çıkarılan 4 uzamsal vekil (v6.1–v6.9l sürümleri).** Aşağıdaki tanımlar
+> artık **kullanılmamaktadır**; V6.9l'de ölçülüp V6.9m'de kaldırılmıştır. Kayıt olarak duruyor,
+> çünkü eski sürümlerin sayılarını okuyan biri bu sütunların ne olduğunu bilmelidir. Bu iki
+> "mesafe" **anatomik ölçüm değil, geometrik vekildir**; gerçek hilus (ana damar kökü)
+> **tespit edilmez**. Tanımlar ([`v6_1_stage2.py`](pipelines/v6_two_stage/v6_1_stage2.py)
+> `_spatial()`):
 >
 > | Özellik | Kodda nasıl hesaplanır | Gerçekte ne |
 > | :--- | :--- | :--- |
@@ -136,20 +143,20 @@ vekili)** ve **akciğer maskesi sınırına uzaklık (plevra vekili)**.
 > | `hilus` | `‖(cx,cy) − bbox merkezi‖ / bbox köşegeni` | **Bbox merkezine** uzaklık (medial orta hat + orta yükseklik) — hilusun *vekilidir*, hilusun kendisi değil |
 > | `plevra` | `distance_transform_edt(akciğer maskesi)[cy,cx] / 30` | **En yakın akciğer-dışı piksele** uzaklık |
 >
-> İki sınırlama açıkça kaydedilir: (i) `hilus` özelliği **hilusun üstünde/altında** ama medialde
-> olan adayları da "hilusa yakın" sayar (y ekseni tam doğru değil); (ii) `plevra` sınır dönüşümü
-> göğüs duvarı, diyafram **ve mediasten** sınırlarını birlikte sayar ⇒ "duvara yakın" ile
-> "mediastene yakın" bu tek sayıda karışır (`rel_x` kısmen ayırır). Ayrıca **30 px** kalibre
-> edilmiş bir mesafe değil, normalizasyon ölçeğidir. Maske kaynağı PSPNet'tir; "5 bölge" gerçek
-> lob segmentasyonu değil, akciğer yüksekliğinin dikey dilimidir (sağ: 3, sol: 2) ve uzamsal
-> özelliklerde **yalnızca birleşim** (`zone > 0`) kullanılır.
+> İki sınırlama: (i) `hilus` özelliği **hilusun üstünde/altında** ama medialde olan adayları da
+> "hilusa yakın" sayar (y ekseni tam doğru değil); (ii) `plevra` sınır dönüşümü göğüs duvarı,
+> diyafram **ve mediasten** sınırlarını birlikte sayar ⇒ "duvara yakın" ile "mediastene yakın" bu
+> tek sayıda karışır (`rel_x` kısmen ayırır). Ayrıca **30 px** kalibre edilmiş bir mesafe değil,
+> normalizasyon ölçeğidir. Maske kaynağı PSPNet'tir; "5 bölge" gerçek lob segmentasyonu değil,
+> akciğer yüksekliğinin dikey dilimidir (sağ: 3, sol: 2) ve uzamsal özelliklerde **yalnızca
+> birleşim** (`zone > 0`) kullanılırdı.
 >
-> 📊 **Ölçüldü (V6.9l, yalnız val):** bu 4 konum sütununun hasta düzeyi katkısı
+> 📊 **Neden çıkarıldı (V6.9l, yalnız val):** bu 4 konum sütununun hasta düzeyi katkısı
 > **gösterilemedi** — 1600 (konum yok) vs 1604 (mevcut) vs 1606 (anatomik) kolları arasında
 > füzyon AUC farkı **±0,001**, rank_metric farkı **±0,0025** ve işaretler **ters yönlü**.
-> Aday düzeyinde ise konum sütunları **zarar veriyor** (TDA-tek AUC 0,9387 → 0,9242). Gerçek
-> medial/lateral kenarları kullanan anatomik kodlama da vekili geçmedi (−0,0008). Bu yüzden
-> ana checkpoint **değiştirilmedi**; ayrıntı: [experiments.md](experiments.md) §V6.9.13.
+> Aday düzeyinde ise konum sütunları **zarar veriyordu** (TDA-tek AUC 0,9387 → 0,9242). Gerçek
+> medial/lateral kenarları kullanan anatomik kodlama da vekili geçmedi (−0,0008).
+> [experiments.md](experiments.md) §V6.9.13 · kilitli test doğrulaması §V6.9.14.
 
 > ⚠️ Kesitler **yeniden boyutlandırılmaz** ve sabit 32/64 px'tir. Sebep ölçülmüştür: interpolasyon
 > (bilinear resize) H1 döngülerini siler — V5.1'de ölçek normalizasyonu TDA'yı 0,9211 → 0,8539'a
@@ -157,14 +164,20 @@ vekili)** ve **akciğer maskesi sınırına uzaklık (plevra vekili)**.
 
 ### 3.3 Sınıflandırıcı
 
-1.604 boyutlu vektör **StandardScaler** ile ölçeklenir, ardından
+**1.600 boyutlu** vektör **StandardScaler** ile ölçeklenir, ardından
 **HistGradientBoostingClassifier** (`max_iter=200`, `learning_rate=0,08`,
 `class_weight="balanced"`) eğitilir. Çıktı: adayın "gerçek nodül olma" olasılığı `p_TDA`.
 
-> ℹ️ **Güncel sürüm (V6.9i):** Bu sınıflandırıcı, 1. aşamanın **kendi aday dağılımı** üzerinde
-> eğitilir. Eski bir sürüm M5 (ImageNet) dedektörünün adaylarıyla eğitilmişti; o uyumsuzluk
-> kilitli testte 0,0075 rank kaybına mal oluyordu. Yeni `stage2_foundation_tda_hgb.joblib`
-> bunu giderdi (test: rank 0,8970 → **0,9045**, AUC 0,9645 → **0,9687**).
+> ℹ️ **Güncel sürüm (V6.9m) — saf 1.600:** dağıtılan bundle
+> `checkpoints/stage2_foundation_tda_hgb_pure1600.joblib`'dir; girdisi **yalnız 1.600 saf
+> topolojik** özelliktir (konum sütunu yok). Kilitli testte resmî rank_metric **0,9047**
+> (1.604 sürümü: 0,9045) — eşit; buna karşılık S@0,5 **0,7642** vs 0,7904 (−2,6 puan).
+> Önceki 1.604 bundle'ı `stage2_foundation_tda_hgb.joblib` olarak **silinmeden korunur**.
+
+> ℹ️ **Aday dağılımı uyumu (V6.9i):** Bu sınıflandırıcı, 1. aşamanın **kendi aday dağılımı**
+> üzerinde eğitilir. Eski bir sürüm M5 (ImageNet) dedektörünün adaylarıyla eğitilmişti; o
+> uyumsuzluk kilitli testte 0,0075 rank kaybına mal oluyordu. Foundation adaylarıyla yeniden
+> eğitim bunu giderdi (test: rank 0,8970 → **0,9045**, AUC 0,9645 → **0,9687**).
 
 ---
 
@@ -182,7 +195,7 @@ Naif yaklaşım şudur: 2. aşama modeline 1. aşamanın skorunu da özellik ola
 **Bizim çözümümüz (V6.7'den itibaren yapısal koruma):**
 
 * ✅ **Bağımsız eğitim:** 2. aşamanın özellik matrisi **1. aşama skorunu içermez** —
-  yalnız 1.600 PI + 4 uzamsal. (Bundle'da `stage1_score_included = False` olarak assert edilir.)
+  yalnız 1.600 saf topolojik PI. (Bundle'da `stage1_score_included = False` olarak assert edilir.)
 * ✅ **Kilitli sabit ağırlık:** İki skor, **doğrulama kümesinde** belirlenen ve bir daha
   **yeniden uydurulmayan** sabit ağırlıkla birleştirilir:
 
@@ -209,13 +222,14 @@ flowchart TD
     B -->|"1:1 denge"| C["1.580 bilimsel / 2.268 tam-veri görüntü"]
     C --> D["1. AŞAMA<br/>ResNet50 + ASPP + FPN + CenterNet<br/>Gaussian focal · 5 donuk + 13 ince ayar = 18 epoch"]
     D --> E["512→256 ısı haritası<br/>3×3 tepe → NMS 8 px<br/>top-50 aday · sabit 56×56 kutu"]
-    E --> F["2. AŞAMA<br/>her aday → 32/64 kesit<br/>GUDHI H0/H1 PI (1600) + 4 uzamsal = 1604"]
+    E --> F["2. AŞAMA<br/>her aday → 32/64 kesit<br/>GUDHI H0/H1 PI = 1.600<br/>(saf topolojik, konum sütunu YOK)"]
     F --> G["HistGradientBoosting<br/>balanced · s1 YOK → p_TDA"]
     G --> H["FÜZYON<br/>S = sigmoid(0,55·z(s1) + 0,45·z(p_TDA))<br/>w ve z-referansı val'de dondurulmuş"]
 ```
 
 **Kilitli test sonucu (sızıntısız, ayarsız):** yalnız 1. aşama rank_metric **0,8842** /
-AUC **0,9446** → iki aşamalı füzyon rank_metric **0,9045** / AUC **0,9687**.
+AUC **0,9446** → iki aşamalı füzyon rank_metric **0,9045** / AUC **0,9687** (1.604 sürümü) ·
+**0,9047** / 0,9661 ve S@0,5 0,7642 (**saf 1.600, V6.9m — dağıtılan sürüm)**.
 Ayrıntı: [experiments.md](experiments.md) · [ablation_matrix.md](ablation_matrix.md) ·
 [LEAK_AUDIT.md](LEAK_AUDIT.md).
 

@@ -163,17 +163,23 @@ dokunulmamış **test** bölmesinde (734 hasta / 229 lezyon) **bir kez** koşuld
 
 ---
 
-## 6. 🟡 Test bölmesi iki kez görüldü
+## 6. 🟡 Test bölmesi beş kez görüldü
 
 | Kullanım | Model ailesi | Sonuç | Ayar |
 | :--- | :--- | :--- | :--- |
 | V6.4 `test_seal()` | V6 CenterNet+FCOS+lokal TDA + V5.2 global füzyon | birleşik hasta AUC **0,9876** | yok |
-| **V6.9 (bu belge)** | M5_foundation + dondurulmuş 2. aşama, w=0,55 | rank_metric **0,8842** / AUC **0,9446** | yok |
+| **V6.9** | M5_foundation + dondurulmuş 2. aşama, w=0,55 | rank_metric **0,8842** / AUC **0,9446** | yok |
+| V6.9f | dinamik yarıçap kutusu (val'de seçilmiş) | rank_metric **0,8842** (= sabit kutu) | yok |
+| V6.9i | uyumlu 2. aşama (foundation adaylarıyla eğitilmiş HGB) | rank_metric **0,9045** / AUC **0,9687** | yok |
+| **V6.9m** | **saf 1.600 TDA** (4 konum sütunu çıkarıldı; karar **val**'de) | rank_metric **0,9047** / AUC **0,9661** / S@0,5 **0,7642** | yok |
 
-V6.4'ten sonraki hiçbir karar (V6.5 domain genelleştirme, V6.6 omurga + FROC kalibrasyonu,
-V6.6.7 resmî metrik, V6.7 tam-veri, V6.8 onarımlar) test sonucuna bakılarak alınmadı —
-hepsi val'de alındı. Yine de **beyan**: bu bölme proje tarihinde iki kez görüldü; üçüncü
-bir "mühür" artık mühür sayılmaz.
+V6.4'ten sonraki hiçbir **tasarım** kararı (V6.5 domain genelleştirme, V6.6 omurga + FROC
+kalibrasyonu, V6.6.7 resmî metrik, V6.7 tam-veri, V6.8 onarımlar, V6.9l konum ablasyonu) test
+sonucuna bakılarak alınmadı — hepsi val'de alındı. Son üç satır (V6.9f / V6.9i / V6.9m)
+**val'de kararlaştırılmış değişikliklerin tek-atımlık doğrulamasıdır**; hiçbirinde test üzerinde
+seçim yapılmadı. Yine de **beyan**: bu bölme proje tarihinde **beş kez** görüldü; artık
+"mühür" değil, **tekrar kullanılan bir doğrulama kümesi** olarak anılmalıdır ve çoklu-karşılaştırma
+şişmesi (her koşu ±0,01–0,02) raporlanan sayılara eşlik etmelidir.
 
 ---
 
@@ -382,7 +388,8 @@ tek yolu, **JSRT'yi eğitimden tamamen çıkarıp** iki aşamayı yeniden eğitm
 **Kurulum.** LOSO eğitimi: `train − JSRT` ⇒ **683 nodüllü + 683 kontrol = 1.366 görüntü** (1:1,
 ana mimariyle **aynı** dengeleme kuralı). PI aralıkları LOSO adaylarından **yeniden türetildi**,
 z-referansı val'in **JSRT-dışı** hastalarından donduruldu. Anlatım ve protokol (3 ölçek + flip TTA,
-NMS 8 px, top-50, sabit 56×56 kutu, 1604 özellik, s1-YOK, HGB `max_iter=200 lr=0.08 balanced`,
+NMS 8 px, top-50, sabit 56×56 kutu, 1604 özellik (o tarihte 4 konum sütunu dâhil; V6.9m'de
+kaldırıldı), s1-YOK, HGB `max_iter=200 lr=0.08 balanced`,
 w=0,55) ana mimariyle **birebir aynıdır**. Negatif havuzu val kontrollerinden (250, seed 42);
 **test bölmesine dokunulmadı**.
 

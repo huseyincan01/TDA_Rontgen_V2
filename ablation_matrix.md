@@ -1068,3 +1068,27 @@ val 734 hasta / 231 lezyon. Kilitli test **KAPALI**, ana checkpoint **değişmed
 * ⚠️ Sınırlar: yalnız val; z-ref her kol için val'den (üç kol aynı işlem); tek tohum.
 * **Kayıt:** `artifacts/v6_two_stage/v6_9l_spatial_ablation.json` ·
   [v6_9l_spatial_ablation.py](pipelines/v6_two_stage/v6_9l_spatial_ablation.py)
+
+### 17.10 Saf 1.600 TDA standardizasyonu — kilitli test (V6.9m)
+
+Occam kararı: 4 konum vekili atıldı, temsil **2 kesit × 2 homoloji × 20×20 = 1.600** saf
+topolojik. TDA yeniden hesaplanmadı (V6.9l önbelleği). HGB aynı hiperparametrelerle
+foundation adaylarında (790+790) eğitildi; z-ref val'den donduruldu.
+`stage2_foundation_tda_hgb_pure1600.joblib` kaydedildi; **1.604 bundle'ı silinmedi**.
+
+| Kilitli test (734/229) | TDA-tek AUC | **Füzyon AUC** | **Füzyon rank** | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **saf 1.600 (yeni)** | 0,9420 | 0,9661 | **0,9047** | 0,6070 | **0,7205** | 0,7642 |
+| 1.604 (deploy edilmiş) | **0,9452** | **0,9687** | 0,9045 | **0,6245** | 0,7118 | **0,7904** |
+| **Δ (saf − 1.604)** | −0,0032 | −0,0026 | **+0,0002** | −0,0175 | **+0,0087** | −0,0262 |
+
+* ✅ **Resmî metrik eşit:** rank **0,9047 vs 0,9045** ⇒ 4 özellik eksilterek aynı skor.
+  (rank = 0,75·AUC + 0,25·S@0,25; S@0,25 +0,0087 kazancı AUC −0,0026 kaybını dengeliyor.)
+* ⚠️ **Eşik-duyarlı trade-off:** S@0,125 **−0,0175**, S@0,5 **−0,0262**; S@0,25 **+0,0087**.
+  Sıkı yanlış-alarm rejiminde 1.604 daha iyi — birlikte raporlanmalı.
+* 🔑 **Val'deki "aday düzeyinde zararlı" bulgusu testte zayıfladı** (−0,0145 → −0,0032) ⇒
+  sadeleştirmenin gerekçesi büyük ölçüde **val'e bağlı**; dürüstçe böyle yazılmalı.
+* ⚠️ **Beşinci test kullanımı** (V6.4 · V6.9 · V6.9f · V6.9i · V6.9m); karar val'de, test
+  yalnız doğrulama. [LEAK_AUDIT.md](LEAK_AUDIT.md) §6 güncellendi.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9m_pure1600_seal.json` ·
+  [v6_9m_pure1600_seal.py](pipelines/v6_two_stage/v6_9m_pure1600_seal.py)

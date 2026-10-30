@@ -100,17 +100,24 @@ belirgin bir tepe izi bırakırken, damar ve kaburga gölgeleri dağınık ve ç
 flowchart LR
     A["20 × 20 tablo<br/>= 400 sayı"] --> B["× 2 şekil özelliği<br/>(H0 tepecik + H1 halka)"]
     B --> C["× 2 pencere<br/>(32×32 çekirdek + 64×64 çevre)"]
-    C --> D["= 1.600 topolojik sayı"]
-    D --> E["+ 4 konum bilgisi<br/>(x, y, akciğer merkezine uzaklık,<br/>akciğer sınırına uzaklık)"]
-    E --> F["= 1.604 boyutlu<br/>şekil parmak izi"]
+    C --> D["= 1.600 sayı<br/>SAF ŞEKİL PARMAK İZİ"]
 ```
 
 Böylece her şüpheli kutu için, sadece ham piksellere değil doğrudan **o bölgenin geometrik
-şekline ve akciğerdeki konumuna** bakan 1.604 sayılık bir parmak izi elde ederiz.
+şekline** bakan **1.600 sayılık** bir parmak izi elde ederiz.
+
+> 📌 **Neden 1.604 değil 1.600?** Önceki sürümde bu 1.600 sayıya **4 konum sütunu** ekleniyordu
+> (kutunun akciğer içindeki x/y konumu, akciğer merkezine uzaklığı, akciğer sınırına uzaklığı).
+> Bunları ayrı ayrı ölçtük: nihai skora **ölçülebilir bir katkı sağlamadılar** (fark ±0,001,
+> işaretler tutarsız), üstelik aday düzeyinde şekil kanıtını bir miktar **bastırdılar**
+> (0,939 → 0,924). "Gereksiz karmaşıklık eklemeyelim" ilkesiyle **çıkardık**; sistem artık
+> %100 saf topolojik şekil üzerinde çalışıyor. Bu sadeleştirme resmî ölçütte **eşit** sonuç
+> verdi (0,9047 vs 0,9045), tek bedeli en sıkı yanlış-alarm eşiğinde ~2,6 puan duyarlılık oldu —
+> bunu aşağıda dürüstçe yazıyorum.
 
 **Durak 4 — İki Uzmanın Ortak Kararı (HGB ve Birleştirme).**
 
-Bu 1.604 boyutlu şekil parmak izini, ağaç tabanlı hızlı bir karar modeline (HistGradientBoosting —
+Bu 1.600 boyutlu şekil parmak izini, ağaç tabanlı hızlı bir karar modeline (HistGradientBoosting —
 HGB) veriyoruz. HGB modeli, "bu şekil parmak izi gerçek bir tümöre mi yoksa damar/kemik gölgesine
 mi ait?" sorusuna bir puan veriyor. Son adımda iki uzmanın görüşünü birleştiriyoruz: **1. aşama
 tarayıcı modelin görsel puanı (%55 ağırlık)** ile **2. aşama modelin topolojik şekil puanı (%45
@@ -177,8 +184,8 @@ hata vardır: 1. aşama modelinin kendi eğitim verisi üzerinde verdiği puanla
 girdi olarak vermek. Oysa 1. aşama modeli eğitimde gördüğü röntgenleri tanıdığı için orada aşırı
 yüksek (şişkin) puanlar verir; 2. aşama da "1. aşama zaten her şeyi biliyor" sanıp kendi topolojik
 özelliklerine bakmayı bırakır ve yeni bir test hastası geldiğinde yanılır. Biz bu tuzağı tamamen
-kapattık: 2. aşamadaki HGB modeline 1. aşamanın puanını **hiç göstermedik** (sadece 1.604 şekil ve
-konum özelliğiyle eğittik); iki uzmanın puanlarını en sonda doğrulama kümesinde belirlenen sabit
+kapattık: 2. aşamadaki HGB modeline 1. aşamanın puanını **hiç göstermedik** (sadece 1.600 saf
+şekil özelliğiyle eğittik); iki uzmanın puanlarını en sonda doğrulama kümesinde belirlenen sabit
 ağırlıklarla (%55 ve %45) birleştirdik.
 
 ---
@@ -190,7 +197,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | 1. Aşama aday yakalama (Recall@K) | **%98,3 (K20) → %99,1 (K50)** | 1. aşama tarayıcı model ilk 50 kutuda gerçek nodüllerin neredeyse tamamını yakalıyor; "kaçırmama" görevi tamam |
 | Küçük kutuda piksel CNN vs. lokal TDA | **0,646 vs. 0,926 AUC** | Aynı küçük kareyi ham pikselleriyle inceleyen CNN zayıf kalırken (`0,646`), **şeklini** inceleyen TDA çok güçlü ayrım sağlıyor (`0,926`) |
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
-| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,969 AUC** (S@0.25 %71,2 · S@0.50 %79,0) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,4 puan**, kutu yakalama duyarlılığı S@0.50'de **+2,6 puan** (S@0.25'te +0,9 puan) artıyor |
+| Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te **+1,7 puan** |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,656 (sıfır-eğitim) → 0,799 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,80** düzeyine çıkıyor |
 | Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; eğitimden tamamen izole) | **0,940 (Top-1) / 0,977 (Noisy-OR) AUC · %94,0 Recall@50** (sıfır-eğitim) | Dış hastanenin görüntüleri JPEG gibi sıkıştırılmamış, yüksek kaliteli (12-bit `.mha`) olduğunda sistem **hiç kalibrasyon yapmadan (sıfır-eğitimle)** yüksek başarısını koruyor |
 
@@ -199,7 +206,7 @@ Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
 1. Küçük şüpheli kutularda ayırt edici bilgi ham piksel dokusunda değil **geometrik şekilde**
    yatmaktadır (`0,646` vs `0,926`).
 2. Topolojik katman kilitli test setinde 1. aşama tarayıcı modelin eksik bıraktığı kısmı
-   tamamlayarak genel başarıyı `0,945`'ten `0,969`'a taşımaktadır.
+   tamamlayarak genel başarıyı `0,945`'ten `0,966`'ya taşımaktadır.
 3. Harici testlerdeki sıfır-eğitim farkı (`0,656` vs `0,940–0,977`), modelin başka bir hastaneye
    gittiğinde düşmesinin ana sebebinin "yabancı hastane" değil, **görüntünün 8-bit JPEG ile
    sıkıştırılıp çözünürlüğünün düşürülmesi** olduğunu **kuvvetle göstermektedir**; ancak iki veri
@@ -270,6 +277,14 @@ noktalarını (`S@0.25` ve `S@0.50`) belirgin biçimde güçlendirirken, en kat�
 büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setinde sabit 56×56 kutuyu geçse de
 (`0,9185` vs `0,9131`) kilitli test setinde S@0.25 kutu duyarlılığını değiştirmediği için (%70,3) daha
 sade olan sabit kutuyu varsayılan olarak koruduk.
+
+Bir de **temsili sadeleştirdik**: 1.600 topolojik sayıya eklediğimiz 4 konum sütununun nihai
+skora katkısı ölçülemediği için onları çıkardık. Bu karar **resmî ölçütte eşit** sonuç verdi
+(0,9047 vs 0,9045) — ama **bedava değil**: en sıkı yanlış-alarm eşiğinde (S@0,5) duyarlılık
+0,7904'ten 0,7642'ye, yani **2,6 puan** düştü; buna karşılık S@0,25'te 0,87 puan kazandık.
+Yani sadeleştirmenin bedeli **eşiğe bağlı**: gevşek ayarda kazanıyor, sıkı ayarda kaybediyor.
+Bunu gizlemeden yazıyorum; klinik kullanımda "çok az yanlış alarm" rejimi hedeflenirse o 2,6
+puan önemli olabilir.
 
 ---
 

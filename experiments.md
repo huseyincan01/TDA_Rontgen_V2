@@ -2120,6 +2120,50 @@ sonek-minimum/önek-maksimum ile **vektörel** hesaplanır. 6 özellik: `rel_x`,
 * **Betik/kayıt:** [v6_9l_spatial_ablation.py](pipelines/v6_two_stage/v6_9l_spatial_ablation.py) ·
   `artifacts/v6_two_stage/v6_9l_spatial_ablation.json`
 
+### V6.9.14 Saf 1.600 TDA standardizasyonu — kilitli test doğrulaması (V6.9m)
+
+**Karar (V6.9l'ye dayanır).** 4 uzamsal konum vekili hasta düzeyinde katkı sağlamadı, aday
+düzeyinde zarar verdi (TDA-tek AUC 0,9387 → 0,9242) ⇒ Occam'ın usturası gereği 2. aşama temsili
+**%100 saf topolojik** hâle getirildi:
+
+$$2\ \text{kesit} \times 2\ \text{homoloji} \times 20\times20\ \text{PI} = \mathbf{1.600}$$
+
+TDA **yeniden hesaplanmadı**: `_v6_9l_cache.npz` içindeki ilk 1.600 sütun kullanıldı. HGB
+(`max_iter=200, lr=0.08, balanced, seed=42`) foundation train adaylarıyla (790+790) eğitildi,
+z-ref **val**'den donduruldu, `checkpoints/stage2_foundation_tda_hgb_pure1600.joblib` kaydedildi.
+**Eski 1.604 bundle'ı silinmedi** (`stage2_foundation_tda_hgb.joblib` korunuyor). Tuzak B korunur:
+`stage1_score_included = False`.
+
+> ⚠️ **BEŞİNCİ test kullanımı** (öncekiler V6.4 · V6.9 · V6.9f · V6.9i). Mimari karar yalnız
+> **val**'de alındı; bu koşu tek-atımlık **doğrulama**dır — test üzerinde hiçbir seçim yapılmadı.
+
+**Kilitli test (734 hasta / 229 lezyon / 34.209 aday):**
+
+| Kol | TDA-tek AUC | TDA-tek rank | **Füzyon AUC** | **Füzyon rank** | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **saf 1.600 (yeni)** | 0,9420 | 0,7327 | 0,9661 | **0,9047** | 0,6070 | **0,7205** | 0,7642 |
+| 1.604 (deploy edilmiş) | **0,9452** | **0,7428** | **0,9687** | 0,9045 | **0,6245** | 0,7118 | **0,7904** |
+| **Δ (saf − 1.604)** | −0,0032 | −0,0101 | −0,0026 | **+0,0002** | −0,0175 | **+0,0087** | −0,0262 |
+
+* ✅ **Resmî metrik EŞİT:** rank_metric **0,9047 vs 0,9045** (Δ **+0,0002**). Nihai yarışma
+  ölçütünde sadeleştirmenin bedeli **yok**; 4 özellik eksiltilerek aynı skor elde edildi.
+  Nedeni: rank = 0,75·AUC + 0,25·S@0,25 ve S@0,25 **+0,0087** kazanırken AUC −0,0026 kaybediyor;
+  iki etki birbirini götürüyor.
+* ⚠️ **Ama bedava değil:** hasta AUC **−0,0026** (gürültü bandında), en katı eşiklerde
+  **S@0,125 −0,0175** ve **S@0,5 −0,0262**. Yani trade-off **eşik-duyarlı**: gevşek
+  yanlış-alarm noktasında saf 1.600 önde, sıkı noktalarda 1.604 önde. Raporlanırken bu
+  mutlaka birlikte verilmelidir.
+* 🔑 **Aday düzeyi fark testte küçüldü:** val'de TDA-tek AUC farkı −0,0145 iken testte yalnız
+  **−0,0032**. Yani V6.9l'nin "konum sütunları aday düzeyinde zararlı" bulgusu testte
+  **tekrarlanmadı** (zayıfladı) — sadeleştirme kararının gerekçesi bu yönüyle **val'e bağlıdır**
+  ve dürüstçe böyle yazılmalıdır.
+* 🟢 **Deploy:** `stage2_foundation_tda_hgb_pure1600.joblib` (1.600) yeni standart;
+  `stage2_foundation_tda_hgb.joblib` (1.604) **korunuyor** (geri dönüş için).
+* 💾 **Önbellek:** test TDA özellikleri `_v6_9m_test_cache.npz` olarak diske alındı (tekrar
+  hesap gerekmez); train/val `_v6_9l_cache.npz`'de.
+* **Betik/kayıt:** [v6_9m_pure1600_seal.py](pipelines/v6_two_stage/v6_9m_pure1600_seal.py) ·
+  `artifacts/v6_two_stage/v6_9m_pure1600_seal.json`
+
 
 
 
