@@ -143,6 +143,13 @@ vekili)** ve **akciğer maskesi sınırına uzaklık (plevra vekili)**.
 > edilmiş bir mesafe değil, normalizasyon ölçeğidir. Maske kaynağı PSPNet'tir; "5 bölge" gerçek
 > lob segmentasyonu değil, akciğer yüksekliğinin dikey dilimidir (sağ: 3, sol: 2) ve uzamsal
 > özelliklerde **yalnızca birleşim** (`zone > 0`) kullanılır.
+>
+> 📊 **Ölçüldü (V6.9l, yalnız val):** bu 4 konum sütununun hasta düzeyi katkısı
+> **gösterilemedi** — 1600 (konum yok) vs 1604 (mevcut) vs 1606 (anatomik) kolları arasında
+> füzyon AUC farkı **±0,001**, rank_metric farkı **±0,0025** ve işaretler **ters yönlü**.
+> Aday düzeyinde ise konum sütunları **zarar veriyor** (TDA-tek AUC 0,9387 → 0,9242). Gerçek
+> medial/lateral kenarları kullanan anatomik kodlama da vekili geçmedi (−0,0008). Bu yüzden
+> ana checkpoint **değiştirilmedi**; ayrıntı: [experiments.md](experiments.md) §V6.9.13.
 
 > ⚠️ Kesitler **yeniden boyutlandırılmaz** ve sabit 32/64 px'tir. Sebep ölçülmüştür: interpolasyon
 > (bilinear resize) H1 döngülerini siler — V5.1'de ölçek normalizasyonu TDA'yı 0,9211 → 0,8539'a

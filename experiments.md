@@ -2067,6 +2067,59 @@ taşınmıyor** — TDA'nın kaynak-taşınabilirliği lehine bağımsız kanıt
   [v6_9k3_bootstrap.py](pipelines/v6_two_stage/v6_9k3_bootstrap.py) ·
   `artifacts/v6_two_stage/v6_9k{,2,3}_*.json`
 
+### V6.9.13 Uzamsal konum özellikleri ablasyonu — "hilus/plevra" gerçekten katkı sağlıyor mu? (V6.9l)
+
+**Soru:** 1604 boyutlu vektörün son 4 sütunu uzamsal konumdur (`rel_x`, `rel_y`,
+**akciğer bbox merkezine uzaklık** = "hilus vekili", **akciğer maskesi sınırına uzaklık** =
+"plevra vekili"). Bu 4 sayı ölçülebilir bir katkı sağlıyor mu, ve daha "anatomik" bir konum
+kodlaması daha iyi mi?
+
+**Yöntem (yalnız val — kilitli test KAPALI, ana checkpoint'lere dokunulmadı).** 1600 TDA
+özelliği **bir kez** hesaplanıp önbelleğe alındı (`_v6_9l_cache.npz`); üç kol arasında yalnız
+son sütunlar değişti. Fit 1.580 hasta (790+790) · val 734 hasta / 231 lezyon / 33.910 aday.
+HGB hiperparametreleri sabit (`max_iter=200, lr=0.08, balanced, seed=42`), Tuzak B korunur
+(1. aşama skoru özellik değil), w=0,55 kilitli, z-ref her kol için val'den donduruldu.
+
+| Kol | Özellik | TDA-tek AUC | TDA-tek rank | **Füzyon AUC** | **Füzyon rank** | S@0,125 | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **A — konum YOK** | 1600 | **0,9387** | 0,7343 | 0,9836 | **0,9304** | 0,6883 | **0,7706** | 0,7965 |
+| **B — mevcut vekiller** | 1604 | 0,9242 | 0,7354 | **0,9846** | 0,9279 | 0,6926 | 0,7576 | 0,8052 |
+| **C — anatomik konum** | 1606 | 0,9302 | 0,7334 | 0,9838 | 0,9262 | 0,6710 | 0,7532 | **0,8095** |
+| Δ(A − B) | | **+0,0145** | −0,0011 | −0,0010 | **+0,0025** | −0,0043 | **+0,0130** | −0,0087 |
+| Δ(C − B) | | +0,0060 | −0,0020 | −0,0008 | −0,0017 | −0,0216 | −0,0044 | +0,0043 |
+
+**Kol C nedir (GUDHI yok, saniyeler)?** `mask_5zones.mha` sol/sağ akciğeri **ayırır**
+(1-3 = sağ, 4-5 = sol). Bu ayrımla her akciğerin **iç (medial/mediasten)** ve **dış
+(lateral/göğüs duvarı)** kenarı ayrı ayrı bulunur; yatay koşu uzunlukları satır bazında
+sonek-minimum/önek-maksimum ile **vektörel** hesaplanır. 6 özellik: `rel_x`, `rel_y`,
+`hilus_uzaklığı` (kendi akciğerinin **iç kenar orta noktasına** Öklid), `iç_mediasten_uzaklığı`,
+`dış_lateral_uzaklığı`, `taraf`. Hangi akciğerin küçük x'te olduğu **maskeden ölçülür**, varsayılmaz.
+
+* ⚪ **Konum özellikleri NÖTR — katkı gösterilemedi (Δ eşiği ±0,002).** Füzyon AUC'de A ile B
+  arasındaki fark **−0,0010** (B lehine, gürültü bandı), füzyon rank_metric'te ise **+0,0025**
+  (A lehine). İki metrik **ters yönde** ve ikisi de eşiğin altında ⇒ 4 konum sütununun hasta
+  düzeyi ayrıma katkısı **ölçülemedi**. S@0,25'te A **+0,013** önde, S@0,5'te B **+0,009** önde
+  (yine zıt yönlü).
+* 🔑 **Ama aday düzeyinde konum özellikleri ZARAR veriyor:** TDA-tek AUC, konum sütunları
+  eklendiğinde **0,9387 → 0,9242** (−0,0145) düşüyor. Yorum: konum sütunları HGB'ye **pozisyon
+  önyargısı** taşıyor ve şekil kanıtının bir kısmını bastırıyor; hasta düzeyinde `max` toplama
+  bunu yıkadığı için nihai skora yansımıyor. ⇒ Bu 4 özellik "bedava" değil, **küçük bir bedeli**
+  var.
+* ⚪ **Anatomik kodlama (C) vekilden (B) daha iyi DEĞİL:** füzyon AUC **−0,0008**, rank
+  **−0,0017**; TDA-tek AUC'de **+0,0060** ama bu da eşiğin altında. Yani "hilus/plevra vekili"
+  yerine gerçek medial/lateral kenar kodlamak **ölçülebilir kazanç getirmiyor**.
+* 🟢 **Karar:** ana checkpoint **DEĞİŞTİRİLMEDİ** (`stage2_foundation_tda_hgb.joblib` aynen
+  korunuyor). Sağladığı fayda marjinal ve işaret tutarsız olduğu için yeni bir bundle üretilmedi.
+* ⚠️ **Sınırlar:** (i) yalnız **val** — kilitli test kapalı; (ii) z-ref her kol için val'den
+  dondurulduğu için mutlak sayılar hafif iyimserdir, ama **üç kol aynı işlemi gördüğü** için
+  kıyas adildir; (iii) B/C özellik sayıları 1604 / 1606 — 1600 boyutun yanında ihmal edilebilir
+  ama birebir eşleştirilmiş değil; (iv) kol başına tek tohum.
+* 📌 **Not — kıyaslanamaz referans:** sık anılan "val füzyon 0,9238 / 0,9835" sayıları V6.9h'de
+  **400+400 hasta** ile eğitilmiş HGB'ye aittir. Buradaki Kol B tam 790+790 ile eğitildiği için
+  **0,9279 / 0,9846** verir; iki koşu doğrudan kıyaslanmamalıdır.
+* **Betik/kayıt:** [v6_9l_spatial_ablation.py](pipelines/v6_two_stage/v6_9l_spatial_ablation.py) ·
+  `artifacts/v6_two_stage/v6_9l_spatial_ablation.json`
+
 
 
 

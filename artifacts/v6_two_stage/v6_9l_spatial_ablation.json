@@ -1,0 +1,209 @@
+{
+  "experiment": "V6.9l-spatial-ablation",
+  "question": "2. aşamanın 4 uzamsal konum özelliği katkı sağlıyor mu, ve daha anatomik (sol/sağ ayrımlı) bir kodlama daha iyi mi?",
+  "seal": "YALNIZ train(fit) + val. KİLİTLİ TEST KAPALI. Ana checkpoint'lere dokunulmadı.",
+  "protocol": {
+    "stage1": "M5_foundation",
+    "features": "1600 TDA (sabit) + kol-özgü konum",
+    "hgb": "max_iter=200 lr=0.08 balanced seed=42",
+    "stage1_score_included": false,
+    "w_fusion": 0.55,
+    "box_px": 56,
+    "z_ref": "her kol için val'den donduruldu"
+  },
+  "feature_names": {
+    "B": [
+      "rel_x",
+      "rel_y",
+      "bbox_merkez_uzakligi",
+      "maske_sinir_uzakligi"
+    ],
+    "C": [
+      "rel_x",
+      "rel_y",
+      "hilus_uzakligi",
+      "ic_mediasten_uzakligi",
+      "dis_lateral_uzakligi",
+      "taraf"
+    ]
+  },
+  "counts": {
+    "fit_patients": 1580,
+    "fit_cands": 74950,
+    "val_patients": 734,
+    "val_cands": 33910,
+    "val_lesions": 231
+  },
+  "arms": {
+    "A_1600_konum_yok": {
+      "n_features": 1600,
+      "stage1_only": {
+        "sens": {
+          "0.125": 0.671,
+          "0.25": 0.7489,
+          "0.5": 0.8009,
+          "1": 0.8355,
+          "2": 0.8788,
+          "4": 0.9091
+        },
+        "auc": 0.9678,
+        "froc_mean_3pt": 0.7403,
+        "rank_metric": 0.9131
+      },
+      "tda_only": {
+        "sens": {
+          "0.125": 0.0606,
+          "0.25": 0.1212,
+          "0.5": 0.1775,
+          "1": 0.2511,
+          "2": 0.368,
+          "4": 0.5801
+        },
+        "auc": 0.9387,
+        "froc_mean_3pt": 0.1198,
+        "rank_metric": 0.7343
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.6883,
+          "0.25": 0.7706,
+          "0.5": 0.7965,
+          "1": 0.8485,
+          "2": 0.8788,
+          "4": 0.9004
+        },
+        "auc": 0.9836,
+        "froc_mean_3pt": 0.7518,
+        "rank_metric": 0.9304
+      },
+      "z_ref": {
+        "s1_mean": 0.026985976845026016,
+        "s1_std": 0.038500506430864334,
+        "tda_mean": 0.2369370460510254,
+        "tda_std": 0.17270119488239288,
+        "w": 0.55
+      },
+      "seconds": 208.6
+    },
+    "B_1604_geometrik_vekil": {
+      "n_features": 1604,
+      "stage1_only": {
+        "sens": {
+          "0.125": 0.671,
+          "0.25": 0.7489,
+          "0.5": 0.8009,
+          "1": 0.8355,
+          "2": 0.8788,
+          "4": 0.9091
+        },
+        "auc": 0.9678,
+        "froc_mean_3pt": 0.7403,
+        "rank_metric": 0.9131
+      },
+      "tda_only": {
+        "sens": {
+          "0.125": 0.1212,
+          "0.25": 0.1688,
+          "0.5": 0.2208,
+          "1": 0.3463,
+          "2": 0.4545,
+          "4": 0.6234
+        },
+        "auc": 0.9242,
+        "froc_mean_3pt": 0.1703,
+        "rank_metric": 0.7354
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.6926,
+          "0.25": 0.7576,
+          "0.5": 0.8052,
+          "1": 0.8442,
+          "2": 0.8745,
+          "4": 0.9134
+        },
+        "auc": 0.9846,
+        "froc_mean_3pt": 0.7518,
+        "rank_metric": 0.9279
+      },
+      "z_ref": {
+        "s1_mean": 0.026985976845026016,
+        "s1_std": 0.038500506430864334,
+        "tda_mean": 0.224217027425766,
+        "tda_std": 0.17219173908233643,
+        "w": 0.55
+      },
+      "seconds": 218.9
+    },
+    "C_1606_anatomik_konum": {
+      "n_features": 1606,
+      "stage1_only": {
+        "sens": {
+          "0.125": 0.671,
+          "0.25": 0.7489,
+          "0.5": 0.8009,
+          "1": 0.8355,
+          "2": 0.8788,
+          "4": 0.9091
+        },
+        "auc": 0.9678,
+        "froc_mean_3pt": 0.7403,
+        "rank_metric": 0.9131
+      },
+      "tda_only": {
+        "sens": {
+          "0.125": 0.0866,
+          "0.25": 0.1429,
+          "0.5": 0.2468,
+          "1": 0.316,
+          "2": 0.4069,
+          "4": 0.5455
+        },
+        "auc": 0.9302,
+        "froc_mean_3pt": 0.1588,
+        "rank_metric": 0.7334
+      },
+      "fusion": {
+        "sens": {
+          "0.125": 0.671,
+          "0.25": 0.7532,
+          "0.5": 0.8095,
+          "1": 0.8442,
+          "2": 0.8701,
+          "4": 0.8918
+        },
+        "auc": 0.9838,
+        "froc_mean_3pt": 0.7446,
+        "rank_metric": 0.9262
+      },
+      "z_ref": {
+        "s1_mean": 0.026985976845026016,
+        "s1_std": 0.038500506430864334,
+        "tda_mean": 0.22381916642189026,
+        "tda_std": 0.17705099284648895,
+        "w": 0.55
+      },
+      "seconds": 212.9
+    }
+  },
+  "delta_vs_B": {
+    "A_1600_konum_yok": {
+      "tda_auc": 0.0145,
+      "fusion_auc": -0.001,
+      "fusion_rank": 0.0025,
+      "fusion_S025": 0.013
+    },
+    "C_1606_anatomik_konum": {
+      "tda_auc": 0.006,
+      "fusion_auc": -0.0008,
+      "fusion_rank": -0.0017,
+      "fusion_S025": -0.0044
+    }
+  },
+  "verdict": {
+    "spatial_features_help": "NÖTR",
+    "anatomical_better_than_proxy": "NÖTR",
+    "keep_main_checkpoint": true,
+    "note": "Karar eşiği ±0,002 AUC (gürültü bandı). Ana checkpoint'ler DEĞİŞTİRİLMEDİ; bu betik yalnız ölçüm yapar."
+  }
+}

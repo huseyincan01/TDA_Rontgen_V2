@@ -1044,3 +1044,27 @@ K20 +0,0048, K50 −0,0048, hasta AUC **+0,0013** ⇒ "sadece daha az veri" aç�
 * 📌 **TODO (bilinçli olarak yapılmadı):** birebir eşleştirilmiş bütçe kontrolü (JSRT'yi koru,
   107 chestxray14 çıkar) — ≈1 ek eğitim koşusu; sonuçların hiçbiri buna bağlı değil.
   Ayrıntı: [roadmap.md](roadmap.md) §14.
+
+### 17.9 Uzamsal konum özellikleri — "hilus/plevra" katkısı (V6.9l, yalnız val)
+
+1600 TDA özelliği **sabit ve önbellekli**; yalnız son sütunlar değişti. Fit 1.580 hasta,
+val 734 hasta / 231 lezyon. Kilitli test **KAPALI**, ana checkpoint **değişmedi**.
+
+| Kol | Özellik | TDA-tek AUC | Füzyon AUC | Füzyon rank | S@0,25 | S@0,5 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A — konum YOK | 1600 | **0,9387** | 0,9836 | **0,9304** | **0,7706** | 0,7965 |
+| B — mevcut vekiller | 1604 | 0,9242 | **0,9846** | 0,9279 | 0,7576 | 0,8052 |
+| C — anatomik konum | 1606 | 0,9302 | 0,9838 | 0,9262 | 0,7532 | **0,8095** |
+| Δ(A−B) | | **+0,0145** | −0,0010 | **+0,0025** | **+0,0130** | −0,0087 |
+| Δ(C−B) | | +0,0060 | −0,0008 | −0,0017 | −0,0044 | +0,0043 |
+
+* ⚪ **NÖTR:** 4 konum sütununun hasta düzeyi katkısı **gösterilemedi** — füzyon AUC'de B +0,001,
+  rank_metric'te A +0,0025 önde (ters yönlü, ikisi de ±0,002 eşiğinin altında).
+* 🔑 **Aday düzeyinde zararlı:** TDA-tek AUC konum sütunlarıyla **0,9387 → 0,9242**. Konum
+  özellikleri HGB'ye pozisyon önyargısı taşıyıp şekil kanıtını kısmen bastırıyor; hasta
+  düzeyinde `max` bunu yıkıyor.
+* ⚪ **Anatomik kodlama (C) vekili (B) geçmiyor:** füzyon AUC −0,0008, rank −0,0017.
+* 🟢 **Karar:** yeni bundle **üretilmedi**; `stage2_foundation_tda_hgb.joblib` korunuyor.
+* ⚠️ Sınırlar: yalnız val; z-ref her kol için val'den (üç kol aynı işlem); tek tohum.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9l_spatial_ablation.json` ·
+  [v6_9l_spatial_ablation.py](pipelines/v6_two_stage/v6_9l_spatial_ablation.py)
