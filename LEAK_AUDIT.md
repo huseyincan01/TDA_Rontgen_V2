@@ -564,3 +564,23 @@ sızmamalıdır. Kayıt: [roadmap.md](roadmap.md) §14 (V6.9k TODO).
 
 *Son güncelleme: V6.9k (Ekim 2026) — §9.7 Leave-JSRT-Out eklendi, §10 hükmü güncellendi*
 
+---
+
+## 12. Adli sızıntı denetimi — 8 kapı (V6.9n)
+
+**Sonuç: 8/8 GEÇTİ — TÜM KAPILAR GEÇTİ.** Varsayım değil, yeniden hesaplama: p1–p99 görüntü başına, StandardScaler fit satır sayısı, z-ref val'den yeniden üretimi, test AUC'nin birebir tekrarı ve 100 permütasyon şans testi.
+
+| # | Kapı | Durum | Kanıt (özet) |
+| :-: | :--- | :--- | :--- |
+| 1 | Hasta düzeyi ayrıklık (split + önbellek) | **PASS** | 3.414/734/734, tüm kesişimler **0**; te == test |
+| 2 | p1–p99 / c_lungref izolasyonu (yeniden hesap) | **PASS** | 40 hastada yeniden hesap: Δ = 0 (p1 ve p99); 4.882 hasta-anahtarı |
+| 3 | TDA ranges kaynağı + StandardScaler fit kümesi | **PASS** | `n_samples_seen_` = 74.950 = train satırı; val dışarıda |
+| 4 | Tuzak B + özellik boyutu (1600, s1 YOK) | **PASS** | `n_features_in_` = 1600; `stage1_score_included=False` |
+| 5 | z-ref ve w=0,55 kilidi (test istatistiği yok) | **PASS** | ref = val'den yeniden üretildi (Δ = 9e-9); test AUC **0,9661** birebir |
+| 6 | JSRT LOSO + VinDr 5-fold CV döngü içi | **PASS** | JSRT −107 / 1.366 görüntü; ana artifact SHA değişmedi; VinDr fold içi temiz |
+| 7 | Önbellek–etiket hizalama + 100 permütasyon | **PASS** | etiket uyuşmazlığı 0; 100 permütasyon ort. **≈0,50** |
+| 8 | LEAK_AUDIT beyan bütünlüğü | **PASS** | omurga aşinalığı + **5** test kullanımı beyanı tam |
+
+**Kayıt:** `artifacts/v6_two_stage/forensic_leak_check_report.json` · [`forensic_leak_check.py`](pipelines/v6_two_stage/forensic_leak_check.py)
+
+*Son güncelleme: V6.9n — adli denetim eklendi*

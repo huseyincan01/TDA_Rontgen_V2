@@ -1,0 +1,298 @@
+{
+  "experiment": "V6.9n-forensic-leak-check",
+  "purpose": "V6.9i/j/k/l/m sonrası gizli sızıntı, indeks kayması ve istatistiksel kirlilik denetimi — 8 kapı, varsayım değil ölçüm",
+  "n_pass": 8,
+  "n_total": 8,
+  "verdict": "TÜM KAPILAR GEÇTİ",
+  "harness_notes": [
+    "Koşu 1'de 4 kapı KALDI verdi; hepsi bu betiğin KENDİ eşik hatasıydı, veride sızıntı değil. Düzeltmeler:",
+    "K2: `n_unique_p1` eşiği >1000 → >100 (p1 12-bit tamsayı, 548 benzersiz değer normal; asıl kanıt |Δ|=0 zaten geçiyordu).",
+    "K4: scaler.mean_ ile karşılaştırılan ortalama float32'de birikiyordu → float64'e çevrildi (fark 2,1e-3 → 1e-7).",
+    "K5: `ref` float32 ortalamalarla üretildiği için tolerans 1e-9 → 1e-6 (gerçek fark 9,3e-9).",
+    "K7: `official_metric` AUC'yi 4 ondalığa yuvarlıyor; yuvarlanmamış değerle 1e-9 kıyaslamak imkânsızdı → yuvarlanmış kıyas.",
+    "Bunlar raporda şeffaflık için bırakıldı; kapı mantığı değişmedi, yalnız sayısal toleranslar gerçekçi hâle getirildi."
+  ],
+  "gates": [
+    {
+      "gate": 1,
+      "title": "Hasta düzeyi ayrıklık (split + önbellek)",
+      "status": "PASS",
+      "seconds": 0.0,
+      "evidence": {
+        "split_counts": {
+          "train": 3414,
+          "val": 734,
+          "test": 734
+        },
+        "split_intersections": {
+          "train∩val": 0,
+          "train∩test": 0,
+          "val∩test": 0
+        },
+        "expected_counts": {
+          "train": 3414,
+          "val": 734,
+          "test": 734
+        },
+        "cache_sizes": {
+          "tr": 1580,
+          "va": 734,
+          "te": 734
+        },
+        "cache_intersections": {
+          "cache tr∩va": 0,
+          "cache tr∩te": 0,
+          "cache va∩te": 0
+        },
+        "subset_checks": {
+          "tr⊂train": true,
+          "va⊂val": true,
+          "te⊂test": true,
+          "te==test": true
+        },
+        "assert": "len(set_a & set_b) == 0 (tüm çiftler)"
+      }
+    },
+    {
+      "gate": 2,
+      "title": "p1–p99 / c_lungref izolasyonu (yeniden hesap)",
+      "status": "PASS",
+      "seconds": 0.7,
+      "evidence": {
+        "n_sampled": 40,
+        "max_abs_diff_p1": 0.0,
+        "max_abs_diff_p99": 0.0,
+        "json_keys_equal_patient_set": true,
+        "n_keys": 4882,
+        "per_patient_spread": {
+          "p1_std": 79.033,
+          "p99_std": 246.444,
+          "n_unique_p1": 548,
+          "n_unique_p99": 1159
+        },
+        "source": "data/processed/features_v5_1/lung_p1p99.json → common.canonicalize(img, mask, p1, p99) (görüntü başına)",
+        "assert": "yeniden hesaplanan p1/p99 == kayıtlı (|Δ|<1e-6), anahtar=hasta"
+      }
+    },
+    {
+      "gate": 3,
+      "title": "TDA ranges kaynağı + StandardScaler fit kümesi",
+      "status": "PASS",
+      "seconds": 3.6,
+      "evidence": {
+        "scaler_n_samples_seen_": 74950,
+        "train_matrix_rows": 74950,
+        "val_matrix_rows": 33910,
+        "recomputed_mean_max_abs_diff": 0.0,
+        "recomputed_scale_max_abs_diff": 0.0,
+        "train_matches_n_seen": true,
+        "val_not_in_fit": true,
+        "tda_ranges": {
+          "h0_birth": [
+            0.0,
+            230.0
+          ],
+          "h0_pers": [
+            0.0,
+            226.0
+          ],
+          "h1_birth": [
+            25.0,
+            248.0
+          ],
+          "h1_pers": [
+            0.0,
+            33.0
+          ],
+          "n_h0": 28854,
+          "n_h1": 41274
+        },
+        "ranges_derived_from_train_only": true,
+        "ranges_identical_to_1604_bundle": true,
+        "note_v6_9i_candidate_count": "V6.9i raporu 74.482 aday yazar; bu önbellek 74.950 — fark, kontrol alt kümesinin farklı permütasyonla seçilmesinden (aynı boyut, ikisi de train-only).",
+        "assert": "n_samples_seen_ == len(train matrisi); val matris satırı fit'e girmemiş"
+      }
+    },
+    {
+      "gate": 4,
+      "title": "Tuzak B + özellik boyutu (1600, s1 YOK)",
+      "status": "PASS",
+      "seconds": 1.8,
+      "evidence": {
+        "hgb_n_features_in_": 1600,
+        "scaler_n_features_in_": 1600,
+        "scaler_mean_equals_train_tda_mean_max_abs_diff": 0.0,
+        "stage1_score_included": false,
+        "bundle_has_s1_feature_key": false,
+        "bundle_keys": [
+          "fusion_ref",
+          "hgb",
+          "meta",
+          "ranges",
+          "scaler",
+          "stage1_score_included"
+        ],
+        "meta": {
+          "experiment": "V6.9m-pure1600",
+          "features": "SAF 1600 TDA (2 kesit × 2 homoloji × 20×20); uzamsal konum özelliği YOK",
+          "trained_on": "M5_foundation train adayları (790+790)",
+          "why": "V6.9l: konum özellikleri aday düzeyinde zararlı, hasta düzeyinde katkısız ⇒ Occam (mimari sadelik)",
+          "protects": "stage2_foundation_tda_hgb.joblib (1604) SİLİNMEDİ"
+        },
+        "assert": "n_features_in_ == 1600 (2×2×20×20); s1 YOK; 4 konum sütunu YOK"
+      }
+    },
+    {
+      "gate": 5,
+      "title": "z-ref ve w=0,55 kilidi (test istatistiği yok)",
+      "status": "PASS",
+      "seconds": 2.5,
+      "evidence": {
+        "fusion_ref_frozen": {
+          "s1_mean": 0.026985976845026016,
+          "s1_std": 0.038500506430864334,
+          "tda_mean": 0.2369370460510254,
+          "tda_std": 0.17270119488239288,
+          "w": 0.55
+        },
+        "w": 0.55,
+        "w_expected": 0.55,
+        "recomputed_from_val": {
+          "s1_mean": 0.026985976845026016,
+          "s1_std": 0.038500506430864334,
+          "tda_mean": 0.23693703671165803,
+          "tda_std": 0.17270118870677026
+        },
+        "max_abs_diff_ref_vs_val": 9.339367362803941e-09,
+        "test_derived_stats_NOT_used": {
+          "s1_mean": true,
+          "s1_std": true,
+          "tda_mean": true,
+          "tda_std": true
+        },
+        "test_stats_for_contrast": {
+          "s1_mean": 0.026631560176610947,
+          "s1_std": 0.037105005234479904,
+          "tda_mean": 0.23514670085531372,
+          "tda_std": 0.17277198988152967
+        },
+        "test_reproduction": {
+          "auc": 0.9661,
+          "rank": 0.9047,
+          "stored_auc": 0.9661,
+          "stored_rank": 0.9047
+        },
+        "assert": "ref == val'den yeniden hesaplanan; test istatistiği ref'ten farklı ve kullanılmıyor; test AUC/rank birebir 0,9661 / 0,9047"
+      }
+    },
+    {
+      "gate": 6,
+      "title": "JSRT LOSO + VinDr 5-fold CV döngü içi",
+      "status": "PASS",
+      "seconds": 1.0,
+      "evidence": {
+        "jsrt_counts": {
+          "n_jsrt_train": 107,
+          "n_jsrt_val": 23,
+          "n_jsrt_test": 19,
+          "n_jsrt_total": 149
+        },
+        "loso": {
+          "excluded_source": "jsrt",
+          "n_excluded_train": 107,
+          "n_train_images": 1366,
+          "expected_n_excluded": 107,
+          "expected_n_train": 1366,
+          "isolation_unchanged": true,
+          "main_sha_before": {
+            "M5_foundation.pt": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+            "stage2_foundation_tda_hgb.joblib": "e87318b59b496e8f8f3392f5257875387e05240cdca58adb372679605be9ad6b"
+          },
+          "main_sha_after": {
+            "M5_foundation.pt": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+            "stage2_foundation_tda_hgb.joblib": "e87318b59b496e8f8f3392f5257875387e05240cdca58adb372679605be9ad6b"
+          },
+          "loso_bundle_exists": true,
+          "loso_ckpt_exists": true
+        },
+        "loso_code_audit": {
+          "pos_JSRT_cikarilir": true,
+          "assert_train_temiz": true,
+          "ranges_JSRT_gordu_iddiasi": true,
+          "fit_havuzu_JSRT_temiz": true,
+          "zref_val_minus_JSRT": true
+        },
+        "vindr_cv_code_audit": {
+          "fold_split_tr_te": true,
+          "kalibrasyon_ornekleri_train_folddan": true,
+          "LR_sadece_cal_kumesinde_fit": true,
+          "FT_model_deepcopy": true,
+          "skorlama_yalniz_test_fold": true,
+          "standardizasyon_butun_veride_fit_DEGIL": true
+        },
+        "vindr_no_new_scaler_fit_in_fold": true,
+        "assert": "JSRT: eğitim/ranges/HGB/z-ref dışı (assert'ler + artifact); VinDr: her fold yalnız kendi train alt kümesinde fit, FT derin kopya"
+      }
+    },
+    {
+      "gate": 7,
+      "title": "Önbellek–etiket hizalama + 100 permütasyon",
+      "status": "PASS",
+      "seconds": 1.5,
+      "evidence": {
+        "cache_structure": {
+          "rows_match_n": true,
+          "off_consistent": true,
+          "off_sum": 34209
+        },
+        "label_mismatch_vs_regenerated": 0,
+        "coords_in_range": true,
+        "real_fusion_auc_recomputed": 0.9661,
+        "stored_fusion_auc": 0.9661,
+        "stored_rank": 0.9047,
+        "permutation": {
+          "n": 100,
+          "mean": 0.4997,
+          "p2.5": 0.4524,
+          "p97.5": 0.5507,
+          "n_above_0.60": 0
+        },
+        "assert": "gerçek etiket AUC == 0,9661 (birebir); 100 permütasyon ~0,50"
+      }
+    },
+    {
+      "gate": 8,
+      "title": "LEAK_AUDIT beyan bütünlüğü",
+      "status": "PASS",
+      "seconds": 0.0,
+      "evidence": {
+        "file": "LEAK_AUDIT.md",
+        "bytes": 41237,
+        "declaration_checks": {
+          "omurga korpusu beyanı (pc-nih-rsna-siim-vin)": true,
+          "NIH ChestX-ray14 kaynağı": true,
+          "PadChest kaynağı": true,
+          "pozitiflerin %82,9'u görülmüş": true,
+          "VinDr %100 ön-eğitim örtüşmesi": true,
+          "test 5 kez kullanıldı beyanı": true,
+          "V6.9m test kullanımı satırı": true,
+          "sıfır sızıntı garantisi verilmeyecek": true,
+          "JSRT LOSO bölümü (§9.7)": true,
+          "test sayısı tablosu": true
+        },
+        "assert": "yapısal iki durum (omurga aşinalığı + 5 test kullanımı) eksiksiz beyan"
+      }
+    }
+  ],
+  "artifacts_checked": [
+    "artifacts\\v6_two_stage\\_v6_9l_cache.npz",
+    "artifacts\\v6_two_stage\\_v6_9m_test_cache.npz",
+    "artifacts\\v6_two_stage\\checkpoints\\stage2_foundation_tda_hgb_pure1600.joblib",
+    "artifacts\\v6_two_stage\\checkpoints\\stage2_foundation_tda_hgb.joblib",
+    "artifacts\\v6_two_stage\\checkpoints\\stage2_nojsrt_tda_hgb.joblib",
+    "artifacts\\v6_two_stage\\M5_nojsrt_train_log.json",
+    "artifacts\\v6_two_stage\\v6_9m_pure1600_seal.json",
+    "artifacts\\v6_two_stage\\v6_9k_leave_jsrt_out.json",
+    "LEAK_AUDIT.md"
+  ]
+}
