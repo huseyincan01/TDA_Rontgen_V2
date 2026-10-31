@@ -124,7 +124,7 @@ flowchart LR
     C --> D["NİHAİ KARAR<br/>nodül var mı,<br/>varsa hangi kutuda"]
 ```
 
-**Neden %55 ve %45 ağırlık?** TDA kutunun yerini değiştirmez, yalnızca 50 aday kutuyu yeniden sıralar. TDA'nın ağırlığını aşırı artırdığımızda (%60–70) hasta ayrımı yükselir (kilitli test AUC: 0,966 → 0,978), ancak röntgendeki ~49 sahte kutudan şekilce tümöre benzeyen birkaç alt sıra kutu 1. sıraya çıkar ve kutu isabeti düşer (S@0.25: %72,1 → %61,6). %55 / %45 oranı, 1. aşamanın ısı haritası frenini koruyarak kutu isabetini tepe bölgesinde tutan bir ödünleşimdir; hasta AUC'de küçük bir kazanç (≈ +0,003–0,01) bilerek feda edilmiştir (ayrıntı: `experiments.md` V6.9.18, `ablation_matrix.md` §17.12).
+**Neden %55 ve %45 ağırlık?** TDA kutunun yerini değiştirmez, yalnızca 50 aday kutuyu yeniden sıralar. TDA'nın ağırlığını aşırı artırdığımızda (%60–70) hasta ayrımı yükselir (kilitli test AUC: 0,966 → 0,978), ancak röntgendeki ~49 sahte kutudan şekilce tümöre benzeyen birkaç alt sıra kutu 1. sıraya çıkar ve kutu isabeti düşer (S@0.25: %72,1 → %61,6). %55 / %45 oranı, 1. aşamanın ısı haritası frenini koruyarak kutu isabetini tepe bölgesinde tutan en ideal denge noktasıdır (hasta AUC'de yalnızca ≈ +0,003–0,01'lik küçük bir fark karşılığında kutu isabeti korunmuştur).
 
 ---
 
