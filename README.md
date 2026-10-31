@@ -35,7 +35,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 | | |
 | :--- | :--- |
 | **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9661** (füzyon, **saf 1.600**) / **0,9446** (1. aşama) · rank_metric **0,9047** / **0,8842** (V6.9m) · ⚠️ pozitiflerin **%82,9'u** omurganın gördüğü kaynaklardan (kutular yeni) — beyan: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9 |
-| **Val'de ölçülen (seçilmiş) sonuç** | Füzyon AUC **0,9879** · rank_metric **0,9131** (56 px) · **0,9185** (onarılmış yarıçap, V6.8) — val'de 296 değerlendirme yapıldı ⇒ **hafif iyimser** |
+| **Val'de ölçülen (seçilmiş) sonuç** | Saf 1.600 (`V6.9m/s`): Füzyon AUC **0,9836** · rank_metric **0,9304** · S@0,25 **0,7706** · S@0,50 **0,7965** *(eski 1.604 sürümü: AUC 0,9879 · rank 0,9131 / yarıçap 0,9185)* — val'de seçim yapıldığı için **hafif iyimser** |
 | **Lokalizasyon (M5_foundation, val)** | Yalnız Aşama-1: Recall@K20 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
 | **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
 | **Harici (JSRT, eğitimden izole)** | **242 saf JSRT (149 nodüllü + 93 sağlıklı, V6.9r):** Saf 1.600 ile **%86,6 Recall@10 · %95,3 Recall@50 · 0,9197 (top1) / 0,9652 (nOR) AUC · S@0.25 %52,4 · S@0.50 %58,4** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.8) · *(149 JSRT + 250 val kontrol, V6.9k4: 0,9316 top1 / 0,9749 nOR)* |
