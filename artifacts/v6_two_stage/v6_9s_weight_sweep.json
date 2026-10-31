@@ -1,0 +1,270 @@
+{
+  "experiment": "V6.9s_weight_sweep",
+  "locked_w_tda": 0.45,
+  "note": "Yeniden eğitim yok; kilitli w_tda=0.45 korunur. Yalnız ablasyon kaydı.",
+  "mean_candidates_per_image": {
+    "NODE21_Val": 46.2,
+    "NODE21_Test": 46.6,
+    "JSRT_242": 49.7
+  },
+  "results": {
+    "NODE21_Val": [
+      {
+        "w_tda": 0.4,
+        "w_s1": 0.6,
+        "patient_auc": 0.9826,
+        "S@0.125": 0.697,
+        "S@0.25": 0.7662,
+        "S@0.5": 0.8009,
+        "rank_metric": 0.9285,
+        "top1_box_hit_rate": 0.7907,
+        "top1_box_s1_rank_ge20_frac": 0.0599,
+        "top1_box_mean_s1_rank": 3.55
+      },
+      {
+        "w_tda": 0.45,
+        "w_s1": 0.55,
+        "patient_auc": 0.9836,
+        "S@0.125": 0.6883,
+        "S@0.25": 0.7706,
+        "S@0.5": 0.7965,
+        "rank_metric": 0.9304,
+        "top1_box_hit_rate": 0.8023,
+        "top1_box_s1_rank_ge20_frac": 0.0913,
+        "top1_box_mean_s1_rank": 5.02
+      },
+      {
+        "w_tda": 0.5,
+        "w_s1": 0.5,
+        "patient_auc": 0.985,
+        "S@0.125": 0.684,
+        "S@0.25": 0.7706,
+        "S@0.5": 0.7965,
+        "rank_metric": 0.9314,
+        "top1_box_hit_rate": 0.8023,
+        "top1_box_s1_rank_ge20_frac": 0.1226,
+        "top1_box_mean_s1_rank": 6.27
+      },
+      {
+        "w_tda": 0.55,
+        "w_s1": 0.45,
+        "patient_auc": 0.9864,
+        "S@0.125": 0.671,
+        "S@0.25": 0.7619,
+        "S@0.5": 0.7835,
+        "rank_metric": 0.9303,
+        "top1_box_hit_rate": 0.8023,
+        "top1_box_s1_rank_ge20_frac": 0.1431,
+        "top1_box_mean_s1_rank": 7.16
+      },
+      {
+        "w_tda": 0.6,
+        "w_s1": 0.4,
+        "patient_auc": 0.9877,
+        "S@0.125": 0.671,
+        "S@0.25": 0.7446,
+        "S@0.5": 0.7879,
+        "rank_metric": 0.9269,
+        "top1_box_hit_rate": 0.7849,
+        "top1_box_s1_rank_ge20_frac": 0.173,
+        "top1_box_mean_s1_rank": 8.33
+      },
+      {
+        "w_tda": 0.65,
+        "w_s1": 0.35,
+        "patient_auc": 0.9884,
+        "S@0.125": 0.658,
+        "S@0.25": 0.7316,
+        "S@0.5": 0.7749,
+        "rank_metric": 0.9242,
+        "top1_box_hit_rate": 0.7326,
+        "top1_box_s1_rank_ge20_frac": 0.2016,
+        "top1_box_mean_s1_rank": 9.49
+      },
+      {
+        "w_tda": 0.7,
+        "w_s1": 0.3,
+        "patient_auc": 0.9879,
+        "S@0.125": 0.6277,
+        "S@0.25": 0.6926,
+        "S@0.5": 0.7316,
+        "rank_metric": 0.9141,
+        "top1_box_hit_rate": 0.7035,
+        "top1_box_s1_rank_ge20_frac": 0.2439,
+        "top1_box_mean_s1_rank": 11.25
+      }
+    ],
+    "NODE21_Test": [
+      {
+        "w_tda": 0.4,
+        "w_s1": 0.6,
+        "patient_auc": 0.9629,
+        "S@0.125": 0.6157,
+        "S@0.25": 0.7205,
+        "S@0.5": 0.7642,
+        "rank_metric": 0.9023,
+        "top1_box_hit_rate": 0.7035,
+        "top1_box_s1_rank_ge20_frac": 0.0749,
+        "top1_box_mean_s1_rank": 4.1
+      },
+      {
+        "w_tda": 0.45,
+        "w_s1": 0.55,
+        "patient_auc": 0.9661,
+        "S@0.125": 0.607,
+        "S@0.25": 0.7205,
+        "S@0.5": 0.7642,
+        "rank_metric": 0.9047,
+        "top1_box_hit_rate": 0.6919,
+        "top1_box_s1_rank_ge20_frac": 0.1035,
+        "top1_box_mean_s1_rank": 5.28
+      },
+      {
+        "w_tda": 0.5,
+        "w_s1": 0.5,
+        "patient_auc": 0.9692,
+        "S@0.125": 0.607,
+        "S@0.25": 0.7162,
+        "S@0.5": 0.7598,
+        "rank_metric": 0.906,
+        "top1_box_hit_rate": 0.6919,
+        "top1_box_s1_rank_ge20_frac": 0.1431,
+        "top1_box_mean_s1_rank": 6.91
+      },
+      {
+        "w_tda": 0.55,
+        "w_s1": 0.45,
+        "patient_auc": 0.9727,
+        "S@0.125": 0.5939,
+        "S@0.25": 0.7031,
+        "S@0.5": 0.7555,
+        "rank_metric": 0.9053,
+        "top1_box_hit_rate": 0.6744,
+        "top1_box_s1_rank_ge20_frac": 0.1717,
+        "top1_box_mean_s1_rank": 8.1
+      },
+      {
+        "w_tda": 0.6,
+        "w_s1": 0.4,
+        "patient_auc": 0.9761,
+        "S@0.125": 0.5895,
+        "S@0.25": 0.69,
+        "S@0.5": 0.7424,
+        "rank_metric": 0.9046,
+        "top1_box_hit_rate": 0.6744,
+        "top1_box_s1_rank_ge20_frac": 0.1962,
+        "top1_box_mean_s1_rank": 9.22
+      },
+      {
+        "w_tda": 0.65,
+        "w_s1": 0.35,
+        "patient_auc": 0.9781,
+        "S@0.125": 0.5852,
+        "S@0.25": 0.655,
+        "S@0.5": 0.7118,
+        "rank_metric": 0.8973,
+        "top1_box_hit_rate": 0.6395,
+        "top1_box_s1_rank_ge20_frac": 0.2289,
+        "top1_box_mean_s1_rank": 10.61
+      },
+      {
+        "w_tda": 0.7,
+        "w_s1": 0.3,
+        "patient_auc": 0.9779,
+        "S@0.125": 0.5677,
+        "S@0.25": 0.6157,
+        "S@0.5": 0.6725,
+        "rank_metric": 0.8873,
+        "top1_box_hit_rate": 0.6221,
+        "top1_box_s1_rank_ge20_frac": 0.2602,
+        "top1_box_mean_s1_rank": 11.85
+      }
+    ],
+    "JSRT_242": [
+      {
+        "w_tda": 0.4,
+        "w_s1": 0.6,
+        "patient_auc": 0.9102,
+        "S@0.125": 0.4362,
+        "S@0.25": 0.5235,
+        "S@0.5": 0.5839,
+        "rank_metric": 0.8135,
+        "top1_box_hit_rate": 0.5369,
+        "top1_box_s1_rank_ge20_frac": 0.0372,
+        "top1_box_mean_s1_rank": 2.35
+      },
+      {
+        "w_tda": 0.45,
+        "w_s1": 0.55,
+        "patient_auc": 0.9197,
+        "S@0.125": 0.4362,
+        "S@0.25": 0.5235,
+        "S@0.5": 0.5839,
+        "rank_metric": 0.8206,
+        "top1_box_hit_rate": 0.5436,
+        "top1_box_s1_rank_ge20_frac": 0.0537,
+        "top1_box_mean_s1_rank": 3.06
+      },
+      {
+        "w_tda": 0.5,
+        "w_s1": 0.5,
+        "patient_auc": 0.9289,
+        "S@0.125": 0.443,
+        "S@0.25": 0.5302,
+        "S@0.5": 0.604,
+        "rank_metric": 0.8292,
+        "top1_box_hit_rate": 0.5503,
+        "top1_box_s1_rank_ge20_frac": 0.0744,
+        "top1_box_mean_s1_rank": 4.02
+      },
+      {
+        "w_tda": 0.55,
+        "w_s1": 0.45,
+        "patient_auc": 0.9383,
+        "S@0.125": 0.443,
+        "S@0.25": 0.5369,
+        "S@0.5": 0.604,
+        "rank_metric": 0.838,
+        "top1_box_hit_rate": 0.5638,
+        "top1_box_s1_rank_ge20_frac": 0.0909,
+        "top1_box_mean_s1_rank": 4.68
+      },
+      {
+        "w_tda": 0.6,
+        "w_s1": 0.4,
+        "patient_auc": 0.9466,
+        "S@0.125": 0.4362,
+        "S@0.25": 0.5034,
+        "S@0.5": 0.5906,
+        "rank_metric": 0.8358,
+        "top1_box_hit_rate": 0.557,
+        "top1_box_s1_rank_ge20_frac": 0.1033,
+        "top1_box_mean_s1_rank": 5.1
+      },
+      {
+        "w_tda": 0.65,
+        "w_s1": 0.35,
+        "patient_auc": 0.9522,
+        "S@0.125": 0.4497,
+        "S@0.25": 0.4899,
+        "S@0.5": 0.5705,
+        "rank_metric": 0.8366,
+        "top1_box_hit_rate": 0.5369,
+        "top1_box_s1_rank_ge20_frac": 0.1157,
+        "top1_box_mean_s1_rank": 5.74
+      },
+      {
+        "w_tda": 0.7,
+        "w_s1": 0.3,
+        "patient_auc": 0.955,
+        "S@0.125": 0.443,
+        "S@0.25": 0.4966,
+        "S@0.5": 0.5436,
+        "rank_metric": 0.8404,
+        "top1_box_hit_rate": 0.5034,
+        "top1_box_s1_rank_ge20_frac": 0.1322,
+        "top1_box_mean_s1_rank": 6.48
+      }
+    ]
+  }
+}

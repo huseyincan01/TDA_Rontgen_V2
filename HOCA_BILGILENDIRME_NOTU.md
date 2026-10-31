@@ -124,6 +124,8 @@ flowchart LR
     C --> D["NİHAİ KARAR<br/>nodül var mı,<br/>varsa hangi kutuda"]
 ```
 
+**Neden %55 ve %45 ağırlık?** TDA kutunun yerini değiştirmez, yalnızca 50 aday kutuyu yeniden sıralar. TDA'nın ağırlığını aşırı artırdığımızda (%60–70) hasta ayrımı yükselir (kilitli test AUC: 0,966 → 0,978), ancak röntgendeki ~49 sahte kutudan şekilce tümöre benzeyen birkaç alt sıra kutu 1. sıraya çıkar ve kutu isabeti düşer (S@0.25: %72,1 → %61,6). %55 / %45 oranı, 1. aşamanın ısı haritası frenini koruyarak kutu isabetini tepe bölgesinde tutan bir ödünleşimdir; hasta AUC'de küçük bir kazanç (≈ +0,003–0,01) bilerek feda edilmiştir (ayrıntı: `experiments.md` V6.9.18, `ablation_matrix.md` §17.12).
+
 ---
 
 ## 3. Bu Makineyi Sıfırdan Nasıl İnşa Ettik ve Eğittik?
@@ -192,7 +194,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor |
 | Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te kutu duyarlılığı **+1,7 puan** artıyor |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,638 (sıfır-eğitim) → 0,794 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,79** düzeyine çıkıyor |
-| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; eğitimden tamamen izole) | **İlk 10 kutuda %85,2 · ilk 50 kutuda %94,0 · Top-1 hasta AUC 0,932** (sıfır-eğitim) | Dış hastanenin görüntüleri JPEG gibi sıkıştırılmamış, yüksek kaliteli (12-bit `.mha`) olduğunda sistem **hiç kalibrasyon yapmadan** tümörün **yerini** bulmaya devam ediyor. (NODE21'de sağlıklı kontroller ortak havuzdan geldiği için asıl güvenilir dış ölçüt, tümörün yerini bulma başarısıdır: **%94,0**.) |
+| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; 149 nodüllü + 93 sağlıklı = 242 hasta, eğitimden tamamen izole) | **İlk 10 kutuda %86,6 · ilk 50 kutuda %95,3 · 0,920 (Top-1) / 0,965 (Noisy-OR) hasta AUC · S@0.25 %52,4 · S@0.50 %58,4** (sıfır-eğitim) | Dış hastanenin görüntüleri JPEG gibi sıkıştırılmamış, yüksek kaliteli (12-bit `.mha`) olduğunda sistem **hiç kalibrasyon yapmadan** 242 saf Japon röntgeninde ilk 50 kutuda tümörlerin **%95,3'ünü (142/149)** yakalıyor; 2. aşama topolojik katman tek başına **0,970 AUC** üretip 1. aşamanın hasta ayrımını **0,849 → 0,920 (+7,1 puan)** ve S@0.25 kutu duyarlılığını **%49,7 → %52,4 (+2,7 puan)** yükseltiyor |
 
 Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
 
@@ -200,7 +202,7 @@ Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
    yatmaktadır (`0,652` vs `0,926`).
 2. Topolojik katman kilitli test setinde 1. aşama tarayıcı modelin eksik bıraktığı kısmı
    tamamlayarak genel başarıyı `0,945`'ten `0,966`'ya taşımaktadır.
-3. Harici testlerdeki sıfır-eğitim farkı (`0,638` vs `0,932–0,941`), modelin başka bir hastaneye
+3. Harici testlerdeki sıfır-eğitim farkı (`0,638` vs `0,920–0,965`), modelin başka bir hastaneye
    gittiğinde düşmesinin ana sebebinin "yabancı hastane" değil, **görüntünün 8-bit JPEG ile
    sıkıştırılıp çözünürlüğünün düşürülmesi** olduğunu **kuvvetle göstermektedir**; ancak iki veri
    setinin hasta ve cihaz yapısı da farklı olduğundan, bunun doğrudan kanıtı için aynı hastanenin
@@ -225,23 +227,30 @@ hesaplamamız (TDA) bu yapay blok kenarlarından olumsuz etkilendi ve sıfır-e�
 
 Bunun üzerine kendimize şu soruyu sorduk: *"Eğer hiç görmediğimiz yabancı bir hastanenin röntgenleri
 bozuk JPEG değil de, eğitimdeki gibi kayıpsız 12-bit `.mha` kalitesinde olsaydı ne olurdu?"*
-Bunu ölçmek için NODE21 içindeki 4 alt kaynaktan biri olan **Japonya (JSRT, 149 hasta)** veri
-setini eğitimden **tamamen çıkardık** (zaten 1. aşamadaki hazır ResNet50 gövdesi de ön-eğitiminde
-JSRT'yi hiç görmemişti) ve ana mimariye hiç dokunmadan izole bir modeli sıfırdan eğittik. Sonuç tam
-düşündüğümüz gibi çıktı: Görüntü kalitesi kayıpsız 12-bit `.mha` olduğunda, model hayatında hiç
-görmediği Japonya hastanesinde **hiç kalibrasyon yapmadan (sıfır-eğitimle)** ilk 50 kutuda
-nodüllerin **%94,0'ını** yakaladı ve **0,932 Top-1 hasta AUC** değerine ulaştı. Burada dürüst bir
-not düşmem gerekiyor: JSRT'nin 149 görüntüsünün tamamı nodüllü olduğu için "hasta AUC" ancak ortak
-bir sağlıklı kontrol havuzuyla hesaplanabiliyor ve o havuz modelin eğitimde gördüğü bir dağılım.
-Bu yüzden bu satırdaki **asıl güvenilir kanıt, tek bir kontrol havuzuna bağlı olmayan "tümörün
-yerini bulma" başarısıdır: ilk 10 kutuda %85,2, ilk 50 kutuda %94,0**. (Kontrol havuzunu JSRT'nin
-kendi fiziksel piksel boyutuna daralttığımızda AUC düşmüyor, 0,932 → 0,941 oluyor; yani sayı
-havuz seçiminden şişmiyor.)
-Daha da önemlisi, yalnız 2. aşama Lokal TDA puanına bakıldığında JSRT'yi hiç görmeyen model
-**0,950 AUC**, JSRT'yi gören ana model **0,968 AUC** veriyor; aradaki fark (0,018) füzyondaki farkın
-(0,049) çok altında. Yani kaynak avantajının büyük kısmı şekil özetinde değil, **dedektörün kendi
-puanında** duruyor; topolojik şekil özetimiz yüksek kaliteli röntgenlerde hastaneden hastaneye
-büyük ölçüde kayıpsız taşınmaktadır.
+NODE21 veri setinde Japonya'dan (JSRT) gelen **149 nodüllü hasta** `jsrt` olarak etiketlenmiş,
+ancak JSRT'nin **93 sağlıklı kontrol röntgeni** diğer hastanelerin sağlıklılarıyla birlikte ortak
+`node21_control` havuzuna karıştırılmıştı. Ham `.mha` görüntü başlıklarındaki benzersiz JSRT
+fiziksel imzasını (`2048×2048` çözünürlük, `0,175 mm/px` piksel aralığı, `MET_USHORT`) tarayarak
+bu **93 orijinal sağlıklı Japon kontrol röntgenini** eksiksiz tespit ettik. Ardından ana mimari
+ağırlıklarımıza hiç dokunmadan, eğitim ve doğrulama kalibrasyon kümesinden **hem 149 JSRT nodüllü
+hem de 93 JSRT sağlıklı kontrol röntgeninin tamamını çıkardık** (eğitimde 0 JSRT pozitif, 0 JSRT
+negatif kaldı; 1. aşamadaki hazır ResNet50 gövdesi de ön-eğitiminde JSRT'yi hiç görmemişti) ve
+tamamen JSRT-siz bir modeli sıfırdan eğittik. Sonuç tam düşündüğümüz gibi çıktı: Görüntü kalitesi
+kayıpsız 12-bit `.mha` olduğunda, model hayatında hiç görmediği **242 hastalık saf Japonya (149
+nodüllü + 93 sağlıklı)** kohortunda **hiç kalibrasyon yapmadan (sıfır-eğitimle)** ilk 10 kutuda
+nodüllerin **%86,6'sını**, ilk 50 kutuda **%95,3'ünü (142/149)** yakaladı; **0,920 (Top-1) /
+0,965 (Noisy-OR) hasta AUC** ile **%52,4 S@0.25** ve **%58,4 S@0.50** kutu duyarlılığına ulaştı.
+Daha da önemlisi, 242 saf JSRT hastasında 1. aşama tarayıcı model tek başına yabancı hastane arka
+planında `0,849` Top-1 AUC ve `%49,7` S@0.25 duyarlılıkta kalırken, **yalnız 2. aşama saf 1.600
+Lokal TDA modeli tek başına `0,970` Top-1 (`0,979` Noisy-OR) hasta AUC** üretmekte; iki aşama
+birleştiğinde hasta AUC değerini **`0,849 → 0,920` (+7,1 puan)**, Noisy-OR AUC değerini
+**`0,872 → 0,965` (+9,3 puan)**, S@0.25 kutu duyarlılığını **`%49,7 → %52,4` (+2,7 puan)** ve
+resmî yarışma skorunu (`rank_metric`) **`0,761 → 0,821` (+6,0 puan)** seviyesine taşımaktadır.
+Üstelik hiçbir modelin eğitimde görmediği 74 hastalık (`val+test`: 42 nodüllü + 32 sağlıklı) saf
+JSRT alt kümesinde, JSRT'yi hiç görmeyen modelimiz (`0,908` Top-1 / `0,962` Noisy-OR AUC) ile
+JSRT'den örnekler gören ana model (`0,901` Top-1 / `0,957` Noisy-OR AUC) aynı başarıyı
+göstermektedir. Yani topolojik şekil özetimiz yüksek kaliteli röntgenlerde hastaneden hastaneye
+kayıpsız taşınmaktadır.
 
 **2. Düşük Kaliteli Hastane Verisinde Saha Kalibrasyonu (Çift-katmanlı uyarlama).**
 Peki görüntü kalitesinin düşük olduğu (8-bit JPEG Vietnam verisi gibi) bir hastaneye sistem

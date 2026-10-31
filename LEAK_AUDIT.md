@@ -504,6 +504,40 @@ Her iki sürümde de **nitel sonuç aynı**: ezber ağırlıklı olarak dedektö
 [`v6_9k2_val_control.py`](pipelines/v6_two_stage/v6_9k2_val_control.py) ·
 [`v6_9k3_bootstrap.py`](pipelines/v6_two_stage/v6_9k3_bootstrap.py)
 
+### 9.8 Tam İzole Saf JSRT Dış Doğrulaması — 93 Orijinal Sağlıklı Kontrolün Keşfi ve 242 Saf JSRT Testi (V6.9r) 🟢
+
+§9.7'deki `V6.9k / k4 / q` deneylerinde JSRT'nin 93 sağlıklı kontrol röntgeninin `node21_control` torbasında gizli olduğu varsayılmış; bu yüzden eğitimden yalnız 107 JSRT pozitif çıkarılmış ve dış testte negatif olarak 250 karma `node21_control` kullanılmıştı.
+
+`dataset_node21/cxr_images/original_data/images/*.mha` ham dosya başlıkları tarandığında, JSRT'nin benzersiz fiziksel imzası (`DimSize = 2048 2048`, `ElementSpacing = 0.17499999999999999 0.17499999999999999`, `ElementType = MET_USHORT`) sayesinde:
+* 149 `jsrt` nodüllü görüntünün **149'u (%100)**,
+* Diğer pozitif kaynakların (`chestxray14`, `padchest`, `openi`) **0'ı (%0)**,
+* `node21_control` havuzundaki **tam 93 sağlıklı görüntü** (`train: 61, val: 18, test: 14` — orijinal JSRT'nin `JPCNN001..093` sağlıklı kontrolleri)
+birebir tespit edildi (**149 nodüllü + 93 sağlıklı = 242 saf JSRT hastası**).
+
+**1) Hızlı Kontrol (`M5_nojsrt` + `stage2_nojsrt_tda_hgb_pure1600`, yeniden eğitim yok):**
+Mevcut `M5_nojsrt` modelinin eğitiminde `train` bölmesindeki 61 JSRT sağlıklı kontrolünden 14'ünün yer aldığı, `val+test` içindeki **32 gerçek JSRT sağlıklı kontrolün** ise hiç görülmediği doğrulandı:
+* **42 JSRT Nodüllü (`val+test`) vs 32 Gerçek JSRT Sağlıklı (`val+test`) [N=74]:** 1. Aşama Top-1 AUC `0,8668` → Füzyon Top-1 AUC **`0,9003`** (`Noisy-OR 0,9442`, `S@0,125=0,3810`, `S@0,25=0,4286`, `S@0,50=0,4762`, `rank_metric=0,7824`).
+* **149 JSRT Nodüllü (tümü) vs 32 Gerçek JSRT Sağlıklı (`val+test`) [N=181]:** 1. Aşama Top-1 AUC `0,8450` → Füzyon Top-1 AUC **`0,9283` (+8,3 puan)** (`Noisy-OR 0,9690`, `S@0,125=0,4362`, `S@0,25=0,4966`, `S@0,50=0,5436`, `rank_metric=0,8204`).
+
+**2) Tam Temiz Deney (`V6.9r` — %100 JSRT-siz Eğitim ve 242 Saf JSRT Dış Testi):**
+Ana mimari ağırlıklarına (`M5_foundation.pt`, `stage2_foundation_tda_hgb_pure1600.joblib`) hiç dokunulmadan, ayrı ad alanında (`M5_nojsrt_full.pt`, `stage2_nojsrt_full_tda_hgb_pure1600.joblib`):
+* `train` kümesinden hem **107 JSRT nodüllü** hem de **61 JSRT sağlıklı kontrol** tamamen çıkarıldı (**0 JSRT pozitif, 0 JSRT negatif**; `683 JSRT-dışı nodüllü + 683 JSRT-dışı sağlıklı = 1.366 hasta`).
+* `val` z-referansı (`w=0,55`) kalibrasyonundan hem **23 JSRT nodüllü** hem de **18 JSRT sağlıklı kontrol** tamamen çıkarıldı (`693 JSRT-dışı val hastası`).
+* TDA PI aralıkları (`ranges`) yalnız JSRT-dışı eğitim adaylarından türetildi ve 2. aşama **saf 1.600 TDA** ile eğitildi.
+
+| Kohort (`V6.9r` — %100 Sıfır-Eğitim) | Recall@K10 | @K20 | @K50 | Katman | Hasta AUC (Top-1 / Resmî) | Hasta AUC (Noisy-OR) | S@0,125 | S@0,25 | S@0,50 | `rank_metric` |
+| :--- | ---: | ---: | ---: | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **242 Saf JSRT**<br>(149 Poz + 93 Sağ) | **0,8658** | **0,8926** | **0,9530** | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8488<br>**0,9704**<br>**0,9197 (+7,1p)** | 0,8721<br>**0,9789**<br>**0,9652 (+9,3p)** | 0,4295<br>0,0067<br>**0,4362** | 0,4966<br>0,0268<br>**0,5235 (+2,7p)** | 0,5839<br>0,0604<br>**0,5839** | 0,7608<br>0,7345<br>**0,8206 (+6,0p)** |
+| **74 Saf JSRT (`val+test`)**<br>(42 Poz + 32 Sağ) | 0,8571 | 0,8810 | 0,9048 | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8527<br>**0,9747**<br>**0,9077 (+5,5p)** | 0,8780<br>**0,9695**<br>**0,9621 (+8,4p)** | 0,4048<br>0,0000<br>**0,4286** | 0,4524<br>0,0000<br>0,4286 | 0,5714<br>0,0476<br>0,5476 | 0,7526<br>0,7310<br>**0,7879 (+3,5p)** |
+| **74 Saf JSRT (`val+test`)**<br>Ana Model (Salt-Okunur) | 0,8571 | 0,9048 | 0,9286 | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8757<br>0,9591<br>0,9010 | 0,9025<br>0,9769<br>0,9568 | 0,5000<br>0,0000<br>0,4524 | 0,5476<br>0,0238<br>0,5714 | 0,6429<br>0,0238<br>0,5952 | 0,7937<br>0,7253<br>0,8186 |
+
+**Hüküm (`V6.9r`):**
+1. ✅ **"Hepsi hastalıklı / ortak kontrol havuzu" çekincesi tamamen kapandı:** Hem 149 nodüllü hastası hem de 93 sağlıklı kontrolü eğitimden ve kalibrasyondan %100 dışlanmış **242 hastalık saf JSRT (12-bit `.mha`)** kohortunda model **ilk 10 kutuda %86,6, ilk 50 kutuda %95,3** yakalama, **`0,9197` Top-1 (`0,9652` Noisy-OR) Hasta AUC**, **`%52,4` S@0,25**, **`%58,4` S@0,50** ve **`0,8206` `rank_metric`** üretmektedir.
+2. 🔑 **2. aşama Lokal TDA'nın gerçek dış hastane katkısı:** 242 saf JSRT hastasında yalnız 1. aşama `0,8488` Top-1 AUC ve `%49,7` S@0,25'te kalırken, **yalnız 2. aşama saf 1.600 TDA `0,9704` Top-1 (`0,9789` Noisy-OR) AUC** vermekte; iki aşama birleştiğinde **Top-1 AUC +7,1 puan (`0,8488 → 0,9197`)**, **Noisy-OR AUC +9,3 puan (`0,8721 → 0,9652`)**, **S@0,25 +2,7 puan (`%49,7 → %52,4`)** ve **`rank_metric` +6,0 puan (`0,7608 → 0,8206`)** artmaktadır.
+3. 🔒 **İzolasyon:** Salt-okunur ana ağırlıkların (`M5_foundation.pt`, `stage2_foundation_tda_hgb_pure1600.joblib`) SHA-256 özetleri koşu öncesi ve sonrası birebir aynıdır (`unchanged = true`).
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9r_true_jsrt_external.json` · [`v6_9r_true_jsrt_external.py`](pipelines/v6_two_stage/v6_9r_true_jsrt_external.py)
+
 ---
 
 ## 10. 🔒 KAPANIŞ — ön-eğitim örtüşmesi konusu mühürlendi

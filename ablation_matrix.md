@@ -1115,3 +1115,41 @@ aynı fold/FT/shrinkage/w):
 * 🔑 JSRT'de kaynak avantajı **TDA'da değil dedektörde**: TDA-tek Δ **0,018** vs füzyon Δ **0,049**.
 * **Kayıt:** `v6_9k4_loso_pure1600.json` · `v6_9k4b_main_pure1600_jsrt.json` ·
   `v6_9j2_vindr_pure1600.json`
+
+### 17.12 TDA ağırlığı ablasyonu — `w_tda` ∈ [0,40 … 0,70] (V6.9s)
+
+Yeniden eğitim yok; hazır önbellekler (`_v6_9l_cache` Val, `_v6_9m_test_cache` Test, `_v6_9r_cache` JSRT) ve kilitli 2. aşama paketleri. Kutu içi doğrusal birleşim `(1−w_tda)·z(s1) + w_tda·z(p_TDA)`, z-referansı dondurulmuş.
+
+| Kohort | `w_tda` | Hasta AUC (Top-1) | S@0.25 | S@0.50 | `rank_metric` | Birleşik 1. kutu isabeti (pozitiflerde) | 1. kutunun 1. aşama sırası ≥ 20 olan görüntü oranı |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| NODE21 Val (734) | 0,40 | 0,9826 | 0,7662 | 0,8009 | 0,9285 | %79,1 | %6,0 |
+| **NODE21 Val (734)** | **0,45 (kilitli)** | **0,9836** | **0,7706** | **0,7965** | **0,9304** | %80,2 | %9,1 |
+| NODE21 Val (734) | 0,50 | 0,9850 | 0,7706 | 0,7965 | 0,9314 | %80,2 | %12,3 |
+| NODE21 Val (734) | 0,55 | 0,9864 | 0,7619 | 0,7835 | 0,9303 | %80,2 | %14,3 |
+| NODE21 Val (734) | 0,60 | 0,9877 | 0,7446 | 0,7879 | 0,9269 | %78,5 | %17,3 |
+| NODE21 Val (734) | 0,65 | 0,9884 | 0,7316 | 0,7749 | 0,9242 | %73,3 | %20,2 |
+| NODE21 Val (734) | 0,70 | 0,9879 | 0,6926 | 0,7316 | 0,9141 | %70,3 | %24,4 |
+| NODE21 Test (734, kilitli) | 0,40 | 0,9629 | 0,7205 | 0,7642 | 0,9023 | %70,3 | %7,5 |
+| **NODE21 Test (734, kilitli)** | **0,45 (kilitli)** | **0,9661** | **0,7205** | **0,7642** | **0,9047** | %69,2 | %10,3 |
+| NODE21 Test (734, kilitli) | 0,50 | 0,9692 | 0,7162 | 0,7598 | 0,9060 | %69,2 | %14,3 |
+| NODE21 Test (734, kilitli) | 0,55 | 0,9727 | 0,7031 | 0,7555 | 0,9053 | %67,4 | %17,2 |
+| NODE21 Test (734, kilitli) | 0,60 | 0,9761 | 0,6900 | 0,7424 | 0,9046 | %67,4 | %19,6 |
+| NODE21 Test (734, kilitli) | 0,65 | 0,9781 | 0,6550 | 0,7118 | 0,8973 | %63,9 | %22,9 |
+| NODE21 Test (734, kilitli) | 0,70 | 0,9779 | 0,6157 | 0,6725 | 0,8873 | %62,2 | %26,0 |
+| 242 Saf JSRT | 0,40 | 0,9102 | 0,5235 | 0,5839 | 0,8135 | %53,7 | %3,7 |
+| **242 Saf JSRT** | **0,45 (kilitli)** | **0,9197** | **0,5235** | **0,5839** | **0,8206** | %54,4 | %5,4 |
+| 242 Saf JSRT | 0,50 | 0,9289 | 0,5302 | 0,6040 | 0,8292 | %55,0 | %7,4 |
+| 242 Saf JSRT | 0,55 | 0,9383 | 0,5369 | 0,6040 | 0,8380 | %56,4 | %9,1 |
+| 242 Saf JSRT | 0,60 | 0,9466 | 0,5034 | 0,5906 | 0,8358 | %55,7 | %10,3 |
+| 242 Saf JSRT | 0,65 | 0,9522 | 0,4899 | 0,5705 | 0,8366 | %53,7 | %11,6 |
+| 242 Saf JSRT | 0,70 | 0,9550 | 0,4966 | 0,5436 | 0,8404 | %50,3 | %13,2 |
+
+**Mekanizma:** TDA kutuların koordinatını değiştirmez; yalnızca sabit aday havuzundaki (görüntü başına ortalama 46–50 kutu) **sıralamayı** değiştirir. Bir görüntüde en çok 1 (nadiren birkaç) gerçek nodüle karşılık ~45–49 sahte aday vardır. `w_tda` büyüdükçe 1. aşamanın ısı haritası freni gevşer; 1. aşamada alt sıralarda (rank ≥ 20) kalan ve TDA'dan yüksek puan alan sahte adaylar birleşik 1. sıraya sıçrar (yorum: bunlar şekilce yuvarlak damar/kaburga kesitleri olabilir; kutu türü elle doğrulanmadı). Ölçülen: NODE21 Test'te birleşik 1. kutunun 1. aşama sırasının ≥ 20 olduğu görüntü oranı %10,3 (`w_tda`=0,45) → %26,0 (0,70), pozitiflerde 1. kutu isabeti %69,2 → %62,2, **S@0.25 %72,0 → %61,6**, rank_metric 0,9047 → 0,8873; buna karşın hasta ayrımı (TDA'nın ağırlığı) artar: **Hasta AUC 0,966 → 0,978**.
+
+**Bulgular:**
+1. 🔼 **Hasta AUC `w_tda` ile üç kohortta da neredeyse tekdüze artar** (Test 0,966 → 0,978; JSRT 0,920 → 0,955; Val tepe 0,65'te 0,988).
+2. 🔽 **Kutu ölçütleri (S@0.25 / S@0.50 / `rank_metric`) NODE21'de `w_tda` ≈ 0,45–0,50'de tepe yapar, ≥ 0,60'ta düşer** (Test S@0.25: %72,1 → %69,0 (0,60) → %65,5 (0,65) → %61,6 (0,70)).
+3. ⚖️ **İki ölçüt aynı anda maksimize edilmez; kilitli 0,45 bir ödünleşimdir.** Kutu isabeti tarafında Val/Test tepe bölgesinde, hasta AUC'de ise tavanın altında (0,50 → Test AUC +0,0031, Val rank_metric +0,0010, Test rank_metric +0,0013, Test S@0.25 −0,0043: fark gürültü düzeyinde). 242 JSRT'de 0,55 en iyi kutu ölçütlerini verir (S@0.25 %53,7, S@0.50 %60,4) ama NODE21 Val/Test'te S@0.25 düşer; seçim dış kümeye göre yapılmamıştır.
+4. 🔒 **Kilitli `w_tda = 0,45` (w_s1 = 0,55) korunur**; bu kayıt yalnız ablasyondur, hiçbir ağırlık/model değiştirilmedi.
+
+* **Kayıt:** [v6_9s_weight_sweep.json](artifacts/v6_two_stage/v6_9s_weight_sweep.json) · [v6_9s_weight_sweep.py](pipelines/v6_two_stage/v6_9s_weight_sweep.py)

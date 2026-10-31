@@ -1,0 +1,679 @@
+{
+  "experiment": "V6.9r-true-jsrt-external",
+  "discovery": {
+    "summary": "dataset_node21/cxr_images/original_data/images/*.mha başlık taramasıyla DimSize='2048 2048', ElementSpacing='0.175 0.175', ElementType='MET_USHORT' imzasına sahip 149 JSRT nodüllü ve 93 JSRT sağlıklı kontrol görüntüsü (toplam 242 saf JSRT röntgeni) eksiksiz tespit edildi.",
+    "jsrt_positive_counts": {
+      "train": 107,
+      "val": 23,
+      "test": 19
+    },
+    "jsrt_positive_total": 149,
+    "jsrt_control_counts": {
+      "train": 61,
+      "val": 18,
+      "test": 14
+    },
+    "jsrt_control_total": 93,
+    "jsrt_control_ids": [
+      "c0104",
+      "c0129",
+      "c0221",
+      "c0284",
+      "c0346",
+      "c0388",
+      "c0445",
+      "c0472",
+      "c0484",
+      "c0654",
+      "c0730",
+      "c0924",
+      "c1074",
+      "c1143",
+      "c1179",
+      "c1189",
+      "c1235",
+      "c1273",
+      "c1337",
+      "c1418",
+      "c1624",
+      "c1705",
+      "c1738",
+      "c1816",
+      "c1831",
+      "c1846",
+      "c1915",
+      "c2055",
+      "c2515",
+      "c2548",
+      "c2621",
+      "c2653",
+      "c2694",
+      "c2732",
+      "c2757",
+      "c2762",
+      "c2781",
+      "c2825",
+      "c2870",
+      "c2900",
+      "c2970",
+      "c3010",
+      "c3026",
+      "c3028",
+      "c3054",
+      "c3065",
+      "c3081",
+      "c3124",
+      "c3146",
+      "c3177",
+      "c3179",
+      "c3250",
+      "c3348",
+      "c3362",
+      "c3475",
+      "c3664",
+      "c3690",
+      "c3715",
+      "c3764",
+      "c3851",
+      "c3877",
+      "c0455",
+      "c0561",
+      "c1328",
+      "c1633",
+      "c1848",
+      "c1852",
+      "c1889",
+      "c1926",
+      "c1987",
+      "c2047",
+      "c2276",
+      "c2638",
+      "c2816",
+      "c2909",
+      "c3193",
+      "c3248",
+      "c3549",
+      "c3672",
+      "c0127",
+      "c0413",
+      "c1096",
+      "c1205",
+      "c1213",
+      "c1233",
+      "c1652",
+      "c1699",
+      "c1758",
+      "c1911",
+      "c2649",
+      "c2867",
+      "c3225",
+      "c3509"
+    ],
+    "pure_jsrt_total": 242
+  },
+  "design": {
+    "stage1_checkpoint": "artifacts\\v6_two_stage\\checkpoints\\M5_nojsrt_full.pt",
+    "stage2_bundle": "artifacts\\v6_two_stage\\checkpoints\\stage2_nojsrt_full_tda_hgb_pure1600.joblib",
+    "train_pos_non_jsrt": 683,
+    "train_neg_non_jsrt": 683,
+    "train_total": 1366,
+    "jsrt_in_train_pos": 0,
+    "jsrt_in_train_neg": 0,
+    "val_zref_non_jsrt": 693,
+    "jsrt_in_val_zref": 0,
+    "stage2_features": "1600 saf TDA PI (konum YOK, s1 YOK)",
+    "w_fusion": 0.55,
+    "box_px": 56,
+    "z_ref": {
+      "s1_mean": 0.027384327724575996,
+      "s1_std": 0.038952335715293884,
+      "tda_mean": 0.23115627467632294,
+      "tda_std": 0.1699773073196411,
+      "w": 0.55
+    }
+  },
+  "isolation": {
+    "readonly_before": {
+      "M5_foundation.pt": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+      "stage2_foundation_tda_hgb.joblib": "e87318b59b496e8f8f3392f5257875387e05240cdca58adb372679605be9ad6b",
+      "stage2_foundation_tda_hgb_pure1600.joblib": "98fd633b11db841af9b8a5c01a4f06cb9f9726128b9d425c9ba5aab54b9bd01c",
+      "M5_nojsrt.pt": "d8d978b9b5ce7c42e4901983fe6dee16abc454e51632e2eeed54e59fe45a0b45",
+      "stage2_nojsrt_tda_hgb.joblib": "3653e4da9e6ccf05226ac0988cb13a03e5b88d1591fc4dfdfff3d54ee67704bf",
+      "stage2_nojsrt_tda_hgb_pure1600.joblib": "33362aaa66a4d81261ab08c7d19fca381fbf292f84a8c2edfc975ac42042a187"
+    },
+    "readonly_after": {
+      "M5_foundation.pt": "fc27752564143b3ec8978c1b3dac8585337f1a2af62e8b59c09becdd2c1937cd",
+      "stage2_foundation_tda_hgb.joblib": "e87318b59b496e8f8f3392f5257875387e05240cdca58adb372679605be9ad6b",
+      "stage2_foundation_tda_hgb_pure1600.joblib": "98fd633b11db841af9b8a5c01a4f06cb9f9726128b9d425c9ba5aab54b9bd01c",
+      "M5_nojsrt.pt": "d8d978b9b5ce7c42e4901983fe6dee16abc454e51632e2eeed54e59fe45a0b45",
+      "stage2_nojsrt_tda_hgb.joblib": "3653e4da9e6ccf05226ac0988cb13a03e5b88d1591fc4dfdfff3d54ee67704bf",
+      "stage2_nojsrt_tda_hgb_pure1600.joblib": "33362aaa66a4d81261ab08c7d19fca381fbf292f84a8c2edfc975ac42042a187"
+    },
+    "unchanged": true,
+    "s1_r_sha256": "ca75349ae5df9d3d4e84580685160a4bae645b3d32b16ab097e1a7a6429cacd5",
+    "bundle_r_sha256": "70d1110aa9e2107f456c368b15b17898245471a030d2f6f962aac91e856d3464"
+  },
+  "results": {
+    "pure_jsrt_242_external": {
+      "n_patients": 149,
+      "n_lesions": 149,
+      "recall_at_K": {
+        "K10": 0.8658,
+        "K20": 0.8926,
+        "K50": 0.953
+      },
+      "patient_hit_top50": 0.953,
+      "candidate_auc": {
+        "stage1": 0.88,
+        "tda": 0.6654,
+        "fusion": 0.8282
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.4295,
+            "0.25": 0.4966,
+            "0.5": 0.5839,
+            "1": 0.6577,
+            "2": 0.7047,
+            "4": 0.7718
+          },
+          "auc": 0.8488,
+          "froc_mean_3pt": 0.5033,
+          "rank_metric": 0.7608
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.0067,
+            "0.25": 0.0268,
+            "0.5": 0.0604,
+            "1": 0.1275,
+            "2": 0.2215,
+            "4": 0.3758
+          },
+          "auc": 0.9704,
+          "froc_mean_3pt": 0.0313,
+          "rank_metric": 0.7345
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.4362,
+            "0.25": 0.5235,
+            "0.5": 0.5839,
+            "1": 0.6443,
+            "2": 0.6913,
+            "4": 0.7047
+          },
+          "auc": 0.9197,
+          "froc_mean_3pt": 0.5145,
+          "rank_metric": 0.8206
+        }
+      },
+      "official_n_controls": 93,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.8488,
+          "top3": 0.8682,
+          "noisyor": 0.8721
+        },
+        "tda": {
+          "top1": 0.9704,
+          "top3": 0.9764,
+          "noisyor": 0.9789
+        },
+        "fusion": {
+          "top1": 0.9197,
+          "top3": 0.967,
+          "noisyor": 0.9652
+        }
+      }
+    },
+    "pure_jsrt_74_valtest": {
+      "n_patients": 42,
+      "n_lesions": 42,
+      "recall_at_K": {
+        "K10": 0.8571,
+        "K20": 0.881,
+        "K50": 0.9048
+      },
+      "patient_hit_top50": 0.9048,
+      "candidate_auc": {
+        "stage1": 0.904,
+        "tda": 0.6284,
+        "fusion": 0.819
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.4048,
+            "0.25": 0.4524,
+            "0.5": 0.5714,
+            "1": 0.619,
+            "2": 0.7143,
+            "4": 0.7381
+          },
+          "auc": 0.8527,
+          "froc_mean_3pt": 0.4762,
+          "rank_metric": 0.7526
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.0,
+            "0.25": 0.0,
+            "0.5": 0.0476,
+            "1": 0.0952,
+            "2": 0.1667,
+            "4": 0.3571
+          },
+          "auc": 0.9747,
+          "froc_mean_3pt": 0.0159,
+          "rank_metric": 0.731
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.4286,
+            "0.25": 0.4286,
+            "0.5": 0.5476,
+            "1": 0.5714,
+            "2": 0.6429,
+            "4": 0.6429
+          },
+          "auc": 0.9077,
+          "froc_mean_3pt": 0.4683,
+          "rank_metric": 0.7879
+        }
+      },
+      "official_n_controls": 32,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.8527,
+          "top3": 0.8735,
+          "noisyor": 0.878
+        },
+        "tda": {
+          "top1": 0.9747,
+          "top3": 0.9628,
+          "noisyor": 0.9695
+        },
+        "fusion": {
+          "top1": 0.9077,
+          "top3": 0.9621,
+          "noisyor": 0.9621
+        }
+      }
+    },
+    "pure_jsrt_33_test_only": {
+      "n_patients": 19,
+      "n_lesions": 19,
+      "recall_at_K": {
+        "K10": 0.7895,
+        "K20": 0.7895,
+        "K50": 0.8421
+      },
+      "patient_hit_top50": 0.8421,
+      "candidate_auc": {
+        "stage1": 0.8604,
+        "tda": 0.593,
+        "fusion": 0.7541
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.3684,
+            "0.25": 0.4211,
+            "0.5": 0.4211,
+            "1": 0.4211,
+            "2": 0.4737,
+            "4": 0.5789
+          },
+          "auc": 0.7368,
+          "froc_mean_3pt": 0.4035,
+          "rank_metric": 0.6579
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.0,
+            "0.25": 0.0,
+            "0.5": 0.0,
+            "1": 0.1579,
+            "2": 0.1579,
+            "4": 0.2632
+          },
+          "auc": 0.9624,
+          "froc_mean_3pt": 0.0,
+          "rank_metric": 0.7218
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.3684,
+            "0.25": 0.3684,
+            "0.5": 0.4737,
+            "1": 0.4737,
+            "2": 0.4737,
+            "4": 0.4737
+          },
+          "auc": 0.8083,
+          "froc_mean_3pt": 0.4035,
+          "rank_metric": 0.6983
+        }
+      },
+      "official_n_controls": 14,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.7368,
+          "top3": 0.8008,
+          "noisyor": 0.7895
+        },
+        "tda": {
+          "top1": 0.9624,
+          "top3": 0.9286,
+          "noisyor": 0.9361
+        },
+        "fusion": {
+          "top1": 0.8083,
+          "top3": 0.9173,
+          "noisyor": 0.8947
+        }
+      }
+    },
+    "jsrt_149_vs_250_nonjsrt_val_ctrl": {
+      "n_patients": 149,
+      "n_lesions": 149,
+      "recall_at_K": {
+        "K10": 0.8658,
+        "K20": 0.8926,
+        "K50": 0.953
+      },
+      "patient_hit_top50": 0.953,
+      "candidate_auc": {
+        "stage1": 0.88,
+        "tda": 0.6654,
+        "fusion": 0.8282
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.4631,
+            "0.25": 0.5101,
+            "0.5": 0.6107,
+            "1": 0.6779,
+            "2": 0.7248,
+            "4": 0.7852
+          },
+          "auc": 0.8611,
+          "froc_mean_3pt": 0.528,
+          "rank_metric": 0.7733
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.0201,
+            "0.25": 0.0336,
+            "0.5": 0.1208,
+            "1": 0.1879,
+            "2": 0.3087,
+            "4": 0.4631
+          },
+          "auc": 0.964,
+          "froc_mean_3pt": 0.0582,
+          "rank_metric": 0.7314
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.4899,
+            "0.25": 0.5638,
+            "0.5": 0.6174,
+            "1": 0.6711,
+            "2": 0.7047,
+            "4": 0.7248
+          },
+          "auc": 0.9438,
+          "froc_mean_3pt": 0.557,
+          "rank_metric": 0.8488
+        }
+      },
+      "official_n_controls": 250,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.8611,
+          "top3": 0.8739,
+          "noisyor": 0.8782
+        },
+        "tda": {
+          "top1": 0.964,
+          "top3": 0.9826,
+          "noisyor": 0.9844
+        },
+        "fusion": {
+          "top1": 0.9438,
+          "top3": 0.9765,
+          "noisyor": 0.9823
+        }
+      }
+    }
+  },
+  "results_main_readonly": {
+    "pure_jsrt_242_in_fold_mixed": {
+      "n_patients": 149,
+      "n_lesions": 149,
+      "recall_at_K": {
+        "K10": 0.9396,
+        "K20": 0.9732,
+        "K50": 0.9799
+      },
+      "patient_hit_top50": 0.9799,
+      "candidate_auc": {
+        "stage1": 0.9208,
+        "tda": 0.8038,
+        "fusion": 0.9181
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.5705,
+            "0.25": 0.6846,
+            "0.5": 0.7517,
+            "1": 0.8121,
+            "2": 0.8591,
+            "4": 0.9128
+          },
+          "auc": 0.8951,
+          "froc_mean_3pt": 0.6689,
+          "rank_metric": 0.8425
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.1007,
+            "0.25": 0.1678,
+            "0.5": 0.2685,
+            "1": 0.4161,
+            "2": 0.5101,
+            "4": 0.651
+          },
+          "auc": 0.9579,
+          "froc_mean_3pt": 0.179,
+          "rank_metric": 0.7604
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.6174,
+            "0.25": 0.7047,
+            "0.5": 0.7584,
+            "1": 0.8121,
+            "2": 0.8926,
+            "4": 0.9262
+          },
+          "auc": 0.9364,
+          "froc_mean_3pt": 0.6935,
+          "rank_metric": 0.8785
+        }
+      },
+      "official_n_controls": 93,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.8951,
+          "top3": 0.9195,
+          "noisyor": 0.9244
+        },
+        "tda": {
+          "top1": 0.9579,
+          "top3": 0.9791,
+          "noisyor": 0.9811
+        },
+        "fusion": {
+          "top1": 0.9364,
+          "top3": 0.9651,
+          "noisyor": 0.9712
+        }
+      }
+    },
+    "pure_jsrt_74_valtest": {
+      "n_patients": 42,
+      "n_lesions": 42,
+      "recall_at_K": {
+        "K10": 0.8571,
+        "K20": 0.9048,
+        "K50": 0.9286
+      },
+      "patient_hit_top50": 0.9286,
+      "candidate_auc": {
+        "stage1": 0.9094,
+        "tda": 0.6155,
+        "fusion": 0.8544
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.5,
+            "0.25": 0.5476,
+            "0.5": 0.6429,
+            "1": 0.7381,
+            "2": 0.7619,
+            "4": 0.8095
+          },
+          "auc": 0.8757,
+          "froc_mean_3pt": 0.5635,
+          "rank_metric": 0.7937
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.0,
+            "0.25": 0.0238,
+            "0.5": 0.0238,
+            "1": 0.119,
+            "2": 0.1429,
+            "4": 0.3333
+          },
+          "auc": 0.9591,
+          "froc_mean_3pt": 0.0159,
+          "rank_metric": 0.7253
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.4524,
+            "0.25": 0.5714,
+            "0.5": 0.5952,
+            "1": 0.619,
+            "2": 0.7143,
+            "4": 0.7857
+          },
+          "auc": 0.901,
+          "froc_mean_3pt": 0.5397,
+          "rank_metric": 0.8186
+        }
+      },
+      "official_n_controls": 32,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.8757,
+          "top3": 0.9033,
+          "noisyor": 0.9025
+        },
+        "tda": {
+          "top1": 0.9591,
+          "top3": 0.9754,
+          "noisyor": 0.9769
+        },
+        "fusion": {
+          "top1": 0.901,
+          "top3": 0.9435,
+          "noisyor": 0.9568
+        }
+      }
+    },
+    "pure_jsrt_33_test_only": {
+      "n_patients": 19,
+      "n_lesions": 19,
+      "recall_at_K": {
+        "K10": 0.7895,
+        "K20": 0.8421,
+        "K50": 0.8947
+      },
+      "patient_hit_top50": 0.8947,
+      "candidate_auc": {
+        "stage1": 0.864,
+        "tda": 0.6387,
+        "fusion": 0.8207
+      },
+      "official_jsrt_plus_controls": {
+        "stage1": {
+          "sens": {
+            "0.125": 0.4211,
+            "0.25": 0.4211,
+            "0.5": 0.4737,
+            "1": 0.5789,
+            "2": 0.5789,
+            "4": 0.6316
+          },
+          "auc": 0.7632,
+          "froc_mean_3pt": 0.4386,
+          "rank_metric": 0.6777
+        },
+        "tda": {
+          "sens": {
+            "0.125": 0.0,
+            "0.25": 0.0,
+            "0.5": 0.0,
+            "1": 0.0526,
+            "2": 0.1053,
+            "4": 0.3684
+          },
+          "auc": 0.9361,
+          "froc_mean_3pt": 0.0,
+          "rank_metric": 0.7021
+        },
+        "fusion": {
+          "sens": {
+            "0.125": 0.3158,
+            "0.25": 0.4737,
+            "0.5": 0.4737,
+            "1": 0.4737,
+            "2": 0.5789,
+            "4": 0.6842
+          },
+          "auc": 0.8045,
+          "froc_mean_3pt": 0.4211,
+          "rank_metric": 0.7218
+        }
+      },
+      "official_n_controls": 14,
+      "mixed_patient_auc": {
+        "stage1": {
+          "top1": 0.7632,
+          "top3": 0.8045,
+          "noisyor": 0.7932
+        },
+        "tda": {
+          "top1": 0.9361,
+          "top3": 0.9398,
+          "noisyor": 0.9436
+        },
+        "fusion": {
+          "top1": 0.8045,
+          "top3": 0.8872,
+          "noisyor": 0.8985
+        }
+      }
+    }
+  },
+  "elapsed_seconds": 5.2
+}

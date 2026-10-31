@@ -2258,3 +2258,73 @@ Spacing dağılımı: JSRT p5/p50/p95 = **0,282 / 0,309 / 0,347** mm/px (%96'sı
 
 
 
+### V6.9.17 Tam İzole Saf JSRT Dış Doğrulaması — 149 Nodüllü + 93 Sağlıklı = 242 Saf JSRT (V6.9r)
+
+**Keşif (Metodolojik Kapanış):** Önceki `V6.9k / k4 / q` analizlerinde NODE21 meta verisinde yalnızca 149 nodüllü JSRT görüntüsünün `source_dataset = "jsrt"` olarak etiketlendiği, JSRT'nin sağlıklı kontrollerinin ise `node21_control` torbasına karıştırıldığı varsayılmıştı. Ancak `dataset_node21/cxr_images/original_data/images/*.mha` ham dosya başlıkları tarandığında, orijinal JSRT veri kümesinin benzersiz fiziksel imzası (`DimSize = 2048 2048`, `ElementSpacing = 0.17499999999999999 0.17499999999999999`, `ElementType = MET_USHORT`) sayesinde:
+* 149 `jsrt` nodüllü görüntünün **149'u (%100)**,
+* Diğer pozitif kaynakların (`chestxray14` 617, `padchest` 314, `openi` 54) **0'ı (%0)**,
+* `node21_control` havuzundaki **tam 93 sağlıklı görüntü** (`train: 61, val: 18, test: 14` — orijinal JSRT'nin 93 sağlıklı kontrolüne birebir karşılık gelen küme)
+eksiksiz tespit edildi (**149 nodüllü + 93 sağlıklı = 242 saf JSRT röntgeni**).
+
+**Hızlı Kontrol (`M5_nojsrt` + `stage2_nojsrt_tda_hgb_pure1600`, eğitim yok):** Mevcut `M5_nojsrt` modelinin eğitiminde `train` bölmesindeki 61 JSRT sağlıklı kontrolünden 14'ünün yer aldığı, `val+test` içindeki **32 gerçek JSRT sağlıklı kontrolün** ise hiç görülmediği doğrulandı. Bu 32 gerçek JSRT sağlıklı kontrol karşısında mevcut `M5_nojsrt` (saf 1.600) modeli:
+* **42 JSRT Nodüllü (`val+test`) vs 32 JSRT Sağlıklı (`val+test`) [N=74]:** 1. Aşama Top-1 AUC `0,8668` → Füzyon Top-1 AUC **`0,9003`** (`Noisy-OR 0,9442`, `rank_metric 0,7632 → 0,7824`).
+* **149 JSRT Nodüllü (tümü) vs 32 JSRT Sağlıklı (`val+test`) [N=181]:** 1. Aşama Top-1 AUC `0,8450` → Füzyon Top-1 AUC **`0,9283` (+8,3 puan)** (`Noisy-OR 0,9690`, `S@0.25: 0,4832 → 0,4966`, `S@0.50: 0,5302 → 0,5436`, `rank_metric: 0,7546 → 0,8204`).
+
+**Tam Temiz Deney (`V6.9r` — %100 JSRT-siz Eğitim ve 242 Saf JSRT Dış Testi):**
+Ana mimari ağırlıklarına (`M5_foundation.pt`, `stage2_foundation_tda_hgb_pure1600.joblib`) ve önceki `M5_nojsrt` ağırlıklarına hiç dokunulmadan (SHA-256 koşu öncesi/sonrası doğrulandı), ayrı ad alanında (`M5_nojsrt_full.pt`, `stage2_nojsrt_full_tda_hgb_pure1600.joblib`):
+1. `train` kümesinden hem **107 JSRT nodüllü** hem de **61 JSRT sağlıklı kontrol** tamamen çıkarıldı (**0 JSRT pozitif, 0 JSRT negatif**; `683 JSRT-dışı nodüllü + 683 JSRT-dışı sağlıklı = 1.366 hasta`).
+2. `val` z-referansı (`w = 0,55`) kalibrasyonundan hem **23 JSRT nodüllü** hem de **18 JSRT sağlıklı kontrol** tamamen çıkarıldı (`693 JSRT-dışı val hastası`).
+3. TDA PI aralıkları (`ranges`) yalnız JSRT-dışı eğitim adaylarından türetildi; 1. aşama (18 epoch, 5 donuk + 13 diferansiyel FT) ve 2. aşama (**saf 1.600 TDA**, HGB `max_iter=200, lr=0.08, balanced, rs=42`, `s1` yok) sıfırdan eğitildi.
+4. Dış test, modelin ne eğitimde ne de kalibrasyonda tek bir örneğini bile görmediği **149 JSRT Nodüllü + 93 JSRT Sağlıklı = 242 Saf JSRT (12-bit kayıpsız `.mha`)** kohortu üzerinde yapıldı:
+
+| Kohort ve Model | Recall@K10 | Recall@K20 | Recall@K50 | Katman | Hasta AUC (Top-1 / Resmî) | Hasta AUC (Noisy-OR) | S@0.125 | S@0.25 | S@0.50 | `rank_metric` |
+| :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **242 Saf JSRT (149 Poz + 93 Sağ)**<br>`V6.9r` (%100 Sıfır-Eğitim) | **0,8658** | **0,8926** | **0,9530** | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8488<br>**0,9704**<br>**0,9197 (+7,1p)** | 0,8721<br>**0,9789**<br>**0,9652 (+9,3p)** | 0,4295<br>0,0067<br>**0,4362** | 0,4966<br>0,0268<br>**0,5235 (+2,7p)** | 0,5839<br>0,0604<br>**0,5839** | 0,7608<br>0,7345<br>**0,8206 (+6,0p)** |
+| **74 Saf JSRT (`val+test`: 42 Poz + 32 Sağ)**<br>`V6.9r` (%100 Sıfır-Eğitim) | 0,8571 | 0,8810 | 0,9048 | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8527<br>**0,9747**<br>**0,9077 (+5,5p)** | 0,8780<br>**0,9695**<br>**0,9621 (+8,4p)** | 0,4048<br>0,0000<br>**0,4286** | 0,4524<br>0,0000<br>0,4286 | 0,5714<br>0,0476<br>0,5476 | 0,7526<br>0,7310<br>**0,7879 (+3,5p)** |
+| **74 Saf JSRT (`val+test`: 42 Poz + 32 Sağ)**<br>Ana Model (Salt-Okunur Kıyas) | 0,8571 | 0,9048 | 0,9286 | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8757<br>0,9591<br>0,9010 | 0,9025<br>0,9769<br>0,9568 | 0,5000<br>0,0000<br>0,4524 | 0,5476<br>0,0238<br>0,5714 | 0,6429<br>0,0238<br>0,5952 | 0,7937<br>0,7253<br>0,8186 |
+| **149 JSRT Poz + 250 JSRT-dışı Val Kontrol**<br>`V6.9r` (`V6.9k4` Protokol Kıyası) | 0,8658 | 0,8926 | 0,9530 | Yalnız 1. Aşama<br>Yalnız 2. Aşama (Saf 1.600 TDA)<br>**Füzyon (`w=0,55`)** | 0,8611<br>0,9640<br>**0,9438** | 0,8782<br>0,9844<br>**0,9823** | 0,4631<br>0,0201<br>**0,4899** | 0,5101<br>0,0336<br>**0,5638** | 0,6107<br>0,1208<br>**0,6174** | 0,7733<br>0,7314<br>**0,8488** |
+
+**Temel Bulgular (`V6.9r`):**
+1. 🟢 **"Hepsi hastalıklı / karma kontrol havuzu" yanlılığı tamamen ortadan kalktı:** 149 JSRT nodüllü ve 93 orijinal JSRT sağlıklı kontrolünden oluşan **242 hastalık %100 saf Japonya dış kohortunda** model hiçbir yerel örnek görmeden **ilk 10 kutuda %86,6, ilk 50 kutuda %95,3** yakalama (`142/149` tümör), **`0,9197` Top-1 (`0,9652` Noisy-OR) Hasta AUC**, **`%52,4` S@0.25**, **`%58,4` S@0.50** ve **`0,8206` `rank_metric`** üretti.
+2. 🔑 **Eğitimdeki 14 JSRT sağlıklı kontrolünü de çıkarmak JSRT yakalama oranını artırdı:** Önceki `V6.9k/k4`'te eğitim negatifleri arasında kalan 14 JSRT sağlıklı kontrolü çıkarıldığında, 1. aşamanın JSRT üzerindeki yakalama başarısı `K10: %85,2 → %86,6` ve `K50: %94,0 → %95,3` düzeyine yükseldi.
+3. 🏆 **Saf dış hastane kohortunda 2. aşama Lokal TDA'nın devasa katkısı:** 242 saf JSRT hastasında 1. aşama tek başına `0,8488` Top-1 AUC ve `%49,7` S@0.25'te kalırken, **yalnız 2. aşama saf 1.600 TDA `0,9704` Top-1 (`0,9789` Noisy-OR) hasta AUC** vermekte; iki aşama birleştiğinde (`w=0,55`) **Hasta AUC `+7,1 puan` (`0,8488 → 0,9197`)**, **Noisy-OR AUC `+9,3 puan` (`0,8721 → 0,9652`)**, **S@0.25 kutu duyarlılığı `+2,7 puan` (`%49,7 → %52,4`)** ve **`rank_metric` `+6,0 puan` (`0,7608 → 0,8206`)** sıçramaktadır!
+4. ⚖️ **Hiçbir modelin eğitimde görmediği 74 (`val+test`) Saf JSRT alt kümesinde kaynak ezberi yok:** `V6.9r` (JSRT'yi hiç görmeyen model) `0,9077` Top-1 / `0,9621` Noisy-OR Füzyon AUC üretirken, eğitimde 168 JSRT görüntüsü gören ana model `0,9010` Top-1 / `0,9568` Noisy-OR üretmektedir (`Δ = +0,0067`).
+* **Kayıt:** [v6_9r_true_jsrt_external.json](artifacts/v6_two_stage/v6_9r_true_jsrt_external.json) · [v6_9r_true_jsrt_external.py](pipelines/v6_two_stage/v6_9r_true_jsrt_external.py)
+
+### V6.9.18 TDA ağırlığı ablasyonu — `w_tda` ∈ [0,40 … 0,70] (V6.9s)
+
+Yeniden eğitim yok; hazır önbellekler (`_v6_9l_cache` Val, `_v6_9m_test_cache` Test, `_v6_9r_cache` JSRT) ve kilitli 2. aşama paketleri. Kutu içi doğrusal birleşim `(1−w_tda)·z(s1) + w_tda·z(p_TDA)`, z-referansı dondurulmuş.
+
+| Kohort | `w_tda` | Hasta AUC (Top-1) | S@0.25 | S@0.50 | `rank_metric` | Birleşik 1. kutu isabeti (pozitiflerde) | 1. kutunun 1. aşama sırası ≥ 20 olan görüntü oranı |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| NODE21 Val (734) | 0,40 | 0,9826 | 0,7662 | 0,8009 | 0,9285 | %79,1 | %6,0 |
+| **NODE21 Val (734)** | **0,45 (kilitli)** | **0,9836** | **0,7706** | **0,7965** | **0,9304** | %80,2 | %9,1 |
+| NODE21 Val (734) | 0,50 | 0,9850 | 0,7706 | 0,7965 | 0,9314 | %80,2 | %12,3 |
+| NODE21 Val (734) | 0,55 | 0,9864 | 0,7619 | 0,7835 | 0,9303 | %80,2 | %14,3 |
+| NODE21 Val (734) | 0,60 | 0,9877 | 0,7446 | 0,7879 | 0,9269 | %78,5 | %17,3 |
+| NODE21 Val (734) | 0,65 | 0,9884 | 0,7316 | 0,7749 | 0,9242 | %73,3 | %20,2 |
+| NODE21 Val (734) | 0,70 | 0,9879 | 0,6926 | 0,7316 | 0,9141 | %70,3 | %24,4 |
+| NODE21 Test (734, kilitli) | 0,40 | 0,9629 | 0,7205 | 0,7642 | 0,9023 | %70,3 | %7,5 |
+| **NODE21 Test (734, kilitli)** | **0,45 (kilitli)** | **0,9661** | **0,7205** | **0,7642** | **0,9047** | %69,2 | %10,3 |
+| NODE21 Test (734, kilitli) | 0,50 | 0,9692 | 0,7162 | 0,7598 | 0,9060 | %69,2 | %14,3 |
+| NODE21 Test (734, kilitli) | 0,55 | 0,9727 | 0,7031 | 0,7555 | 0,9053 | %67,4 | %17,2 |
+| NODE21 Test (734, kilitli) | 0,60 | 0,9761 | 0,6900 | 0,7424 | 0,9046 | %67,4 | %19,6 |
+| NODE21 Test (734, kilitli) | 0,65 | 0,9781 | 0,6550 | 0,7118 | 0,8973 | %63,9 | %22,9 |
+| NODE21 Test (734, kilitli) | 0,70 | 0,9779 | 0,6157 | 0,6725 | 0,8873 | %62,2 | %26,0 |
+| 242 Saf JSRT | 0,40 | 0,9102 | 0,5235 | 0,5839 | 0,8135 | %53,7 | %3,7 |
+| **242 Saf JSRT** | **0,45 (kilitli)** | **0,9197** | **0,5235** | **0,5839** | **0,8206** | %54,4 | %5,4 |
+| 242 Saf JSRT | 0,50 | 0,9289 | 0,5302 | 0,6040 | 0,8292 | %55,0 | %7,4 |
+| 242 Saf JSRT | 0,55 | 0,9383 | 0,5369 | 0,6040 | 0,8380 | %56,4 | %9,1 |
+| 242 Saf JSRT | 0,60 | 0,9466 | 0,5034 | 0,5906 | 0,8358 | %55,7 | %10,3 |
+| 242 Saf JSRT | 0,65 | 0,9522 | 0,4899 | 0,5705 | 0,8366 | %53,7 | %11,6 |
+| 242 Saf JSRT | 0,70 | 0,9550 | 0,4966 | 0,5436 | 0,8404 | %50,3 | %13,2 |
+
+**Mekanizma:** TDA kutuların koordinatını değiştirmez; yalnızca sabit aday havuzundaki (görüntü başına ortalama 46–50 kutu) **sıralamayı** değiştirir. Bir görüntüde en çok 1 (nadiren birkaç) gerçek nodüle karşılık ~45–49 sahte aday vardır. `w_tda` büyüdükçe 1. aşamanın ısı haritası freni gevşer; 1. aşamada alt sıralarda (rank ≥ 20) kalan ve TDA'dan yüksek puan alan sahte adaylar birleşik 1. sıraya sıçrar (yorum: bunlar şekilce yuvarlak damar/kaburga kesitleri olabilir; kutu türü elle doğrulanmadı). Ölçülen: NODE21 Test'te birleşik 1. kutunun 1. aşama sırasının ≥ 20 olduğu görüntü oranı %10,3 (`w_tda`=0,45) → %26,0 (0,70), pozitiflerde 1. kutu isabeti %69,2 → %62,2, **S@0.25 %72,0 → %61,6**, rank_metric 0,9047 → 0,8873; buna karşın hasta ayrımı (TDA'nın ağırlığı) artar: **Hasta AUC 0,966 → 0,978**.
+
+**Bulgular:**
+1. 🔼 **Hasta AUC `w_tda` ile üç kohortta da neredeyse tekdüze artar** (Test 0,966 → 0,978; JSRT 0,920 → 0,955; Val tepe 0,65'te 0,988).
+2. 🔽 **Kutu ölçütleri (S@0.25 / S@0.50 / `rank_metric`) NODE21'de `w_tda` ≈ 0,45–0,50'de tepe yapar, ≥ 0,60'ta düşer** (Test S@0.25: %72,1 → %69,0 (0,60) → %65,5 (0,65) → %61,6 (0,70)).
+3. ⚖️ **İki ölçüt aynı anda maksimize edilmez; kilitli 0,45 bir ödünleşimdir.** Kutu isabeti tarafında Val/Test tepe bölgesinde, hasta AUC'de ise tavanın altında (0,50 → Test AUC +0,0031, Val rank_metric +0,0010, Test rank_metric +0,0013, Test S@0.25 −0,0043: fark gürültü düzeyinde). 242 JSRT'de 0,55 en iyi kutu ölçütlerini verir (S@0.25 %53,7, S@0.50 %60,4) ama NODE21 Val/Test'te S@0.25 düşer; seçim dış kümeye göre yapılmamıştır.
+4. 🔒 **Kilitli `w_tda = 0,45` (w_s1 = 0,55) korunur**; bu kayıt yalnız ablasyondur, hiçbir ağırlık/model değiştirilmedi.
+
+* **Kayıt:** [v6_9s_weight_sweep.json](artifacts/v6_two_stage/v6_9s_weight_sweep.json) · [v6_9s_weight_sweep.py](pipelines/v6_two_stage/v6_9s_weight_sweep.py)
