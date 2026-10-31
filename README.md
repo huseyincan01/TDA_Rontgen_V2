@@ -38,7 +38,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 | **Val'de ölçülen (seçilmiş) sonuç** | Füzyon AUC **0,9879** · rank_metric **0,9131** (56 px) · **0,9185** (onarılmış yarıçap, V6.8) — val'de 296 değerlendirme yapıldı ⇒ **hafif iyimser** |
 | **Lokalizasyon (M5_foundation, val)** | Yalnız Aşama-1: Recall@K20 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
 | **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
-| **Harici (JSRT, eğitimden izole)** | Saf 1.600 ile **0,9316 (top1) / 0,9749 (nOR) AUC · %94,0 Recall@50** — LOSO dış test, 149 hasta ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7) |
+| **Harici (JSRT, eğitimden izole)** | **242 saf JSRT (149 nodüllü + 93 sağlıklı, V6.9r):** Saf 1.600 ile **%86,6 Recall@10 · %95,3 Recall@50 · 0,9197 (top1) / 0,9652 (nOR) AUC · S@0.25 %52,4 · S@0.50 %58,4** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.8) · *(149 JSRT + 250 val kontrol, V6.9k4: 0,9316 top1 / 0,9749 nOR)* |
 | **Gönderim modeli** | 4.882 hastanın tamamıyla eğitildi → **NODE21'de değerlendirilemez** |
 | **Konteyner** | `submission_docker/` · çevrimdışı (`--network=none`) test edildi · non-root · CUDA 13,9 GB / CPU 3,51 GB · ⚠️ **stage-2 hâlâ 1.604** (tam-veri bundle'ı yenilenmedi; bkz. [roadmap.md](roadmap.md) TODO) |
 
@@ -72,12 +72,14 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 
 ---
 
-## Dallar
+## Dallar ve Etiketler (Tags)
 
-| Dal | Anlamı |
+| Dal / Etiket | Anlamı |
 | :--- | :--- |
-| `main` | **v3 — kapandı, yayına hazır** (`v3-publication-ready`) |
-| `exp/v4-directional-radial` | **aktif dal** — v4'ten başlayıp **V6.9'a** kadar tüm çalışma (V5 fiziksel kanonikleştirme, V6 iki aşamalı lokalizasyon, V6.6 CXR vakıf omurgası, V6.7 tam veri + Docker, V6.8 kanıt boşlukları, V6.9 mühürlü test onayı + sızıntı denetimi) |
+| `main` (`v6.9-two-stage-final`) | **Ana dal (nihai durum)** — v1'den **V6.9s'ye** tüm çalışma (V5 fiziksel kanonikleştirme, V6 iki aşamalı lokalizasyon, V6.6 CXR vakıf omurgası, V6.7 tam veri + Docker, V6.8 kanıt boşlukları, V6.9 mühürlü test + sızıntı denetimi + 242 saf JSRT dış testi + ağırlık ablasyonu) |
+| `exp/v4-directional-radial` | Geliştirme dalı (`main` ile eşitlendi) |
+| `v5.3-five-zone` *(tag)* | Eski 5-zonlu global TDA döneminin (V4/V5.1–V5.3) son commit'i (`914c065`) |
+| `v3-publication-ready` *(tag)* | v3 5-zonlu NODE21 iç değerlendirme kapanışı (`0ae2617`) |
 
 ---
 
