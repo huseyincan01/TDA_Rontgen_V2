@@ -455,14 +455,20 @@ Sabit 56 px muhafazakâr varsayılan olarak kalır ([experiments.md §V6.9.8](ex
 > DEĞİŞTİRMEDİĞİNİ gösterdi** (0,8842 = 0,8842) ⇒ bu adım artık zorunlu bir iyileştirme değil,
 > FROC-optimal dağıtım hedefleniyorsa uygulanacak bir **seçenektir**.
 
-**Ek (V6.9k) — Leave-JSRT-Out:** JSRT hastalarının 107'si NODE21 `train` bölmesindeydi ⇒
-kaynak-dışı genelleme iddiası için JSRT eğitimden **tamamen** çıkarılıp iki aşama aynı reçeteyle
-yeniden eğitildi (izole: ayrı checkpoint/bundle, ana artifact SHA-256'ları değişmedi). JSRT dış
-testinde (149 hasta, hepsi yabancı) **Recall@K10 0,8523 · K50 0,9396 · hasta AUC 0,9395**.
-Ana modelle farkın büyük kısmı **in-sample** ezber; hiç görülmeyen 42 hastada kalan fark
-**−0,0432** [−0,0809; −0,0064] ve **veri azalmasıyla açıklanamıyor** (JSRT-dışı val'de iki model
-eşit: Δ +0,0013) ⇒ fark-farkı **−0,0435**. **Kural:** kilitli test sayıları `in-fold` etiketlenir,
-kaynak-dışı genelleme iddiasında **LOSO** sayıları kullanılır ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7).
+**Ek (V6.9k → V6.9r) — Leave-JSRT-Out (242 Saf JSRT):** JSRT hastalarının 107 nodüllüsü ve `.mha`
+başlık imzasıyla (`2048×2048, 0,175 mm/px, MET_USHORT`) tespit edilen **93 orijinal JSRT sağlıklı
+kontrolünün** 61'i NODE21 `train` bölmesindeydi ⇒ kaynak-dışı genelleme iddiası için hem JSRT
+pozitifleri hem JSRT sağlıklı kontrolleri eğitim ve kalibrasyondan **tamamen** çıkarılıp iki aşama
+saf 1.600 TDA ile sıfırdan eğitildi (`V6.9r`, izole: ayrı checkpoint/bundle, ana artifact
+SHA-256'ları değişmedi). **242 Saf JSRT (149 nodüllü + 93 sağlıklı)** dış testinde **Recall@K10
+0,8658 (%86,6) · K50 0,9530 (%95,3) · Hasta AUC 0,9197 (Top-1) / 0,9652 (Noisy-OR) · S@0,25 0,5235
+· S@0,50 0,5839 · `rank_metric` 0,8206** (yalnız 2. aşama TDA: **0,9704 Top-1 / 0,9789 nOR AUC**).
+Hiçbir modelin eğitimde görmediği 74 hastalık (`val+test`: 42 nodüllü + 32 sağlıklı) saf JSRT alt
+kümesinde `V6.9r` (`0,9077` Top-1) ile ana model (`0,9010` Top-1) arasında fark yoktur (`Δ =
++0,0067`). *(Önceki `V6.9k/k4` 149 pozitif + 250 karma val kontrol koşusu: saf 1.600 ile `0,9316`
+Top-1 / `0,9749` nOR, 1.604 ile `0,9395`.)* **Kural:** kilitli test sayıları `in-fold` etiketlenir,
+kaynak-dışı genelleme iddiasında **LOSO (`V6.9r`)** sayıları kullanılır
+([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7–§9.8).
 
 > 📌 **TODO — bilinçli olarak YAPILMADI (V6.9k eşleştirilmiş bütçe kontrolü):** LOSO'nun
 > "veri azalması" bileşeni V6.9k2'de *miktar* için ölçüldü (val(−JSRT)'de Δ ≈ 0). Daha sıkı

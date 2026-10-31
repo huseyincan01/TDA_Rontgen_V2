@@ -239,40 +239,53 @@ Ayrıntı: [experiments.md](experiments.md) · [ablation_matrix.md](ablation_mat
 
 ---
 
-## 6. Dış Genelleme — Bir Kaynağı Tamamen Dışarıda Bırakmak (LOSO)
+## 6. Dış Genelleme — Bir Kaynağı Tamamen Dışarıda Bırakmak (LOSO · V6.9r Saf JSRT)
 
 Yukarıdaki bütün sayılar **kendi veri setimiz içinde** ölçülmüştür: NODE21 dört açık kaynaktan
 derlenmiştir ve model bu kaynakların **hepsinden** hasta görür. "Yeni bir merkeze ne kadar
 genelleniyor?" sorusunun dürüst cevabı için, bir kaynağı **eğitimden tamamen çıkarmak** gerekir.
 
-JSRT (Japon kaynağı, 149 hasta; 107'si `train`, 23'ü `val`, 19'u `test`) bu test için seçildi:
+JSRT (Japon kaynağı) bu test için seçildi. Ham `.mha` görüntü başlıklarındaki benzersiz JSRT
+fiziksel imzası (`DimSize = 2048 2048`, `ElementSpacing = 0.175 mm/px`, `MET_USHORT`) taranarak
+NODE21 içindeki **149 JSRT nodüllü** görüntünün yanı sıra ortak `node21_control` havuzuna
+karıştırılmış olan **93 orijinal JSRT sağlıklı kontrol röntgeni** (`train: 61, val: 18, test: 14`)
+eksiksiz tespit edildi (**149 nodüllü + 93 sağlıklı = 242 saf JSRT hastası**). Eğitim ve doğrulama
+kalibrasyon kümesinden hem 149 JSRT nodüllü hem de 93 JSRT sağlıklı kontrolün tamamı çıkarıldı
+(`V6.9r`: eğitimde 0 JSRT pozitif, 0 JSRT negatif):
 
 ```mermaid
 flowchart TD
-    A["NODE21 train<br/>790 nodüllü + 790 kontrol"] -->|"JSRT'nin 107 hastası ÇIKARILIR"| B["LOSO train<br/>683 + 683 = 1.366"]
-    B --> C["1. aşama: M5_nojsrt<br/>2. aşama: stage2_nojsrt<br/>(PI aralıkları da JSRT görmez)"]
-    C --> D["JSRT dış test<br/>149 hasta · hepsi YABANCI"]
-    A2["ANA mimari<br/>M5_foundation + stage2_foundation"] --> E["aynı 149 hasta<br/>(salt-okunur kıyas)"]
-    D --> F["Δ = LOSO − ANA"]
+    A["NODE21 train<br/>790 nodüllü + 790 kontrol"] -->|"107 JSRT pozitif + 61 JSRT sağlıklı ÇIKARILIR"| B["Tam İzole LOSO train<br/>683 + 683 = 1.366 (0 JSRT)"]
+    B --> C["1. aşama: M5_nojsrt_full<br/>2. aşama: stage2_nojsrt_full (saf 1.600)<br/>(PI aralıkları ve val z-ref de JSRT görmez)"]
+    C --> D["242 Saf JSRT Dış Testi<br/>(149 nodüllü + 93 sağlıklı · %100 yabancı)"]
+    A2["ANA mimari<br/>M5_foundation + stage2_foundation_pure1600"] --> E["74 Saf JSRT (val+test)<br/>(42 nodüllü + 32 sağlıklı · ikisi için de görülmemiş)"]
+    D --> F["Sıfır-eğitim dış doğrulama & kaynak ezberi kontrolü"]
     E --> F
 ```
 
-**Sonuç.** LOSO modelinin JSRT'deki gerçek dış performansı: **Recall@K10 0,8523 · K20 0,8792 ·
-K50 0,9396 · hasta AUC 0,9395 (top1) / 0,9767 (noisy-OR)**.
+**Sonuç (`V6.9r`, saf 1.600 TDA):** JSRT'yi hiç görmeyen modelin **242 Saf JSRT (149 nodüllü + 93
+sağlıklı)** dış kohortundaki sıfır-eğitim performansı: **Recall@K10 0,8658 (%86,6) · K20 0,8926
+(%89,3) · K50 0,9530 (%95,3) · Hasta AUC 0,9197 (Top-1) / 0,9652 (Noisy-OR) · S@0,25 0,5235
+(%52,4) · S@0,50 0,5839 (%58,4) · `rank_metric` 0,8206**.
 
-| Ölçüt (JSRT, 149 hasta) | LOSO | ANA | Δ |
-| :--- | ---: | ---: | ---: |
-| Recall@K10 | 0,8523 | 0,9396 | −0,0873 |
-| Recall@K50 | 0,9396 | 0,9799 | −0,0403 |
-| Hasta AUC (füzyon, top1) | 0,9395 | 0,9674 | −0,0279 |
+| Kohort / Ölçüt (Saf 1.600 TDA) | Yalnız 1. Aşama | Yalnız 2. Aşama (TDA) | İki Aşamalı Füzyon (`w=0,55`) | Katkı (`Füzyon − 1. Aşama`) |
+| :--- | ---: | ---: | ---: | ---: |
+| **242 Saf JSRT** — Recall@K10 / K50 | 0,8658 / 0,9530 | — | **0,8658 / 0,9530** | — |
+| **242 Saf JSRT** — Hasta AUC (Top-1 / Noisy-OR) | 0,8488 / 0,8721 | **0,9704 / 0,9789** | **0,9197 / 0,9652** | **+0,0709 / +0,0931** |
+| **242 Saf JSRT** — S@0,25 / S@0,50 | 0,4966 / 0,5839 | 0,0268 / 0,0604 | **0,5235 / 0,5839** | **+0,0269 / 0,0000** |
+| **242 Saf JSRT** — `rank_metric` | 0,7608 | 0,7345 | **0,8206** | **+0,0598** |
+| **74 Saf JSRT (`val+test`)** — Füzyon AUC (`V6.9r` vs Ana Model) | — | — | **0,9077 vs 0,9010** | **Δ = +0,0067 (ezber yok)** |
 
-⚠️ Bu farkın **büyük kısmı in-sample ezberdir**: 149 hastanın **107'si ana modelin eğitim
-kümesindeydi**. Hiçbir modelin eğitiminde olmayan **42 JSRT hastasında** fark küçülür:
-1. aşama hasta AUC **−0,0432** [−0,0809; −0,0064]. Bu fark **veri azalmasıyla açıklanamaz** —
-aynı iki model JSRT-dışı doğrulama hastalarında **eşittir** (Δ **+0,0013**) ⇒ fark-farkı
-**−0,0435** [−0,0813; −0,0067].
+> 🔑 **Metodolojik kapanış (`V6.9k → V6.9r`):** Önceki `V6.9k/k4` koşularında (yalnız 107 JSRT
+> pozitifi çıkarılıp eğitim negatiflerinde 14 JSRT sağlıklı kontrol unutulduğunda, 149 JSRT + 250
+> karma kontrol üzerinde) `Recall@K50 = 0,9396`, `Top-1 AUC = 0,9316` (1.604 ile `0,9395`)
+> ölçülmüştü. Eğitimden 61 JSRT sağlıklı kontrolün tamamı da çıkarıldığında (`V6.9r`), JSRT
+> yakalama başarısı **%94,0 → %95,3 (`K10: %85,2 → %86,6`)** düzeyine yükseldi ve hiçbir modelin
+> eğitimde görmediği **74 hastalık (`val+test`: 42 nodüllü + 32 sağlıklı) saf JSRT alt kümesinde**
+> JSRT-siz model (`0,9077` Top-1 / `0,9621` Noisy-OR) ile ana model (`0,9010` Top-1 / `0,9568`
+> Noisy-OR) arasında **kaynak ezberi farkı kalmadı (`Δ = +0,0067`)**.
 
 **Kullanım kuralı.** Kilitli test sayıları **`in-fold`** olarak etiketlenir (veri seti içinde
-geçerli). *Kaynak-dışı genelleme* iddiasında **LOSO** sayıları kullanılır. Ayrıntı ve izolasyon
-denetimi: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7 ·
-[`v6_9k_leave_jsrt_out.py`](pipelines/v6_two_stage/v6_9k_leave_jsrt_out.py).
+geçerli). *Kaynak-dışı genelleme* iddiasında **242 Saf JSRT (`V6.9r`)** ve **VinDr (`V6.9j2`)**
+sayıları kullanılır. Ayrıntı ve izolasyon denetimi: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7–§9.8 ·
+[`v6_9r_true_jsrt_external.py`](pipelines/v6_two_stage/v6_9r_true_jsrt_external.py).

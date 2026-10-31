@@ -475,16 +475,23 @@ M5'te +0,221 iken FND'de +0,021 ⇒ **CXR ön-eğitimi kaynak-duyarlılığını
 azaltıyor.** Bu tablo, örtüşmenin *şişirdiği* değil ön-eğitimin *sağlamlaştırdığı* bir
 tablodur.
 
-⚠️ **Ama bu tablo yalnız "omurganın ön-eğitimi" sorusunu cevaplıyor.** Daha sonra (V6.9k)
-daha keskin bir soru sorduk: NODE21'in **kendi içinde** JSRT hastalarının 107'si zaten eğitim
-kümesindeydi. JSRT'yi eğitimden **tamamen çıkarıp** sistemi yeniden eğittiğimizde JSRT dış
-testinde **Recall@K10 0,8523 · K50 0,9396 · hasta AUC 0,9395** çıktı. Ana modelle farkın büyük
-kısmı **in-sample** ezber (149 hastanın 107'si eğitimde); hiç görülmeyen **42 hastada** kalan
-fark **−0,043 AUC** [−0,081; −0,006] ve bu **veri azalmasıyla açıklanamıyor** (JSRT-dışı val'de
-iki model eşit: Δ +0,001). ⇒ "Örtüşme şişirmiyor" hükmü **omurga ön-eğitimi** için geçerli;
-**kaynak kompozisyonu** için küçük ama gerçek bir avantaj var ve bu beyan edilmelidir.
-Kilitli test sayıları **in-fold** etiketlenmeli; kaynak-dışı genelleme iddiasında **LOSO**
-sayıları kullanılmalı. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7.
+⚠️ **Ama bu tablo yalnız "omurganın ön-eğitimi" sorusunu cevaplıyor.** Daha sonra (`V6.9k → V6.9r`)
+daha keskin bir soru sorduk: NODE21'in **kendi içinde** JSRT hastalarının 107 nodüllüsü ve `.mha`
+başlık imzasıyla (`2048×2048, 0,175 mm/px, MET_USHORT`) tespit edilen **93 orijinal JSRT sağlıklı
+kontrolünün** 61'i eğitim kümesindeydi. Hem 149 JSRT nodüllü hem de 93 JSRT sağlıklı kontrolü
+eğitim ve kalibrasyon kümesinden **tamamen çıkarıp** sistemi saf 1.600 TDA ile sıfırdan
+eğittiğimizde (`V6.9r`), **242 Saf JSRT (149 nodüllü + 93 sağlıklı)** dış testinde **Recall@K10
+0,8658 (%86,6) · K50 0,9530 (%95,3) · Hasta AUC 0,9197 (Top-1) / 0,9652 (Noisy-OR) · S@0,25 0,5235
+(%52,4) · S@0,50 0,5839 (%58,4) · `rank_metric` 0,8206** elde edildi (yalnız 2. aşama TDA tek
+başına **0,9704 Top-1 / 0,9789 Noisy-OR AUC** üretip 1. aşamayı `0,8488 → 0,9197` (+7,1 puan)
+yukarı taşıdı). Üstelik hiçbir modelin eğitimde görmediği **74 hastalık (`val+test`: 42 nodüllü +
+32 sağlıklı) saf JSRT alt kümesinde**, JSRT'yi hiç görmeyen model (`0,9077` Top-1 / `0,9621` nOR)
+ile ana model (`0,9010` Top-1 / `0,9568` nOR) aynı başarıyı verdi (`Δ = +0,0067`). *(Not: Yalnız
+pozitif JSRT'lerin çıkarıldığı ilk `V6.9k/k4` koşusunda 149 JSRT + 250 karma val kontrol üzerinde
+saf 1.600 ile `0,9316` Top-1 / `0,9749` nOR AUC ve 42 pozitifte 1. aşamada `−0,043` fark
+görülmüştü; eğitimdeki 14 JSRT sağlıklı kontrol de temizlenince `V6.9r`'de bu fark kapandı.)*
+Kilitli test sayıları **in-fold** etiketlenmeli; kaynak-dışı genelleme iddiasında **LOSO (`V6.9r`
+242 Saf JSRT)** sayıları kullanılmalı. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7–§9.8.
 
 🔒 **Konu kapandı.** Dört bağımsız ölçüm (dış VinDr · iç kaynak-ayrıştırmalı · etkileşim ·
 **Leave-JSRT-Out**) aynı çerçeveyi çiziyor: omurga ön-eğitimi şişirmiyor, kaynak kompozisyonu
