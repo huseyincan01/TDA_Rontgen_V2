@@ -2328,3 +2328,109 @@ Yeniden eğitim yok; hazır önbellekler (`_v6_9l_cache` Val, `_v6_9m_test_cache
 4. 🔒 **Kilitli `w_tda = 0,45` (w_s1 = 0,55) korunur**; bu kayıt yalnız ablasyondur, hiçbir ağırlık/model değiştirilmedi.
 
 * **Kayıt:** [v6_9s_weight_sweep.json](artifacts/v6_two_stage/v6_9s_weight_sweep.json) · [v6_9s_weight_sweep.py](pipelines/v6_two_stage/v6_9s_weight_sweep.py)
+
+
+### V6.9.19 242 Saf JSRT Saha Kalibrasyonu — sıfır-eğitim → saha kalibrasyonu simetrisi (V6.9t)
+
+**Eksik olan simetri.** Harici Vietnam verisinde (VinDr-CXR, 8-bit JPEG) hem sıfır-eğitim hem
+**çift-katmanlı saha kalibrasyonu** ölçülmüştü (§V6.9.11: **0,6376 → 0,7935** AUC). Yüksek kaliteli
+harici Japonya verisinde (§V6.9.17, 242 Saf JSRT) ise **yalnız sıfır-eğitim** vardı. Bu deney, aynı
+hastane-içi etiketleme bütçesiyle JSRT'ye adapte olunduğunda ne olduğunu ölçer ⇒ iki harici veri
+için protokol simetrisi tamamlanır.
+
+**Protokol — V6.9j2 ile birebir** ([v6_9t_jsrt_calibration.py](pipelines/v6_two_stage/v6_9t_jsrt_calibration.py)):
+
+* Model: **`M5_nojsrt_full`** (JSRT'yi hiç görmemiş 1. aşama) + **`stage2_nojsrt_full_tda_hgb_pure1600`**.
+* **5-fold stratified CV**: test katmanına asla dokunulmaz; her fold'da model **`deepcopy` ile
+  sıfırlanır** (ağırlıklar dondurulmuş başlangıçtan yüklenir) ⇒ fold'lar arası sızıntı yok.
+* **N ∈ {0,10,20,40,80,120,160}** etiketli görüntü (yarısı nodüllü, yarısı sağlıklı). N=160'ta
+  eğitim katmanında 93 sağlıklının yalnız ~74'ü bulunduğu için gerçek kalibrasyon kümesi
+  **80 pozitif + 74/75 sağlıklı** olur.
+* **Kol 1 — yalnız 2. katman:** saf 1.600 TDA üzerinde LR (görüntü etiketi) + sıfır-eğitim öncülüyle
+  **shrinkage** `p = α·p_LR + (1−α)·p_tda0`, `α = N/(N+40)`.
+* **Kol 2 — yalnız 1. katman:** omurga **donuk**, yalnız neck+CenterNet kafası ince ayarı
+  (Gaussian focal + sıfır-eğitim öncül çapası, 5 epoch, lr 1e-4); **aday kutuları sabit**
+  (V6.9j2 tasarım kararı) ⇒ yalnız sabit merkezlerde yeniden puanlama (1,0 ölçek + flip TTA).
+* **Kol 3 — çift katmanlı:** FT edilmiş 1. katman skoru + kalibre edilmiş TDA.
+* **Füzyon sabit ve hiçbir veride yeniden öğrenilmez:** `S = σ(0,55·z(s1) + 0,45·z(p_TDA))`,
+  z-referansı JSRT-dışı NODE21 val'den dondurulmuş.
+* **Hız:** 1.600 TDA özellikleri `_v6_9r_cache.npz`'de hazır (GUDHI tekrar çalışmadı); donuk omurga
+  çıktıları (c2..c5) float16 RAM önbelleğinde ⇒ 242 görüntü × 7 N × 5 fold **533 saniyede** bitti.
+
+**Doğrulama (harness denetimi).** Aynı betik, donuk model + **3 ölçekli TTA** ile N=0 satırını
+ürettiğinde yayımlanmış V6.9r sayılarını **birebir** verdi: AUC **0,9197** · Noisy-OR **0,9652** ·
+S@0.25 **0,5235** · S@0.50 **0,5839** · `rank_metric` **0,8206**. Koordinat eşlemesi denetimi:
+3-ölçek TTA skoru ile 1,0+flip skoru korelasyonu **0,965**.
+
+> ⚠️ **Ölçüm yolu asimetrisi (dürüstlük notu).** Yayımlanmış N=0 satırı **3 ölçekli TTA** kullanır;
+> Kol 2/3 ise sabit merkezleri **1,0 ölçek + flip** ile yeniden puanlar (V6.9j2'de de aynıydı).
+> Bu yüzden kalibrasyon kazanımını iki tabanla veriyoruz: **eşleşmiş taban** (donuk model,
+> 1,0+flip) **0,9006** ve **yayımlanmış taban** (donuk model, 3-TTA) **0,9197**. Kol 2/3 sayıları
+> 3 ölçekli TTA almadığı için kazanımlar **alt sınır**dır.
+
+**Havuzlanmış out-of-fold (OOF) sonuçlar — 242 hastanın tamamı, her hasta tam bir kez test fold'unda:**
+
+| Kol | N | Hasta AUC (Top-1) | Noisy-OR | S@0.125 | S@0.25 | S@0.50 | `rank_metric` |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Kol 1** (yalnız 2. katman) | 0 | 0,9006 | 0,9559 | 0,4228 | 0,4899 | 0,5638 | 0,7979 |
+| | 10 | 0,9158 | 0,9687 | 0,4295 | 0,4966 | 0,5839 | 0,8110 |
+| | 20 | 0,9158 | 0,9693 | 0,4027 | 0,4966 | 0,5906 | 0,8110 |
+| | 40 | 0,9265 | 0,9777 | 0,4228 | 0,4899 | 0,5772 | 0,8174 |
+| | 80 | 0,9370 | 0,9825 | 0,4094 | 0,5101 | 0,5906 | 0,8303 |
+| | 120 | **0,9410** | **0,9836** | 0,4362 | 0,5034 | 0,5906 | 0,8316 |
+| | 160 | 0,9400 | 0,9818 | 0,4161 | 0,5034 | 0,6107 | 0,8308 |
+| **Kol 2** (yalnız 1. katman) | 0 | 0,9006 | 0,9559 | 0,4228 | 0,4899 | 0,5638 | 0,7979 |
+| | 10 | 0,9215 | 0,9667 | 0,4228 | 0,4832 | 0,5503 | 0,8119 |
+| | 20 | 0,9065 | 0,9518 | 0,4430 | 0,5101 | 0,5638 | 0,8074 |
+| | 40 | 0,9268 | 0,9592 | **0,5168** | 0,5503 | 0,5973 | 0,8327 |
+| | 80 | 0,9199 | 0,9485 | 0,4698 | 0,5570 | 0,5906 | 0,8292 |
+| | 120 | 0,9301 | 0,9623 | 0,4899 | 0,5503 | 0,6309 | 0,8352 |
+| | 160 | **0,9413** | **0,9659** | 0,4966 | **0,5772** | **0,6376** | **0,8503** |
+| **Kol 3** (çift katmanlı) | 0 | 0,9006 | 0,9559 | 0,4228 | 0,4899 | 0,5638 | 0,7979 |
+| | 10 | 0,9366 | 0,9777 | 0,4228 | 0,4966 | 0,5436 | 0,8266 |
+| | 20 | 0,9216 | 0,9672 | 0,4362 | 0,5101 | 0,5772 | 0,8187 |
+| | 40 | 0,9503 | 0,9810 | 0,4899 | 0,5436 | 0,6376 | 0,8486 |
+| | 80 | 0,9528 | 0,9797 | 0,4698 | 0,5638 | 0,6242 | 0,8556 |
+| | 120 | 0,9585 | 0,9851 | **0,4966** | 0,5570 | 0,6309 | 0,8581 |
+| | **160** | **0,9662** | **0,9868** | 0,4765 | **0,5638** | **0,6644** | **0,8656** |
+| *referans:* 1. katman tek başına | 0 → 160 | 0,8351 → 0,8692 | 0,8630 → 0,8882 | 0,3960 → 0,5034 | 0,4698 → 0,5705 | 0,5772 → 0,6644 | 0,7438 → 0,7945 |
+| *referans:* sıfır-eğitim (3-TTA, V6.9r) | 0 | 0,9197 | 0,9652 | 0,4362 | 0,5235 | 0,5839 | 0,8206 |
+
+**Fold'lar arası ortalama ± SD** (kalibrasyon değerleri her fold'un yalnız kendi test katmanında
+ölçülür ⇒ daha küçük kohort, daha yüksek varyans): Kol 3 — N=0 **0,9076 ± 0,0475**, N=10
+0,9355 ± 0,0301, N=20 0,9284 ± 0,0416, N=40 0,9501 ± 0,0334, N=80 0,9607 ± 0,0280, N=120
+0,9554 ± 0,0372, **N=160 0,9644 ± 0,0335**; Kol 1 N=160 **0,9399 ± 0,0412**; Kol 2 N=160
+**0,9427 ± 0,0245**; 1. katman tek başına N=160 **0,8793 ± 0,0508**. (Noisy-OR karşılıkları
+Kol 3 N=160 **0,9849 ± 0,0186**.)
+
+**Bulgular:**
+
+1. 🟢 **Saha kalibrasyonu yüksek kaliteli harici veride de çalışıyor, ama tavanı yakın:**
+   Kol 3 ile **0,9006 → 0,9662** (N=160, **+6,6 puan**; yayımlanmış 3-TTA tabanına göre
+   **0,9197 → 0,9662, +4,7 puan**). Kutu ölçütleri de birlikte yükseliyor: S@0.25
+   **0,4899 → 0,5638** (+7,4), S@0.50 **0,5638 → 0,6644** (+10,1), `rank_metric`
+   **0,7979 → 0,8656** (+6,8).
+2. 🔑 **Kazanç neredeyse tamamen 1. aşamadan geliyor.** N=160'te yalnız 2. katman (Kol 1) AUC'yi
+   **+0,039**, yalnız 1. katman (Kol 2) **+0,041** taşıyor; S@0.25'te ise 1. katman **+0,087**,
+   2. katman yalnız **+0,014** kazandırıyor (2. katman kutu koordinatını değiştiremez — §V6.9.18).
+   İki kol birleşince S@0.50 **0,6644** ile tek kolların ötesine geçiyor ⇒ **tamamlayıcılık var**.
+3. 📉 **Az etiket yeterli: 10 görüntü kazanımın %55'ini, 40 görüntü %76'sını getiriyor**
+   (Kol 3: 0,9366 / 0,9503 / 0,9662). Yani sahada yüzlerce vaka değil, **birkaç düzine etiketli
+   görüntü** yeterli.
+4. 🎯 **Kalibre edilmiş JSRT, kurum içi kilitli test düzeyine ulaşıyor:** 242 Saf JSRT'de OOF hasta
+   AUC **0,9662**, NODE21 kilitli testteki füzyon AUC'si **0,9661** ile aynı mertebede. ⚠️ Kohortlar
+   farklı (242 hasta, 149 nodüllü/93 sağlıklı — kilitli testte 734 hasta, doğal prevalans) ⇒ bu bir
+   eşitlik iddiası değil, "yabancı merkez açığı, birkaç düzine yerel etiketle kapanıyor" ifadesidir.
+5. ⚖️ **Simetri tamam:** düşük kaliteli JPEG sitede sıfır-eğitim zayıf (**0,6376**) ve kalibrasyon
+   kazancı büyük (**+15,6 puan → 0,7935**); yüksek kaliteli `.mha` sitede sıfır-eğitim zaten güçlü
+   (**0,9197**) ve kalibrasyon onu kurum içi düzeye taşıyor (**+4,7 puan → 0,9662**). Her iki uçta da
+   kazanç **görüntü kalitesi düştükçe artıyor**: 8-bit JPEG'de +0,156, kayıpsız 12-bit'te +0,047.
+6. 🔒 **İzolasyon:** `M5_foundation.pt` / `stage2_foundation_tda_hgb_pure1600.joblib` (ana mimari) ve
+   `M5_nojsrt_full` ağırlıkları **değişmedi**; kilitli NODE21 testi **kullanılmadı** (test bütçesi
+   hâlâ **5/5**). Kalibrasyon etiketleri yalnız JSRT'nin kendi hasta etiketleridir ve test fold'una
+   hiç sızmaz.
+
+* 📌 **Kullanım kuralı:** Saha kalibrasyonu sayıları **"N etiketli görüntü gerektirir"** olarak
+  etiketlenmelidir; sıfır-eğitim (V6.9r) sayılarıyla **karıştırılmamalıdır**. Bu satırlar bir
+  *dağıtım senaryosu* ölçümüdür, mühürlü test iddiası değildir.
+* **Kayıt:** `artifacts/v6_two_stage/v6_9t_jsrt_calibration.json`

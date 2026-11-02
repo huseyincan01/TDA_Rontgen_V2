@@ -287,5 +287,13 @@ sağlıklı)** dış kohortundaki sıfır-eğitim performansı: **Recall@K10 0,8
 
 **Kullanım kuralı.** Kilitli test sayıları **`in-fold`** olarak etiketlenir (veri seti içinde
 geçerli). *Kaynak-dışı genelleme* iddiasında **242 Saf JSRT (`V6.9r`)** ve **VinDr (`V6.9j2`)**
-sayıları kullanılır. Ayrıntı ve izolasyon denetimi: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7–§9.8 ·
+sayıları kullanılır. Ayrıntı ve izolasyon denetimi: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7–§9.9 ·
 [`v6_9r_true_jsrt_external.py`](pipelines/v6_two_stage/v6_9r_true_jsrt_external.py).
+
+> 🎯 **Saha kalibrasyonu simetrisi (`V6.9t`).** Sıfır-eğitim satırlarının yanına, hedef hastaneden
+> **N etiketli görüntü** alınarak yapılan kalibrasyon eklendi (5-fold stratified CV, test fold'una
+> sızıntı yok): VinDr (8-bit JPEG) **0,6376 → 0,7935** (+15,6 puan); JSRT (12-bit `.mha`)
+> **0,9006 → 0,9662** (+6,6 puan; yayımlanmış 3-TTA tabanına göre +4,7). Kazanç neredeyse tamamen
+> 1. aşamadan gelir (S@0.25: 0,4899 → 0,5772) ve **10 etiket kazanımın %55'ini, 40 etiket %76'sını**
+> getirir. Bu satırlar **yerel etiket gerektirir**; sıfır-eğitim iddialarında kullanılmaz
+> ([experiments.md](experiments.md) §V6.9.19, [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.9).

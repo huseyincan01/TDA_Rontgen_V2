@@ -1153,3 +1153,38 @@ Yeniden eğitim yok; hazır önbellekler (`_v6_9l_cache` Val, `_v6_9m_test_cache
 4. 🔒 **Kilitli `w_tda = 0,45` (w_s1 = 0,55) korunur**; bu kayıt yalnız ablasyondur, hiçbir ağırlık/model değiştirilmedi.
 
 * **Kayıt:** [v6_9s_weight_sweep.json](artifacts/v6_two_stage/v6_9s_weight_sweep.json) · [v6_9s_weight_sweep.py](pipelines/v6_two_stage/v6_9s_weight_sweep.py)
+
+### 17.13 242 Saf JSRT saha kalibrasyonu — 5-fold stratified CV, 3 kol × 7 N (V6.9t)
+
+V6.9j2'nin (VinDr) protokolü **birebir** JSRT'ye uygulandı: sabit aday havuzu + yeniden puanlama,
+5-fold stratified CV, her fold'da `deepcopy` ile sıfırlanan model, sabit `w_tda = 0,45`.
+Hedef bütçe N ∈ {0,10,20,40,80,120,160} etiketli görüntü. Yeniden eğitim YOK; 1.600 TDA özellikleri
+`_v6_9r_cache.npz`'den, omurga çıktıları float16 RAM önbelleğinden (533 s).
+
+| Kol | N=0 | 10 | 20 | 40 | 80 | 120 | 160 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Hasta AUC (Top-1)** — Kol 1 (yalnız 2. katman) | 0,9006 | 0,9158 | 0,9158 | 0,9265 | 0,9370 | **0,9410** | 0,9400 |
+| — Kol 2 (yalnız 1. katman) | 0,9006 | 0,9215 | 0,9065 | 0,9268 | 0,9199 | 0,9301 | **0,9413** |
+| — Kol 3 (çift katmanlı) | 0,9006 | 0,9366 | 0,9216 | 0,9503 | 0,9528 | 0,9585 | **0,9662** |
+| **S@0.25** — Kol 1 / Kol 2 / Kol 3 | 0,4899 / 0,4899 / 0,4899 | 0,4966 / 0,4832 / 0,4966 | 0,4966 / 0,5101 / 0,5101 | 0,4899 / 0,5503 / 0,5436 | 0,5101 / 0,5570 / 0,5638 | 0,5034 / 0,5503 / 0,5570 | 0,5034 / 0,5772 / **0,5638** |
+| **S@0.50** — Kol 1 / Kol 2 / Kol 3 | 0,5638 (üç kol aynı) | 0,5839 / 0,5503 / 0,5436 | 0,5906 / 0,5638 / 0,5772 | 0,5772 / 0,5973 / 0,6376 | 0,5906 / 0,5906 / 0,6242 | 0,5906 / 0,6309 / 0,6309 | 0,6107 / 0,6376 / **0,6644** |
+| **`rank_metric`** — Kol 1 / Kol 2 / Kol 3 | 0,7979 (üç kol aynı) | 0,8110 / 0,8119 / 0,8266 | 0,8110 / 0,8074 / 0,8187 | 0,8174 / 0,8327 / 0,8486 | 0,8303 / 0,8292 / 0,8556 | 0,8316 / 0,8352 / 0,8581 | 0,8308 / 0,8503 / **0,8656** |
+| *noisy-OR (Kol 3)* | 0,9559 | 0,9777 | 0,9672 | 0,9810 | 0,9797 | 0,9851 | **0,9868** |
+| *1. katman tek başına (FT)* | 0,8351 | 0,8372 | 0,8260 | 0,8516 | 0,8405 | 0,8588 | **0,8692** |
+
+Değerler **havuzlanmış OOF** (242 hastanın tamamı; her hasta tam bir kez test fold'unda). Fold
+ortalaması ± SD (Kol 3 AUC): 0,9076 ± 0,0475 → **0,9644 ± 0,0335**.
+
+* 🟢 **Kalibrasyon çalışıyor:** Kol 3 ile AUC **+6,6 puan** (eşleşmiş 1,0+flip tabanı 0,9006 →
+  0,9662), S@0.50 **+10,1 puan**, `rank_metric` **+6,8 puan**. Yayımlanmış 3-TTA tabanına göre
+  (0,9197) kazanç **+4,7 puan** — alt sınır, çünkü Kol 2/3 3 ölçekli TTA almıyor.
+* 🔑 **Kazanç 1. aşamada:** N=160'te AUC'ye Kol 1 **+0,039**, Kol 2 **+0,041** katkı; S@0.25'te ise
+  Kol 1 **+0,014**, Kol 2 **+0,087** (2. katman kutu koordinatını değiştirmez). S@0.50'de
+  Kol 3 (0,6644) > Kol 2 (0,6376) > Kol 1 (0,6107) ⇒ **tamamlayıcılık**.
+* 📉 **Doyma eğrisi:** 10 etiket kazanımın %55'i, 40 etiket %76'sı, 160 etiket %100'ü.
+* ⚖️ **Simetri:** VinDr (8-bit JPEG) 0,6376 → **0,7935** (+0,156) · JSRT (12-bit `.mha`) 0,9197 →
+  **0,9662** (+0,047). Kalibrasyon kazancı **görüntü kalitesi düştükçe büyüyor**; yüksek kaliteli
+  sitede sıfır-eğitim zaten kurum içi düzeye (0,9661) yakın.
+* ⚠️ **Etiket:** Bu satırlar "N etiketli görüntü gerektirir" senaryosudur; sıfır-eğitim (V6.9r)
+  sayılarıyla karıştırılmamalıdır. Kilitli NODE21 testi kullanılmadı (bütçe 5/5).
+* **Kayıt:** `v6_9t_jsrt_calibration.json` · [v6_9t_jsrt_calibration.py](pipelines/v6_two_stage/v6_9t_jsrt_calibration.py)

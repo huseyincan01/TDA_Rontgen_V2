@@ -194,7 +194,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor *(S@0.25 ve S@0.50: röntgen başına sırasıyla en fazla 0,25 ve 0,50 yanlış alarma izin verildiğindeki tümör kutusu yakalama oranı)* |
 | Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te kutu duyarlılığı **+1,7 puan** artıyor |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,638 (sıfır-eğitim) → 0,794 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,79** düzeyine çıkıyor |
-| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; 149 nodüllü + 93 sağlıklı = 242 hasta, eğitimden tamamen izole) | **İlk 10 kutuda %86,6 · ilk 50 kutuda %95,3 · 0,920 (Top-1) / 0,965 (Noisy-OR) hasta AUC · S@0.25 %52,4 · S@0.50 %58,4** (sıfır-eğitim) | Dış hastanenin görüntüleri sıkıştırılmamış yüksek kaliteli (12-bit `.mha`) olduğunda, sistem **hiç kalibrasyon yapmadan** 242 saf Japon röntgeninde ilk 50 kutuda tümörlerin **%95,3'ünü (142/149)** yakalıyor. Hastanın en güçlü tek kutusuna göre (**Top-1**) **0,920**, kutuların ortak olasılığına göre (**Noisy-OR**) **0,965** hasta AUC elde ediliyor; 2. aşama topolojik katman hasta düzeyinde tek başına **0,970 AUC** üretirken (kutu merkezini bilmediği için tek başına kutu koyamaz: S@0.25 %2,7), kilitli %55/%45 birleşiminde 1. aşamanın hasta ayrımını **0,849 → 0,920 (+7,1 puan)** ve S@0.25 kutu isabetini **%49,7 → %52,4 (+2,7 puan)** yükseltiyor |
+| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; 149 nodüllü + 93 sağlıklı = 242 hasta, eğitimden tamamen izole) | **İlk 10 kutuda %86,6 · ilk 50 kutuda %95,3 · 0,920 (Top-1) / 0,965 (Noisy-OR) hasta AUC · S@0.25 %52,4 · S@0.50 %58,4** (sıfır-eğitim) → **saha kalibrasyonu (160 etiketli görüntü): 0,966 AUC · S@0.25 %56,4 · S@0.50 %66,4 · sıralama ölçütü 0,866** | Dış hastanenin görüntüleri sıkıştırılmamış yüksek kaliteli (12-bit `.mha`) olduğunda, sistem **hiç kalibrasyon yapmadan** 242 saf Japon röntgeninde ilk 50 kutuda tümörlerin **%95,3'ünü (142/149)** yakalıyor. Hastanın en güçlü tek kutusuna göre (**Top-1**) **0,920**, kutuların ortak olasılığına göre (**Noisy-OR**) **0,965** hasta AUC elde ediliyor; 2. aşama topolojik katman hasta düzeyinde tek başına **0,970 AUC** üretirken (kutu merkezini bilmediği için tek başına kutu koyamaz: S@0.25 %2,7), kilitli %55/%45 birleşiminde 1. aşamanın hasta ayrımını **0,849 → 0,920 (+7,1 puan)** ve S@0.25 kutu isabetini **%49,7 → %52,4 (+2,7 puan)** yükseltiyor. Üstelik bu hastaneden yalnız **160 etiketli görüntü** alınarak yapılan saha kalibrasyonunda (5 katlı çapraz doğrulama, test görüntülerine hiç dokunulmadan) hasta AUC **0,966**'ya, S@0.50 kutu isabeti **%66,4**'e, sıralama ölçütü **0,866**'ya çıkıyor — yani sıfır-eğitimde zaten yüksek olan başarı, az sayıda yerel etiketle kurum içi kilitli test düzeyine (**0,966**) taşınıyor |
 
 Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
 
@@ -263,7 +263,26 @@ gördük. Ancak **her iki aşamayı birlikte** kalibre ettiğimizde güçlü bir
 **`0,794 AUC`** değerine ulaştık. Bu da sistemin düşük kaliteli cihazlara sahip bir hastanede bile
 az sayıda yerel örnekle hızla toparlanabildiğini gösteriyor.
 
-**3. Ön-eğitim veri örtüşmesi skoru şişiriyor mu?**
+**3. Yüksek Kaliteli Harici Veride Saha Kalibrasyonu — Simetriyi Tamamladık.**
+Vietnam (düşük kaliteli JPEG) verisinde yaptığımız saha kalibrasyonunun aynısını Japonya (yüksek
+kaliteli kayıpsız) verisinde de yaptık. Hedef hastaneden **N = 0, 10, 20, 40, 80, 120, 160**
+etiketli görüntü alındığında, **5 katlı çapraz doğrulamayla ve test görüntülerine hiç dokunmadan**,
+hem 1. aşama kutusunu çizen başlık hem de 2. aşama topolojik sınıflandırıcı yerel olarak kalibre
+edildi (her katlamada model sıfırdan, dondurulmuş başlangıç ağırlıklarından yeniden türetildi; bir
+katlamanın öğrendiği ağırlık diğerine geçmedi). Sonuç: hasta AUC **0,901 → 0,966** (aynı ölçüm
+yolundaki tabana göre **+6,6 puan**; hiç kalibrasyon yapılmayan 3 ölçekli **0,920** tabanına göre
+**+4,7 puan**), S@0.50 kutu isabeti **%56,4 → %66,4**, sıralama ölçütü **0,798 → 0,866**.
+Kazancın neredeyse tamamı **1. aşamadan** geliyor (S@0.25 kutu isabeti %49,0 → %57,7); 2. aşama topolojik
+katman hasta düzeyinde **+3,9 puan** ekleyerek iki aşamanın birbirini tamamladığını bir kez daha
+gösteriyor (ikisi birlikte S@0.50'de tek başlarına ulaştıklarından **+10,1 puan** yukarı çıkıyor).
+Dahası, **10 etiketli görüntü kazanımın %55'ini, 40 görüntü %76'sını** getiriyor ⇒ sahada yüzlerce
+vaka değil, birkaç düzine etiket yeterli. Böylece iki uç birbirini tamamlıyor: görüntü kalitesi
+düştükçe sıfır-eğitim başarısı düşüyor ama **kalibrasyon kazancı büyüyor** (Vietnam 8-bit JPEG'de
+`0,638 → 0,794`, **+15,6 puan**), kalite yüksek olduğunda sıfır-eğitim zaten güçlü ve kalibrasyon
+onu kurum içi kilitli test düzeyine taşıyor (Japonya 12-bit `.mha`'da `0,920 → 0,966`, **+4,7 puan**).
+Bu satırların **yerel etiket gerektirdiği** ve sıfır-eğitim iddiası olmadığı açıkça belirtilmelidir.
+
+**4. Ön-eğitim veri örtüşmesi skoru şişiriyor mu?**
 NODE21 veri seti açık kaynaklı röntgenlerden derlendiği için, 1. aşamada kullandığımız hazır
 ResNet50 gövdesi pozitif vakaların bir kısmını (NIH ve PadChest) ön-eğitim sırasında (kutu etiketi
 olmadan) görmüştü. "Acaba başarımız bu yüzden mi yüksek?" şüphesiyle modeli hiç röntgen görmemiş bir
@@ -271,7 +290,7 @@ ImageNet gövdesiyle kıyasladık. Sonuç tam tersini gösterdi: Hazır gövdeni
 önce gördüğü kaynaklarda değil, **hayatında hiç görmediği** kaynaklarda (**+0,325 AUC**
 sağlamlaştırma etkisiyle) ortaya çıktı.
 
-**4. Dürüst sınırlılıklar.**
+**5. Dürüst sınırlılıklar.**
 Çalışmamızın sınırları da nettir: Topolojik katman hasta düzeyindeki ayrımı (**0,945 → 0,966**) ve
 kritik yanlış-alarm noktasını (**S@0.25: %70,3 → %72,1**) belirgin biçimde güçlendirirken, çok düşük
 yanlış-alarm eşiğinde (**S@0.125**, yani 8 röntgende en fazla 1 yanlış alarma izin verildiğinde) küçük bir duyarlılık tavizi verebiliyor. Kutu boyutu konusunda

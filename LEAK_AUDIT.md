@@ -540,6 +540,42 @@ Ana mimari ağırlıklarına (`M5_foundation.pt`, `stage2_foundation_tda_hgb_pur
 
 ---
 
+### 9.9 Saha Kalibrasyonu Sızıntı Değildir — Ama Sızıntıya Açık Bir Prosedürdür (V6.9t) 🟡
+
+§9.8'de 242 Saf JSRT **sıfır-eğitim** performansı ölçüldü. §V6.9.11'de (VinDr) ise hedef hastaneden
+**N etiketli görüntü** alınarak yapılan çift-katmanlı saha kalibrasyonu ölçülmüştü. Simetriyi
+tamamlamak için aynı protokol JSRT'ye uygulandı ve **sızıntı riski şu üç kuralla kapatıldı**:
+
+1. **5-fold stratified CV:** Her hasta **tam olarak bir** test fold'unda yer alır; kalibrasyon
+   kümesi yalnız eğitim fold'larından örneklenir ⇒ test fold'unun etiketi hiçbir koşuda modele
+   gösterilmez. Raporlanan değerler **havuzlanmış out-of-fold** tahminlerdir.
+2. **`deepcopy` ile sıfırlama:** Her fold'da model dondurulmuş başlangıç ağırlıklarından yeniden
+   türetilir; fold'lar birbirinin ağırlığını taşımaz (önceki fold'un FT ağırlığı bir sonrakine
+   geçmez).
+3. **Mimari ağırlıklara dokunulmadı:** `M5_foundation.pt`, `stage2_foundation_tda_hgb_pure1600.joblib`
+   ve `M5_nojsrt_full.pt` **değişmedi**; yeni ağırlıklar hiç diske yazılmadı. Kilitli NODE21 testi
+   **kullanılmadı** (test bütçesi hâlâ **5/5**).
+
+**Sonuç (havuzlanmış OOF, 242 hasta):** Kol 3 (çift katmanlı) N=0 **0,9006** → N=160 **0,9662** AUC;
+S@0.25 **0,4899 → 0,5638**; S@0.50 **0,5638 → 0,6644**; `rank_metric` **0,7979 → 0,8656**.
+VinDr'de aynı protokol **0,6376 → 0,7935** vermişti.
+
+> ⚠️ **Beyan edilmesi gereken üç sınır:**
+> 1. **Bu satırlar sıfır-eğitim değildir.** "Hedef merkezden N etiketli görüntü temin edilebilirse"
+>    senaryosudur; N=160, kohortun %66'sının etiketlenmesi demektir. Sıfır-eğitim iddialarında
+>    **V6.9r** sayıları kullanılmalıdır.
+> 2. **Ölçüm yolu asimetrisi:** Yayımlanmış N=0 satırı 3 ölçekli TTA kullanır; kalibrasyon kolları
+>    sabit merkezleri 1,0 ölçek + flip ile yeniden puanlar (V6.9j2'de de böyleydi). Bu yüzden
+>    **eşleşmiş taban 0,9006**, yayımlanmış taban 0,9197'dir; kazanç (+0,066 / +0,047) bir **alt
+>    sınırdır**. V6.9j2'nin VinDr sayıları da aynı asimetriyi taşır ⇒ o kazanım da alt sınırdır.
+> 3. **JSRT, `M5_nojsrt_full` için gerçekten dışarıdadır** (ne eğitimde ne val z-ref'inde tek bir
+>    JSRT görüntüsü yok, §9.8) ⇒ kalibrasyon öncesi/sonrası fark kaynak ezberiyle açıklanamaz.
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9t_jsrt_calibration.json` ·
+[`v6_9t_jsrt_calibration.py`](pipelines/v6_two_stage/v6_9t_jsrt_calibration.py)
+
+---
+
 ## 10. 🔒 KAPANIŞ — ön-eğitim örtüşmesi konusu mühürlendi
 
 **Soru:** Ön-eğitim korpusu NODE21'in kaynaklarıyla örtüştüğü için skorlarımız şişmiş olabilir mi?
