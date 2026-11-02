@@ -272,9 +272,10 @@ edildi (her katlamada model sıfırdan, dondurulmuş başlangıç ağırlıklar�
 katlamanın öğrendiği ağırlık diğerine geçmedi). Sonuç: hasta AUC **0,901 → 0,966** (aynı ölçüm
 yolundaki tabana göre **+6,6 puan**; hiç kalibrasyon yapılmayan 3 ölçekli **0,920** tabanına göre
 **+4,7 puan**), S@0.50 kutu isabeti **%56,4 → %66,4**, sıralama ölçütü **0,798 → 0,866**.
-Kazancın neredeyse tamamı **1. aşamadan** geliyor (S@0.25 kutu isabeti %49,0 → %57,7); 2. aşama topolojik
-katman hasta düzeyinde **+3,9 puan** ekleyerek iki aşamanın birbirini tamamladığını bir kez daha
-gösteriyor (ikisi birlikte S@0.50'de tek başlarına ulaştıklarından **+10,1 puan** yukarı çıkıyor).
+Kutu isabetindeki kazanç neredeyse tamamen **1. aşamadan** geliyor (S@0.25 %49,0 → %57,7; 2. aşama
+tek başına yalnızca %50,3'e çıkarıyor). Hasta ayrımında ise **iki katman eşit katkı veriyor** (her
+biri ≈ **+4 puan**: 1. aşama 0,941, 2. aşama 0,940); iki aşama birlikte **+6,6 puan** ile tek
+başlarına ulaştıklarının ötesine geçiyor (S@0.50'de %66,4) ⇒ tamamlayıcılık korunuyor.
 Dahası, **10 etiketli görüntü kazanımın %55'ini, 40 görüntü %76'sını** getiriyor ⇒ sahada yüzlerce
 vaka değil, birkaç düzine etiket yeterli. Böylece iki uç birbirini tamamlıyor: görüntü kalitesi
 düştükçe sıfır-eğitim başarısı düşüyor ama **kalibrasyon kazancı büyüyor** (Vietnam 8-bit JPEG'de

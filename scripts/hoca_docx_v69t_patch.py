@@ -55,10 +55,11 @@ NEW_BODY = (
     "yeniden türetildi; bir katlamanın öğrendiği ağırlık diğerine geçmedi). Sonuç: hasta AUC "
     "0,901 → 0,966 (aynı ölçüm yolundaki tabana göre +6,6 puan; hiç kalibrasyon yapılmayan 3 "
     "ölçekli 0,920 tabanına göre +4,7 puan), S@0.50 kutu isabeti %56,4 → %66,4, sıralama ölçütü "
-    "0,798 → 0,866. Kazancın neredeyse tamamı 1. aşamadan geliyor (S@0.25 kutu isabeti %49,0 → "
-    "%57,7); 2. aşama topolojik katman hasta düzeyinde +3,9 puan ekleyerek iki aşamanın birbirini "
-    "tamamladığını bir kez daha gösteriyor (ikisi birlikte S@0.50’de tek başlarına ulaştıklarından "
-    "+10,1 puan yukarı çıkıyor). Dahası, 10 etiketli görüntü kazanımın %55’ini, 40 görüntü "
+    "0,798 → 0,866. Kutu isabetindeki kazanç neredeyse tamamen 1. aşamadan geliyor (S@0.25 %49,0 → "
+    "%57,7; 2. aşama tek başına yalnızca %50,3’e çıkarıyor). Hasta ayrımında ise iki katman eşit "
+    "katkı veriyor (her biri ≈ +4 puan: 1. aşama 0,941, 2. aşama 0,940); iki aşama birlikte +6,6 "
+    "puan ile tek başlarına ulaştıklarının ötesine geçiyor (S@0.50’de %66,4) ⇒ tamamlayıcılık "
+    "korunuyor. Dahası, 10 etiketli görüntü kazanımın %55’ini, 40 görüntü "
     "%76’sını getiriyor ⇒ sahada yüzlerce vaka değil, birkaç düzine etiket yeterli. Böylece iki uç "
     "birbirini tamamlıyor: görüntü kalitesi düştükçe sıfır-eğitim başarısı düşüyor ama kalibrasyon "
     "kazancı büyüyor (Vietnam 8-bit JPEG’de 0,638 → 0,794, +15,6 puan), kalite yüksek olduğunda "
@@ -71,6 +72,17 @@ OLD3 = "3. Ön-eğitim veri örtüşmesi skoru şişiriyor mu?"
 NEW4 = "4. Ön-eğitim veri örtüşmesi skoru şişiriyor mu?"
 OLD4 = "4. Dürüst sınırlılıklar."
 NEW5 = "5. Dürüst sınırlılıklar."
+
+# Metin hassasiyeti: "kazancın tamamı 1. aşamadan" yalnız KUTU isabeti için doğru; hasta AUC'de
+# iki katman eşit katkı veriyor (Kol1 +0,039 / Kol2 +0,041). İlk yazımdaki cümle düzeltilir.
+_FIX_HEAD = "Kazancın neredeyse tamamı 1. aşamadan geliyor (S@0.25 kutu isabeti"
+_FIX_TAIL = "Dahası, 10 etiketli görüntü kazanımın"
+_FIX_NEW = (
+    "Kutu isabetindeki kazanç neredeyse tamamen 1. aşamadan geliyor (S@0.25 %49,0 → %57,7; 2. aşama "
+    "tek başına yalnızca %50,3’e çıkarıyor). Hasta ayrımında ise iki katman eşit katkı veriyor (her "
+    "biri ≈ +4 puan: 1. aşama 0,941, 2. aşama 0,940); iki aşama birlikte +6,6 puan ile tek başlarına "
+    "ulaştıklarının ötesine geçiyor (S@0.50’de %66,4) ⇒ tamamlayıcılık korunuyor. "
+)
 
 
 def _append_runs(par, pieces: list[tuple[str, bool]], size=None) -> None:
@@ -125,15 +137,10 @@ def main() -> None:
     paras = d.paragraphs
     p3 = next((p for p in paras if p.text.strip().startswith(OLD3[:28])), None)
     p4 = next((p for p in paras if p.text.strip().startswith(OLD4)), None)
-    p3_new = next((p for p in paras if p.text.strip().startswith(NEW4[:28])), None)
-    if p3 is None:
-        if p3_new is not None:
-            print("  [atlandı] §5 paragrafı ve numaralama zaten güncel (yama daha önce uygulanmış)")
-            print("  (dry-run: kaydedilmedi)" if args.dry_run else "  değişiklik yok")
-            return
-        raise SystemExit("  [!] '3. Ön-eğitim ...' paragrafı bulunamadı")
-
-    if any(p.text.strip().startswith(NEW_LEAD[:28]) for p in paras):
+    already = p3 is None
+    if already:
+        print("  [atlandı] §5 paragrafı/numaralama daha önce uygulanmış")
+    elif any(p.text.strip().startswith(NEW_LEAD[:28]) for p in paras):
         print("  [atlandı] Yeni §5 paragrafı zaten var")
     else:
         new_p = p3.insert_paragraph_before("", style=p3.style)
@@ -154,16 +161,29 @@ def main() -> None:
         print("  [+] Yeni §5 paragrafı eklendi")
 
     # ---- 3) numaralar
-    for par, old, new in ((p3, OLD3, NEW4), (p4, OLD4, NEW5)):
-        if par is None:
-            continue
-        done = False
-        for r in par.runs:
-            if r.text.startswith(old.split()[0] + " "):
-                r.text = r.text.replace(old.split()[0], new.split()[0], 1)
-                done = True
-                break
-        print(f"  [{'✓' if done else '!'}] numaralama: {old[:2]} → {new[:2]}")
+    if not already:
+        for par, old, new in ((p3, OLD3, NEW4), (p4, OLD4, NEW5)):
+            if par is None:
+                continue
+            done = False
+            for r in par.runs:
+                if r.text.startswith(old.split()[0] + " "):
+                    r.text = r.text.replace(old.split()[0], new.split()[0], 1)
+                    done = True
+                    break
+            print(f"  [{'✓' if done else '!'}] numaralama: {old[:2]} → {new[:2]}")
+
+    # ---- 4) metin hassasiyeti düzeltmesi (idempotent)
+    fixed = 0
+    for par in d.paragraphs:
+        for run in par.runs:
+            if _FIX_HEAD in run.text:
+                i = run.text.find(_FIX_HEAD)
+                j = run.text.find(_FIX_TAIL, i)
+                if j > i:
+                    run.text = run.text[:i] + _FIX_NEW + run.text[j:]
+                    fixed += 1
+    print(f"  [{'✓' if fixed else '='}] metin hassasiyeti düzeltmesi ({fixed} run)")
 
     if args.dry_run:
         print("  (dry-run: kaydedilmedi)")
