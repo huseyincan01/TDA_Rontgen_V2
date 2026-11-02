@@ -482,9 +482,7 @@ kontrolünün** 61'i eğitim kümesindeydi. Hem 149 JSRT nodüllü hem de 93 JSR
 eğitim ve kalibrasyon kümesinden **tamamen çıkarıp** sistemi saf 1.600 TDA ile sıfırdan
 eğittiğimizde (`V6.9r`), **242 Saf JSRT (149 nodüllü + 93 sağlıklı)** dış testinde **Recall@K10
 0,8658 (%86,6) · K50 0,9530 (%95,3) · Hasta AUC 0,9197 (Top-1) / 0,9652 (Noisy-OR) · S@0,25 0,5235
-(%52,4) · S@0,50 0,5839 (%58,4) · `rank_metric` 0,8206** elde edildi (yalnız 2. aşama TDA tek
-başına **0,9704 Top-1 / 0,9789 Noisy-OR AUC** üretip 1. aşamayı `0,8488 → 0,9197` (+7,1 puan)
-yukarı taşıdı). Üstelik hiçbir modelin eğitimde görmediği **74 hastalık (`val+test`: 42 nodüllü +
+(%52,4) · S@0,50 0,5839 (%58,4) · `rank_metric` 0,8206** elde edildi (yalnız 2. aşama TDA hasta düzeyinde **0,9704 Top-1 / 0,9789 Noisy-OR AUC** üretirken kutu merkezini bilmediği için tek başına kutu koyamaz [`S@0,25 = %2,7 · rank_metric = 0,7345`]; kilitli `w=0,55` birleşimi dış veriye göre değiştirilmeden 1. aşamayı `0,8488 → 0,9197` [+7,1p] AUC ve `%49,7 → %52,4` S@0,25 düzeyine taşıdı). Üstelik hiçbir modelin eğitimde görmediği **74 hastalık (`val+test`: 42 nodüllü +
 32 sağlıklı) saf JSRT alt kümesinde**, JSRT'yi hiç görmeyen model (`0,9077` Top-1 / `0,9621` nOR)
 ile ana model (`0,9010` Top-1 / `0,9568` nOR) aynı başarıyı verdi (`Δ = +0,0067`). *(Not: Yalnız
 pozitif JSRT'lerin çıkarıldığı ilk `V6.9k/k4` koşusunda 149 JSRT + 250 karma val kontrol üzerinde

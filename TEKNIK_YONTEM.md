@@ -279,8 +279,8 @@ sağlıklı)** dış kohortundaki sıfır-eğitim performansı: **Recall@K10 0,8
 > 🔑 **Metodolojik kapanış (`V6.9k → V6.9r`):** Önceki `V6.9k/k4` koşularında (yalnız 107 JSRT
 > pozitifi çıkarılıp eğitim negatiflerinde 14 JSRT sağlıklı kontrol unutulduğunda, 149 JSRT + 250
 > karma kontrol üzerinde) `Recall@K50 = 0,9396`, `Top-1 AUC = 0,9316` (1.604 ile `0,9395`)
-> ölçülmüştü. Eğitimden 61 JSRT sağlıklı kontrolün tamamı da çıkarıldığında (`V6.9r`), JSRT
-> yakalama başarısı **%94,0 → %95,3 (`K10: %85,2 → %86,6`)** düzeyine yükseldi ve hiçbir modelin
+> ölçülmüştü. Eğitimden 61 JSRT sağlıklı kontrolün tamamı da çıkarıldığında (`V6.9r`; `tr_neg_clean[:683]` kesimi ve tek-tohum `±0,02` eğitim bandı içinde), JSRT
+> yakalama başarısı **%94,0 → %95,3 (`K10: %85,2 → %86,6`, +2 lezyon)** ile gürültü bandı içinde korundu; yalnız 2. aşama TDA hasta düzeyinde **0,9704 AUC** üretirken kutu merkezini bilmediği için tek başına kutu koyamadığından (`S@0,25 = %2,7 · rank_metric = 0,7345`), kilitli `w=0,55` birleşimi hem kutu isabetini (`S@0,25: %49,7 → %52,4`) hem hasta ayrımını (`0,8488 → 0,9197`, `rank_metric: 0,7608 → 0,8206`) birlikte yukarı taşıdı ve hiçbir modelin
 > eğitimde görmediği **74 hastalık (`val+test`: 42 nodüllü + 32 sağlıklı) saf JSRT alt kümesinde**
 > JSRT-siz model (`0,9077` Top-1 / `0,9621` Noisy-OR) ile ana model (`0,9010` Top-1 / `0,9568`
 > Noisy-OR) arasında **kaynak ezberi farkı kalmadı (`Δ = +0,0067`)**.

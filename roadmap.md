@@ -462,7 +462,7 @@ pozitifleri hem JSRT sağlıklı kontrolleri eğitim ve kalibrasyondan **tamamen
 saf 1.600 TDA ile sıfırdan eğitildi (`V6.9r`, izole: ayrı checkpoint/bundle, ana artifact
 SHA-256'ları değişmedi). **242 Saf JSRT (149 nodüllü + 93 sağlıklı)** dış testinde **Recall@K10
 0,8658 (%86,6) · K50 0,9530 (%95,3) · Hasta AUC 0,9197 (Top-1) / 0,9652 (Noisy-OR) · S@0,25 0,5235
-· S@0,50 0,5839 · `rank_metric` 0,8206** (yalnız 2. aşama TDA: **0,9704 Top-1 / 0,9789 nOR AUC**).
+· S@0,50 0,5839 · `rank_metric` 0,8206** (yalnız 2. aşama TDA hasta düzeyinde **0,9704 Top-1 / 0,9789 nOR AUC**, fakat tek başına kutu koyamaz: `S@0,25 %2,7 · rank_metric 0,7345`; kilitli `w=0,55` birleşimi 1. aşamayı `0,8488 → 0,9197` AUC ve `%49,7 → %52,4` S@0,25'e taşır).
 Hiçbir modelin eğitimde görmediği 74 hastalık (`val+test`: 42 nodüllü + 32 sağlıklı) saf JSRT alt
 kümesinde `V6.9r` (`0,9077` Top-1) ile ana model (`0,9010` Top-1) arasında fark yoktur (`Δ =
 +0,0067`). *(Önceki `V6.9k/k4` 149 pozitif + 250 karma val kontrol koşusu: saf 1.600 ile `0,9316`

@@ -194,7 +194,7 @@ ağırlıklarla (%55 ve %45) birleştirdik.
 | Kilitli test (734 hasta) — yalnız 1. aşama | **0,945 AUC** (S@0.25 %70,3 · S@0.50 %76,4) | 1. aşama tarayıcı model tek başına da güçlü bir başlangıç sağlıyor *(S@0.25 ve S@0.50: röntgen başına sırasıyla en fazla 0,25 ve 0,50 yanlış alarma izin verildiğindeki tümör kutusu yakalama oranı)* |
 | Kilitli test — 1.+2. aşama birleşimi (Füzyon) | **0,966 AUC** (S@0.25 %72,1 · S@0.50 %76,4) | 2. aşama topolojik katman, 1. aşamanın kararsız kaldığı yerleri tamamlıyor: hasta AUC **+2,2 puan**, S@0.25'te kutu duyarlılığı **+1,7 puan** artıyor |
 | Harici veri 1 — Düşük kalite JPEG (VinDr-CXR, Vietnam; 400 görüntü) | **0,638 (sıfır-eğitim) → 0,794 AUC** (160 görüntüyle saha kalibrasyonu) | 3× küçültülmüş ve 8-bit JPEG olarak sıkıştırılmış harici veride sıfır-eğitimde başarı düşüyor; ancak az sayıda yerel örnekle iki katman birlikte kalibre edildiğinde **0,79** düzeyine çıkıyor |
-| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; 149 nodüllü + 93 sağlıklı = 242 hasta, eğitimden tamamen izole) | **İlk 10 kutuda %86,6 · ilk 50 kutuda %95,3 · 0,920 (Top-1) / 0,965 (Noisy-OR) hasta AUC · S@0.25 %52,4 · S@0.50 %58,4** (sıfır-eğitim) | Dış hastanenin görüntüleri sıkıştırılmamış yüksek kaliteli (12-bit `.mha`) olduğunda, sistem **hiç kalibrasyon yapmadan** 242 saf Japon röntgeninde ilk 50 kutuda tümörlerin **%95,3'ünü (142/149)** yakalıyor. Hastanın en güçlü tek kutusuna göre (**Top-1**) **0,920**, kutuların ortak olasılığına göre (**Noisy-OR**) **0,965** hasta AUC elde ediliyor; 2. aşama topolojik katman tek başına **0,970 AUC** üretip 1. aşamanın hasta ayrımını **0,849 → 0,920 (+7,1 puan)** ve S@0.25 kutu isabetini **%49,7 → %52,4 (+2,7 puan)** yükseltiyor |
+| Harici veri 2 — Yüksek kalite tıbbi format (JSRT, Japonya; 149 nodüllü + 93 sağlıklı = 242 hasta, eğitimden tamamen izole) | **İlk 10 kutuda %86,6 · ilk 50 kutuda %95,3 · 0,920 (Top-1) / 0,965 (Noisy-OR) hasta AUC · S@0.25 %52,4 · S@0.50 %58,4** (sıfır-eğitim) | Dış hastanenin görüntüleri sıkıştırılmamış yüksek kaliteli (12-bit `.mha`) olduğunda, sistem **hiç kalibrasyon yapmadan** 242 saf Japon röntgeninde ilk 50 kutuda tümörlerin **%95,3'ünü (142/149)** yakalıyor. Hastanın en güçlü tek kutusuna göre (**Top-1**) **0,920**, kutuların ortak olasılığına göre (**Noisy-OR**) **0,965** hasta AUC elde ediliyor; 2. aşama topolojik katman hasta düzeyinde tek başına **0,970 AUC** üretirken (kutu merkezini bilmediği için tek başına kutu koyamaz: S@0.25 %2,7), kilitli %55/%45 birleşiminde 1. aşamanın hasta ayrımını **0,849 → 0,920 (+7,1 puan)** ve S@0.25 kutu isabetini **%49,7 → %52,4 (+2,7 puan)** yükseltiyor |
 
 Tablodaki bulgularımız üç temel gerçeği ortaya koymaktadır:
 
@@ -242,10 +242,14 @@ hayatında hiç görmediği **242 hastalık saf Japonya (149 nodüllü + 93 sağ
 kalibrasyon yapmadan (sıfır-eğitimle)** ilk 10 kutuda nodüllerin **%86,6'sını**, ilk 50 kutuda
 **%95,3'ünü (142/149)** yakaladı; **0,920 (Top-1) / 0,965 (Noisy-OR) hasta AUC** ile **%52,4 S@0.25**
 ve **%58,4 S@0.50** kutu isabetine ulaştı. Daha da çarpıcı olan şudur: yabancı hastane arka planında
-1. aşama tarayıcı model tek başına **0,849 AUC** ve **%49,7 S@0.25** düzeyinde kalırken, **yalnız
-2. aşama Lokal TDA modeli tek başına 0,970 Top-1 (0,979 Noisy-OR) hasta AUC** üretmektedir. İki
-aşama birleştiğinde TDA katmanı hasta ayrımını **0,849 → 0,920 (+7,1 puan)** ve S@0.25 kutu
-isabetini **%49,7 → %52,4 (+2,7 puan)** seviyesine taşımaktadır. Üstelik hiçbir modelin eğitimde
+1. aşama tarayıcı model tek başına **0,849 AUC** ve **%49,7 S@0.25** (`rank_metric 0,761`) düzeyinde kalırken, **yalnız
+2. aşama Lokal TDA modeli hasta düzeyinde tek başına 0,970 Top-1 (0,979 Noisy-OR) hasta AUC** üretmektedir.
+Ancak TDA yalnızca kendisine verilen kutunun şeklini puanlayıp kutu merkezini bilmediği için tek başına kutu
+yerleştiremez (**S@0.25 %2,7 · `rank_metric` 0,735**); ayrıca birleştirme ağırlığımızı (%55 / %45) dış veriye göre
+değiştirmeden kilitli tuttuğumuz için, iki aşama birleştiğinde 1. aşamanın yabancı hastanedeki daha düşük puanı (`0,849`)
+birleşik hasta AUC değerini `0,920` seviyesinde tutarken 1. aşamaya kıyasla **hasta ayrımını 0,849 → 0,920 (+7,1 puan)**,
+**S@0.25 kutu isabetini %49,7 → %52,4 (+2,7 puan)** ve **genel sıralama ölçütünü (`rank_metric`) 0,761 → 0,821 (+6,0 puan)**
+seviyesine taşımaktadır (TDA ağırlığı %55–70'e çıkarıldığında JSRT hasta AUC'si **0,938–0,955**'e ulaşmaktadır). Üstelik hiçbir modelin eğitimde
 görmediği 74 hastalık (`val+test`: 42 nodüllü + 32 sağlıklı) saf JSRT alt kümesinde de JSRT'yi hiç
 görmeyen model (**0,908 AUC**) ile JSRT'den örnekler gören ana model (**0,901 AUC**) aynı başarıyı
 göstermektedir; yani topolojik şekil özetimiz yüksek kaliteli röntgenlerde hastaneden hastaneye
