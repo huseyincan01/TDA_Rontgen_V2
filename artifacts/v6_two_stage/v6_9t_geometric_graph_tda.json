@@ -1,0 +1,407 @@
+{
+  "experiment": "V6.9t-geometric-graph-tda",
+  "limit": 0,
+  "fusion_w_tda": 0.45,
+  "track_1_uncalibrated_jsrt242": {
+    "Arm_0_Baseline_Pure1600": {
+      "candidate_auc": 0.7515,
+      "corr_with_s1": 0.2299,
+      "corr_with_pure1600": 1.0,
+      "tda_only": {
+        "patient_auc": 0.9704,
+        "S@0.125": 0.0067,
+        "S@0.25": 0.0268,
+        "S@0.5": 0.0604,
+        "rank_metric": 0.7345,
+        "top1_box_hit_rate": 0.0671
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9197,
+        "S@0.125": 0.4362,
+        "S@0.25": 0.5235,
+        "S@0.5": 0.5839,
+        "rank_metric": 0.8206,
+        "top1_box_hit_rate": 0.5436
+      },
+      "n_features": 1600
+    },
+    "Arm_1_Radial_Only": {
+      "candidate_auc": 0.7441,
+      "corr_with_s1": 0.2152,
+      "corr_with_pure1600": 0.7952,
+      "tda_only": {
+        "patient_auc": 0.9312,
+        "S@0.125": 0.0336,
+        "S@0.25": 0.0537,
+        "S@0.5": 0.0738,
+        "rank_metric": 0.7118,
+        "top1_box_hit_rate": 0.1074
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9116,
+        "S@0.125": 0.4497,
+        "S@0.25": 0.4966,
+        "S@0.5": 0.5772,
+        "rank_metric": 0.8078,
+        "top1_box_hit_rate": 0.557
+      },
+      "n_features": 424
+    },
+    "Arm_2_DistTransform_Only": {
+      "candidate_auc": 0.7223,
+      "corr_with_s1": 0.2106,
+      "corr_with_pure1600": 0.5198,
+      "tda_only": {
+        "patient_auc": 0.8048,
+        "S@0.125": 0.0201,
+        "S@0.25": 0.0537,
+        "S@0.5": 0.0738,
+        "rank_metric": 0.617,
+        "top1_box_hit_rate": 0.0671
+      },
+      "fusion_w045": {
+        "patient_auc": 0.8655,
+        "S@0.125": 0.4228,
+        "S@0.25": 0.4765,
+        "S@0.5": 0.5906,
+        "rank_metric": 0.7683,
+        "top1_box_hit_rate": 0.5705
+      },
+      "n_features": 560
+    },
+    "Arm_3_VR_Graph_Only": {
+      "candidate_auc": 0.6314,
+      "corr_with_s1": 0.1153,
+      "corr_with_pure1600": 0.3155,
+      "tda_only": {
+        "patient_auc": 0.66,
+        "S@0.125": 0.0,
+        "S@0.25": 0.0,
+        "S@0.5": 0.0336,
+        "rank_metric": 0.495,
+        "top1_box_hit_rate": 0.0671
+      },
+      "fusion_w045": {
+        "patient_auc": 0.8612,
+        "S@0.125": 0.443,
+        "S@0.25": 0.4899,
+        "S@0.5": 0.5705,
+        "rank_metric": 0.7684,
+        "top1_box_hit_rate": 0.5369
+      },
+      "n_features": 296
+    },
+    "Arm_4_GeoGraph_Combined": {
+      "candidate_auc": 0.7548,
+      "corr_with_s1": 0.2406,
+      "corr_with_pure1600": 0.7547,
+      "tda_only": {
+        "patient_auc": 0.9288,
+        "S@0.125": 0.0403,
+        "S@0.25": 0.0671,
+        "S@0.5": 0.1007,
+        "rank_metric": 0.7134,
+        "top1_box_hit_rate": 0.1074
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9073,
+        "S@0.125": 0.4362,
+        "S@0.25": 0.4966,
+        "S@0.5": 0.5772,
+        "rank_metric": 0.8046,
+        "top1_box_hit_rate": 0.5503
+      },
+      "n_features": 1280
+    },
+    "Arm_5_Pure1600_Plus_Radial": {
+      "candidate_auc": 0.747,
+      "corr_with_s1": 0.2269,
+      "corr_with_pure1600": 0.8766,
+      "tda_only": {
+        "patient_auc": 0.9342,
+        "S@0.125": 0.047,
+        "S@0.25": 0.0671,
+        "S@0.5": 0.0805,
+        "rank_metric": 0.7174,
+        "top1_box_hit_rate": 0.0872
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9164,
+        "S@0.125": 0.4228,
+        "S@0.25": 0.5235,
+        "S@0.5": 0.5906,
+        "rank_metric": 0.8182,
+        "top1_box_hit_rate": 0.557
+      },
+      "n_features": 2024
+    },
+    "Arm_6_Pure1600_Plus_AllGeo": {
+      "candidate_auc": 0.7446,
+      "corr_with_s1": 0.2563,
+      "corr_with_pure1600": 0.8064,
+      "tda_only": {
+        "patient_auc": 0.9331,
+        "S@0.125": 0.0537,
+        "S@0.25": 0.0671,
+        "S@0.5": 0.1074,
+        "rank_metric": 0.7166,
+        "top1_box_hit_rate": 0.1074
+      },
+      "fusion_w045": {
+        "patient_auc": 0.917,
+        "S@0.125": 0.4161,
+        "S@0.25": 0.5034,
+        "S@0.5": 0.5772,
+        "rank_metric": 0.8136,
+        "top1_box_hit_rate": 0.5369
+      },
+      "n_features": 2880
+    },
+    "Arm_7_DualHGB_ProbBlend_alpha0.35": {
+      "candidate_auc": 0.7646,
+      "corr_with_s1": 0.2287,
+      "corr_with_pure1600": 0.9553,
+      "tda_only": {
+        "patient_auc": 0.9663,
+        "S@0.125": 0.0268,
+        "S@0.25": 0.0671,
+        "S@0.5": 0.1208,
+        "rank_metric": 0.7415,
+        "top1_box_hit_rate": 0.094
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9076,
+        "S@0.125": 0.443,
+        "S@0.25": 0.5101,
+        "S@0.5": 0.5906,
+        "rank_metric": 0.8082,
+        "top1_box_hit_rate": 0.5436
+      },
+      "n_features": "1600 + 1280 (2 HGB)"
+    },
+    "Arm_7_DualHGB_ProbBlend_alpha0.50": {
+      "candidate_auc": 0.7662,
+      "corr_with_s1": 0.231,
+      "corr_with_pure1600": 0.9248,
+      "tda_only": {
+        "patient_auc": 0.957,
+        "S@0.125": 0.0604,
+        "S@0.25": 0.0738,
+        "S@0.5": 0.1208,
+        "rank_metric": 0.7362,
+        "top1_box_hit_rate": 0.1275
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9075,
+        "S@0.125": 0.443,
+        "S@0.25": 0.4966,
+        "S@0.5": 0.5906,
+        "rank_metric": 0.8048,
+        "top1_box_hit_rate": 0.5436
+      },
+      "n_features": "1600 + 1280 (2 HGB)"
+    }
+  },
+  "track_2_node21_val734": {
+    "Arm_0_Baseline_Pure1600": {
+      "candidate_auc": 0.8434,
+      "corr_with_s1": 0.2193,
+      "corr_with_pure1600": 1.0,
+      "tda_only": {
+        "patient_auc": 0.9387,
+        "S@0.125": 0.0606,
+        "S@0.25": 0.1212,
+        "S@0.5": 0.1775,
+        "rank_metric": 0.7343,
+        "top1_box_hit_rate": 0.1744
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9836,
+        "S@0.125": 0.6883,
+        "S@0.25": 0.7706,
+        "S@0.5": 0.7965,
+        "rank_metric": 0.9304,
+        "top1_box_hit_rate": 0.8023
+      },
+      "n_features": 1600
+    },
+    "Arm_1_Radial_Only": {
+      "candidate_auc": 0.8473,
+      "corr_with_s1": 0.2124,
+      "corr_with_pure1600": 0.7349,
+      "tda_only": {
+        "patient_auc": 0.9386,
+        "S@0.125": 0.0649,
+        "S@0.25": 0.1082,
+        "S@0.5": 0.1775,
+        "rank_metric": 0.731,
+        "top1_box_hit_rate": 0.1221
+      },
+      "fusion_w045": {
+        "patient_auc": 0.984,
+        "S@0.125": 0.684,
+        "S@0.25": 0.7532,
+        "S@0.5": 0.8182,
+        "rank_metric": 0.9263,
+        "top1_box_hit_rate": 0.7616
+      },
+      "n_features": 424
+    },
+    "Arm_2_DistTransform_Only": {
+      "candidate_auc": 0.8051,
+      "corr_with_s1": 0.2184,
+      "corr_with_pure1600": 0.4979,
+      "tda_only": {
+        "patient_auc": 0.7389,
+        "S@0.125": 0.0693,
+        "S@0.25": 0.1039,
+        "S@0.5": 0.1645,
+        "rank_metric": 0.5801,
+        "top1_box_hit_rate": 0.1802
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9682,
+        "S@0.125": 0.6537,
+        "S@0.25": 0.7229,
+        "S@0.5": 0.7922,
+        "rank_metric": 0.9069,
+        "top1_box_hit_rate": 0.75
+      },
+      "n_features": 560
+    },
+    "Arm_3_VR_Graph_Only": {
+      "candidate_auc": 0.7026,
+      "corr_with_s1": 0.1318,
+      "corr_with_pure1600": 0.2633,
+      "tda_only": {
+        "patient_auc": 0.7234,
+        "S@0.125": 0.0433,
+        "S@0.25": 0.0736,
+        "S@0.5": 0.1169,
+        "rank_metric": 0.561,
+        "top1_box_hit_rate": 0.0988
+      },
+      "fusion_w045": {
+        "patient_auc": 0.97,
+        "S@0.125": 0.6623,
+        "S@0.25": 0.7143,
+        "S@0.5": 0.7965,
+        "rank_metric": 0.9061,
+        "top1_box_hit_rate": 0.7442
+      },
+      "n_features": 296
+    },
+    "Arm_4_GeoGraph_Combined": {
+      "candidate_auc": 0.873,
+      "corr_with_s1": 0.2699,
+      "corr_with_pure1600": 0.6897,
+      "tda_only": {
+        "patient_auc": 0.9262,
+        "S@0.125": 0.1342,
+        "S@0.25": 0.2035,
+        "S@0.5": 0.303,
+        "rank_metric": 0.7455,
+        "top1_box_hit_rate": 0.2674
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9827,
+        "S@0.125": 0.6883,
+        "S@0.25": 0.7446,
+        "S@0.5": 0.8009,
+        "rank_metric": 0.9232,
+        "top1_box_hit_rate": 0.7733
+      },
+      "n_features": 1280
+    },
+    "Arm_5_Pure1600_Plus_Radial": {
+      "candidate_auc": 0.8542,
+      "corr_with_s1": 0.2159,
+      "corr_with_pure1600": 0.8405,
+      "tda_only": {
+        "patient_auc": 0.941,
+        "S@0.125": 0.0779,
+        "S@0.25": 0.1082,
+        "S@0.5": 0.1732,
+        "rank_metric": 0.7328,
+        "top1_box_hit_rate": 0.1163
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9867,
+        "S@0.125": 0.6883,
+        "S@0.25": 0.7749,
+        "S@0.5": 0.8052,
+        "rank_metric": 0.9338,
+        "top1_box_hit_rate": 0.7965
+      },
+      "n_features": 2024
+    },
+    "Arm_6_Pure1600_Plus_AllGeo": {
+      "candidate_auc": 0.8756,
+      "corr_with_s1": 0.269,
+      "corr_with_pure1600": 0.7663,
+      "tda_only": {
+        "patient_auc": 0.9225,
+        "S@0.125": 0.1645,
+        "S@0.25": 0.2078,
+        "S@0.5": 0.303,
+        "rank_metric": 0.7438,
+        "top1_box_hit_rate": 0.2326
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9828,
+        "S@0.125": 0.671,
+        "S@0.25": 0.7576,
+        "S@0.5": 0.8052,
+        "rank_metric": 0.9265,
+        "top1_box_hit_rate": 0.7791
+      },
+      "n_features": 2880
+    },
+    "Arm_7_DualHGB_ProbBlend_alpha0.35": {
+      "candidate_auc": 0.873,
+      "corr_with_s1": 0.2339,
+      "corr_with_pure1600": 0.9541,
+      "tda_only": {
+        "patient_auc": 0.9399,
+        "S@0.125": 0.1212,
+        "S@0.25": 0.1688,
+        "S@0.5": 0.2597,
+        "rank_metric": 0.7471,
+        "top1_box_hit_rate": 0.2267
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9829,
+        "S@0.125": 0.6926,
+        "S@0.25": 0.7532,
+        "S@0.5": 0.8095,
+        "rank_metric": 0.9255,
+        "top1_box_hit_rate": 0.7791
+      },
+      "n_features": "1600 + 1280 (2 HGB)"
+    },
+    "Arm_7_DualHGB_ProbBlend_alpha0.50": {
+      "candidate_auc": 0.8788,
+      "corr_with_s1": 0.2416,
+      "corr_with_pure1600": 0.9124,
+      "tda_only": {
+        "patient_auc": 0.9405,
+        "S@0.125": 0.1255,
+        "S@0.25": 0.2035,
+        "S@0.5": 0.2987,
+        "rank_metric": 0.7562,
+        "top1_box_hit_rate": 0.2616
+      },
+      "fusion_w045": {
+        "patient_auc": 0.9823,
+        "S@0.125": 0.6883,
+        "S@0.25": 0.7489,
+        "S@0.5": 0.8095,
+        "rank_metric": 0.9239,
+        "top1_box_hit_rate": 0.7733
+      },
+      "n_features": "1600 + 1280 (2 HGB)"
+    }
+  },
+  "sha256_unchanged": true,
+  "elapsed_s": 4960.5
+}

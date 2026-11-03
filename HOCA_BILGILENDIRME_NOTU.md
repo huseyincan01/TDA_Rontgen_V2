@@ -298,7 +298,7 @@ kritik yanlış-alarm noktasını (**S@0.25: %70,3 → %72,1**) belirgin biçimd
 yanlış-alarm eşiğinde (**S@0.125**, yani 8 röntgende en fazla 1 yanlış alarma izin verildiğinde) küçük bir duyarlılık tavizi verebiliyor. Kutu boyutu konusunda
 her tümöre kendi büyüklüğünde dinamik kutu çizen bir başlık da eğittik; doğrulama setinde sabit
 56×56 kutuyu geçse de kilitli test setinde S@0.25 kutu duyarlılığını değiştirmediği için (%70,3)
-daha sade olan sabit kutuyu varsayılan olarak koruduk.
+daha sade olan sabit kutuyu varsayılan olarak koruduk. Ayrıca şüpheli kutunun **içindeki şekli** farklı biçimlerde özetlemeyi de denedik (kutu merkezine uzaklıkla ağırlıklandırma, yapının piksel cinsinden **kalınlığı**, nokta bulutunun **Vietoris-Rips graf** topolojisi; her biri kendi makine öğrenmesi modeliyle ayrı ayrı eğitildi). Üçü de **yalnız şekil özeti kullanıldığında** doğru kutuyu bulmayı belirgin biçimde artırdı (Japonya dış testinde tümör kutusu isabeti %2,7 → %6,7, ilk kutunun tümöre denk gelme oranı %6,7 → %10,7; kurum içi doğrulamada %12,1 → %20,4), ancak **iki aşama birleştirildiğinde ek kazanç sağlamadı**: bu özetler 1. aşamanın zaten gördüğü bilgiye daha çok benziyor (1. aşama ile korelasyon 0,22 → 0,27). Bu yüzden mevcut parlaklık tabanlı şekil özetinde kaldık.
 
 ---
 

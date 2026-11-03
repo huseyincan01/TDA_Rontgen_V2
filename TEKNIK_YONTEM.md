@@ -132,6 +132,22 @@ sağlamadığını (±0,001 AUC; işaretler ters) ve aday düzeyinde **zarar ver
 (TDA-tek AUC 0,9387 → 0,9242) gösterdi ⇒ Occam'ın usturası gereği **çıkarıldı** (V6.9m).
 Ayrıntı ve kilitli test sonucu: [experiments.md](experiments.md) §V6.9.13–14.
 
+> 🧪 **Alternatif kutu-içi filtrasyonlar denendi ve elendi (V6.9u).** Ham parlaklık filtrasyonunun
+> (`255 − I`) iki körlüğü — kutunun **merkezini** ve yapının **kalınlığını** görmemesi — üç yeni
+> temsille test edildi: **M1 radyal** (`F = clip((255−I) + 60·r_norm)`, kutu merkezli; 424 özellik),
+> **M2 EDT / geometrik kalınlık** (`F = −EDT(q70)` ve yoğunluk-ağırlıklı `F_geo`; 560) ve
+> **M3 Vietoris-Rips graf** (`48` düğüm, `d = √(Δu² + Δv² + 1,5·ΔI²)`, `max_edge = 2,5`; 296).
+> Her kol kendi HGB'sini **sıfırdan** eğitti; iki kulvar (kalibresiz 242 Saf JSRT + NODE21 Val 734),
+> kilitli `w_tda = 0,45`. **Sonuç: hiçbiri füzyonu iyileştirmedi** (Saf JSRT füzyon `rank_metric`
+> 0,8206 → en iyi 0,8182; Val 0,9304 → 0,9338 ama aynı kol JSRT'de −0,0024) ⇒ **KILL**, kilitli test
+> açılmadı. Buna karşılık **tek başına** kutu körlüğünü kırdıkları ölçüldü: TDA-tek `S@0,25`
+> Saf JSRT'de **%2,7 → %6,7 (2,5×)**, Val'de **%12,1 → %20,4 (1,7×)** ⇒ §V6.9.17'deki `%2,7`'nin
+> nedeni gerçekten **merkez + kalınlık bilgisizliğiymiş**. Füzyona taşınmamasının **en olası
+> açıklaması** ölçüldü: yeni temsillerin **1. aşama ile korelasyonu artıyor** (`r(p_TDA, s1)`:
+> 0,219 → 0,269 Val; 0,230 → 0,256 JSRT; mutlak düzey ≤0,27) ⇒ 1. aşamanın kodladığı bilgiye
+> yaklaşıyorlar. (Korelasyon gözlemi; nedensellik test edilmedi.) Ayrıntı: [experiments.md](experiments.md) §V6.9.20 ·
+> [ablation_matrix.md](ablation_matrix.md) §17.14.
+
 > ⚠️ **TARİHSEL KAYIT — çıkarılan 4 uzamsal vekil (v6.1–v6.9l sürümleri).** Aşağıdaki tanımlar
 > artık **kullanılmamaktadır**; V6.9l'de ölçülüp V6.9m'de kaldırılmıştır. Kayıt olarak duruyor,
 > çünkü eski sürümlerin sayılarını okuyan biri bu sütunların ne olduğunu bilmelidir. Bu iki

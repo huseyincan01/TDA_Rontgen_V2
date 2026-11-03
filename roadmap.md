@@ -499,3 +499,19 @@ kaynak-dışı genelleme iddiasında **LOSO (`V6.9r`)** sayıları kullanılır
 > sha256 ile güncellenmeli ve `smoke_test.py` yeniden koşturulmalı. Not: dış-domainde 4 konum
 > sütunu **hafif faydalı** olduğu için (VinDr sıfır-eğitim −0,018) bu geçiş isteğe bağlı bir
 > tercihtir; bilimsel raporlanan sayılarla **uyum** için gereklidir.
+
+> ✅ **Kapanan iş — `V6.9u` kutu-içi geometrik/graf TDA ablasyonu (3.11.2026 · KILL).** Ham parlaklık
+> filtrasyonunun iki körlüğü (kutunun **merkezi** ve yapının **kalınlığı**) üç yeni temsille sınandı:
+> **M1 radyal** (424), **M2 EDT / geometrik kalınlık** (560), **M3 Vietoris-Rips graf** (296) ve
+> bunların birleşimleri; 9 kol × **2 kulvar** (kalibresiz 242 Saf JSRT + `NODE21 Val 734`), kilitli
+> `w_tda = 0,45`, **her kol kendi HGB'sini sıfırdan eğitti** (ayrı scaler; ortak fit yok). Süre
+> 4.960 s, 8 salt-okunur artefaktın SHA-256'sı **değişmedi**.
+> **Hüküm: füzyonda hiçbir kol kazanmadı** (Saf JSRT `rank_metric` 0,8206 → en iyi 0,8182; Val
+> 0,9304 → 0,9338 ama kazanan kol aynı anda Saf JSRT'de −0,0024) ⇒ **ana mimari değişmedi**, kilitli
+> test **açılmadı** (bütçe **5/5**). **Pozitif yan bulgu:** geometrik/radyal TDA **tek başına** kutu
+> körlüğünü kırıyor — TDA-tek `S@0,25` Saf JSRT'de **%2,7 → %6,7 (2,5×)**, Val'de **%12,1 → %20,4
+> (1,7×)** ⇒ `%2,7`'nin nedeni gerçekten merkez/kalınlık bilgisizliğiymiş. Füzyona taşınmamasının **en olası
+> açıklaması** ölçüldü: yeni temsillerin **1. aşama korelasyonu artıyor** (`r(p_TDA, s1)`: Val
+> 0,219 → 0,269; JSRT 0,230 → 0,256; mutlak düzey ≤0,27 — korelasyon gözlemi, nedensellik değil). **Kayıt:**
+> `artifacts/v6_two_stage/v6_9t_geometric_graph_tda.json` · [experiments.md](experiments.md)
+> §V6.9.20 · [ablation_matrix.md](ablation_matrix.md) §17.14

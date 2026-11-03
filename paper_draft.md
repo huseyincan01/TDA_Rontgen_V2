@@ -45,7 +45,7 @@
 1.5 **Katkılarımız:**
    - (C1) NODE21 üzerinde, güçlü ve **ince ayarlı** bir baseline karşısında istatistiksel olarak doğrulanmış füzyon kazancı.
    - (C2) PL üst-zarf çökmesinin **nicel** mekanizma gösterimi.
-   - (C3) "Global vs lokal" sorusunu kapatan **negatif sonuçlar kümesi** (5-zon TDA lokalize etmez; yerel topoloji zayıf; arka planı bastırmak zararlı).
+   - (C3) "Global vs lokal" sorusunu kapatan **negatif sonuçlar kümesi** (5-zon TDA lokalize etmez; yerel topoloji zayıf; arka planı bastırmak zararlı) + kutu-içi **radyal, EDT ve Vietoris-Rips graf TDA'ları** (`V6.9u`): ikisi de kutu körlüğünü **tek başına** kırıyor (TDA-tek `S@0,25` Saf JSRT'de %2,7 → %6,7) ama 1. aşama ile korelasyonu artırdıkları için **füzyonda kazanmıyorlar** (rank 0,8206 → 0,8182).
    - (C4) **İki aşamalı lokalizasyon (V6):** aday üretici + lokal TDA-HGB FP eleme; NODE21 test mührü (AUC **0,9876**, FROC@2 **0,642**) ve VinDr-CXR transfer merdiveni (**0,544 → 0,724**).
 1.6 **Makalenin çerçevesi:** v3 katmanı **hasta düzeyi sınıflandırma**dır ve **lokalizasyon iddiası taşımaz**; lokalizasyon, ayrı olarak değerlendirilen **V6 iki aşamalı eklentisiyle** sağlanır (§4.10).
 

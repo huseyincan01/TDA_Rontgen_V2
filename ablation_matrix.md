@@ -1188,3 +1188,43 @@ ortalaması ± SD (Kol 3 AUC): 0,9076 ± 0,0475 → **0,9644 ± 0,0335**.
 * ⚠️ **Etiket:** Bu satırlar "N etiketli görüntü gerektirir" senaryosudur; sıfır-eğitim (V6.9r)
   sayılarıyla karıştırılmamalıdır. Kilitli NODE21 testi kullanılmadı (bütçe 5/5).
 * **Kayıt:** `v6_9t_jsrt_calibration.json` · [v6_9t_jsrt_calibration.py](pipelines/v6_two_stage/v6_9t_jsrt_calibration.py)
+### 17.14 Kutu-içi geometrik / radyal / VR-graf TDA ablasyonu (V6.9u)
+
+2. aşamanın `32×32`+`64×64` yamalarında bugüne kadar yalnız **ham parlaklık** kübik filtrasyonu
+(`255 − I`) kullanıldı. Saf parlaklık TDA'sının iki körlüğü (kutunun **merkezini** ve yapının
+**kalınlığını** görmemesi) bu deneyde üç yeni kutu-içi temsille test edildi. Her kol kendi HGB'sini
+**sıfırdan** eğitti (`max_iter=200, lr=0.08, balanced, rs=42`; her kolda ayrı `StandardScaler`).
+İki kulvar, sızıntısız: **(1) kalibresiz 242 Saf JSRT** (eğitim 1.366 JSRT-dışı hasta, z-ref 693
+JSRT-dışı val hastası, JSRT'den tek görüntü yok) ve **(2) NODE21 Val 734** (1.580 train · 734 val).
+Füzyon ağırlığı kilitli (`w_tda = 0,45`). Toplam 4.960 s; 8 salt-okunur artefaktın SHA-256'sı
+değişmedi; **kilitli test açılmadı (bütçe 5/5)**.
+
+| Kol (boyut) | JSRT aday AUC | VAL aday AUC | JSRT TDA-tek S@0,25 / hit | VAL TDA-tek S@0,25 / hit | **JSRT füzyon AUC / S@0,25 / rank** | **VAL füzyon AUC / S@0,25 / rank** |
+| :--- | ---: | ---: | ---: | ---: | :--- | :--- |
+| **Arm_0** Pure1600 (kontrol, 1600) | 0,7515 | 0,8434 | 0,0268 / 0,0671 | 0,1212 / 0,1744 | **0,9197 / 0,5235 / 0,8206** | **0,9836 / 0,7706 / 0,9304** |
+| Arm_1 Radyal M1 (424) | 0,7441 | 0,8473 | 0,0537 / 0,1074 | 0,1082 / 0,1221 | 0,9116 / 0,4966 / 0,8078 | 0,9840 / 0,7532 / 0,9263 |
+| Arm_2 EDT M2 (560) | 0,7223 | 0,8051 | 0,0537 / 0,0671 | 0,1039 / 0,1802 | 0,8655 / 0,4765 / 0,7683 | 0,9682 / 0,7229 / 0,9069 |
+| Arm_3 VR-Graf M3 (296) | 0,6314 | 0,7026 | 0,0000 / 0,0671 | 0,0736 / 0,0988 | 0,8612 / 0,4899 / 0,7684 | 0,9700 / 0,7143 / 0,9061 |
+| Arm_4 M1+M2+M3 (1280) | 0,7548 | 0,8730 | **0,0671** / **0,1074** | **0,2035** / **0,2674** | 0,9073 / 0,4966 / 0,8046 | 0,9827 / 0,7446 / 0,9232 |
+| Arm_5 1600+M1 (2024) | 0,7470 | 0,8542 | 0,0671 / 0,0872 | 0,1082 / 0,1163 | 0,9164 / 0,5235 / 0,8182 | **0,9867 / 0,7749 / 0,9338** |
+| Arm_6 1600+M1+M2+M3 (2880) | 0,7446 | **0,8756** | 0,0671 / 0,1074 | 0,2078 / 0,2326 | 0,9170 / 0,5034 / 0,8136 | 0,9828 / 0,7576 / 0,9265 |
+| Arm_7 α=0,35 / 0,50 (çift HGB) | 0,7646 / **0,7662** | 0,8730 / **0,8788** | 0,0671 / 0,0738 | 0,1688 / 0,2035 | 0,9076 / 0,5101 / 0,8082 · 0,9075 / 0,4966 / 0,8048 | 0,9829 / 0,7532 / 0,9255 · 0,9823 / 0,7489 / 0,9239 |
+
+* 🔴 **Hüküm: KILL / NEUTRAL.** Hiçbir kol **iki kulvarda birlikte** kazanç sağlamadı ⇒ ana mimari
+  saf 1.600 parlaklık TDA'sında kalır. Tek iki-kulvar adayı `Arm_5` (1600+M1) VAL'de üç ölçütte de
+  yükseliyor (**Δrank +0,0034 · ΔS@0,25 +0,0043 · ΔAUC +0,0031**) ama JSRT'de düşüyor
+  (Δrank −0,0024 · ΔAUC −0,0033) ⇒ **KEEP değil**, kilitli test açılmadı.
+* 🎯 **Pozitif kavramsal bulgu:** geometrik/radyal TDA **tek başına** kutu körlüğünü gerçekten kırıyor
+  — TDA-tek `S@0,25` JSRT'de **%2,7 → %6,7 (2,5×)**, VAL'de **%12,1 → %20,4 (1,7×)**; `top1_hit`
+  JSRT %6,7 → %10,7, VAL %17,4 → %26,7. Yani §V6.9.17'deki `%2,7`'nin nedeni **merkez + kalınlık
+  bilgisizliğiymiş**.
+* ⚖️ **Füzyona taşınmamasının en olası açıklaması:** `r(p_TDA, s1)` VAL'de 0,2193 → **0,2690**,
+  JSRT'de 0,2299 → **0,2563** (mutlak düzey ≤0,27) ⇒ yeni temsiller aday düzeyinde daha iyi ama
+  **1. aşamanın kodladığı bilgiye daha yakın**; kilitli `w_tda = 0,45` altında tamamlayıcılık
+  kazancı görülmüyor. ⚠️ Korelasyon gözlemi; nedensellik test edilmedi. En bağımsız kol VR-graf
+  (`r = 0,115 / 0,132`) aynı zamanda en zayıf kol ⇒ *bağımsızlık var, sinyal yok*.
+* 📉 **EDT ve VR-graf tek başına başarısız:** füzyon AUC JSRT'de 0,8655 / 0,8612, VAL'de 0,9682 /
+  0,9700 (kontrol 0,9197 / 0,9836).
+* **Kayıt:** `v6_9t_geometric_graph_tda.json` ·
+  [v6_9t_geometric_graph_tda.py](pipelines/v6_two_stage/v6_9t_geometric_graph_tda.py) · anlatı:
+  [experiments.md](experiments.md) §V6.9.20

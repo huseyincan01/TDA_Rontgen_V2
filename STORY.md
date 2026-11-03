@@ -80,6 +80,19 @@ E2.1 **+0,0210 → −0,0019** (füzyona *zarar*). Ardından sırayla:
 
 **Desen:** TDA dalını iyileştiren her müdahale, ResNet'e benzerliği de artırıyor.
 
+> 🔁 **Desen iki yıl sonra, doğru kurulumla yeniden sınandı (`V6.9u`).** `v4`'te radyal filtrasyon
+> **tüm akciğerin** merkezine göre kurulduğu için `r` tümörü değil makro-anatomiyi kodluyordu.
+> `V6`'nın 2 aşamalı mimarisinde aynı fikir **aday kutusunun kendi merkezine** göre yeniden kuruldu
+> (kutunun ortasındaki yuvarlak/kalın yapıyı ödüllendir); üstüne **geometrik kalınlık (EDT)** ve
+> **Vietoris-Rips graf** temsilleri eklendi. Üçü de **tek başına kutu körlüğünü gerçekten kırdı** —
+> 2. aşamanın tek başına kutu bulma oranı Saf JSRT'de **%2,7 → %6,7**, NODE21 Val'de
+> **%12,1 → %20,4** — ama **füzyonda hiçbiri kazanmadı** (Saf JSRT `rank_metric` 0,8206 → en iyi
+> 0,8182; Val'de +0,0034 kazanan kol aynı anda Saf JSRT'de −0,0024). **Aynı desenin işareti** var:
+> yeni temsillerin 1. aşama ile korelasyonu **arttı** (`r(p_TDA, s1)`: 0,219 → 0,269; mutlak düzey
+> hâlâ ≤0,27 ⇒ nedensellik değil, gözlem). ⇒ Ana mimari saf
+> 1.600 parlaklık TDA'sında kaldı, kilitli test **açılmadı**. Ayrıntı:
+> [experiments.md](experiments.md) §V6.9.20 · [ablation_matrix.md](ablation_matrix.md) §17.14.
+
 → [v4_roadmap.md §6–7](v4_roadmap.md)
 
 ## 5. V4 — Harici çöküş (2026-10-17)

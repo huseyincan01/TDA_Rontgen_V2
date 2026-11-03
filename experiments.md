@@ -2434,3 +2434,136 @@ Kol 3 N=160 **0,9849 ± 0,0186**.)
   etiketlenmelidir; sıfır-eğitim (V6.9r) sayılarıyla **karıştırılmamalıdır**. Bu satırlar bir
   *dağıtım senaryosu* ölçümüdür, mühürlü test iddiası değildir.
 * **Kayıt:** `artifacts/v6_two_stage/v6_9t_jsrt_calibration.json`
+### V6.9.20 Kutu-İçi Geometrik ve Graf TDA Ablasyonu — Radyal, Uzaklık Dönüşümü (EDT) ve Vietoris-Rips Graf Filtrasyonları (V6.9u)
+
+> 📌 **Numaralandırma notu (iki çakışma):** Bu deney yol haritasında **"V6.9.19 / V6.9t"** olarak
+> planlanmıştı. Oysa (i) **V6.9.19** numarası §V6.9.19'da **242 Saf JSRT saha kalibrasyonuna**,
+> (ii) **V6.9t** kısa etiketi de aynı kalibrasyon deneyine (artefaktları
+> `v6_9t_jsrt_calibration.py` / `.json`) verilmişti. Karışıklığı kalıcı olarak bitirmek için bu
+> deney **V6.9u / §V6.9.20** olarak kaydedildi; **içeriği ve protokolü yol haritasıyla birebirdir**
+> (betik adı, yol haritasına sadık kalınarak `v6_9t_geometric_graph_tda.py` bırakıldı).
+
+**Hipotez — iki kör nokta.** Şimdiye kadar 2. aşamanın `32×32` (çekirdek) ve `64×64` (çevre)
+yamalarında **yalnızca ham parlaklık** kübik filtrasyonu (`255 − I(u,v)`) kullanıldı. Bunun iki
+körlüğü var:
+
+1. **Merkez körlüğü:** Kutunun tam ortasındaki `(16,16)` parlak tepe ile köşesinden `(2,30)` geçen
+   parlak tepe **aynı doğuş/ölüm değerini** üretir ⇒ saf parlaklık TDA'sı hasta düzeyinde `0,9704`
+   AUC alırken **tek başına doğru kutuyu seçmede `S@0.25 = %2,7`** (ve `top1_box_hit_rate = %6,7`)
+   düzeyinde kalır (§V6.9.17).
+2. **Geometrik kalınlık körlüğü:** Parlaklığı 200 olan **14 px çaplı yuvarlak tümör** ile parlaklığı
+   200 olan **3 px kalınlığında ince kaburga/damar şeridi** parlaklık eşiğinde neredeyse aynı ömre
+   sahiptir.
+
+> ⚠️ **Eski `V2.2` yanılgısıyla farkı:** `v4`'te radyal filtrasyon (`I + t·r`) **tüm akciğer lobunun**
+> merkezine göre denenmiş, `r` tümörün değil makro-anatomiyi kodladığı için elenmişti. Burada `r`
+> **aday kutusunun (`32×32`/`64×64`) kendi merkezine** göre tanımlıdır; yani eski başarısızlığın
+> nedeni (yanlış referans noktası) ortadan kalkmıştır.
+
+**Test edilen üç yeni kutu-içi yöntem** (her aday için `c_in` 32×32 + `c_out` 64×64, iki yamadan
+birleşik vektör; TDA yalnızca bir kez çıkarılıp tüm kollarda ortak kullanılır, ardından **her kol
+kendi HGB'sini sıfırdan eğitir**: yeni `StandardScaler` + yeni `HistGradientBoostingClassifier`,
+`max_iter=200, lr=0.08, balanced, rs=42` — hiçbir kolda baseline modeli yeniden kullanılmaz):
+
+| Yöntem | Ne ölçüyor | Boyut |
+| :--- | :--- | ---: |
+| **`M1` Radyal Kübik** | `F_rad = clip((255−I) + 60·r_norm, 0, 255)` (kutu merkezli); `10×10` PI + 6'lı özet (2 kesit × 2 homoloji) | **424** |
+| **`M2` EDT / Geometrik Kalınlık** | `q50/q70/q85` ikili maskelerde `D_q = EDT` (piksel yarıçapı), `F_edt = −D70`, `F_geo = −D70·(I/255)·e^{−r²/2}`; `8×8` PI + kalınlık/merkezilik/yuvarlaklık oranları | **560** |
+| **`M3` Vietoris-Rips Graf** | 40–48 en parlak düğüm, `d_VR = √(Δu²+Δv²+1.5·ΔĨ²)`, `RipsComplex(max_edge=2.5, max_dim=2)`; `H0` MST kenar istatistikleri + `H1` döngüleri + kovaryans izotropi/yayılım | **296** |
+
+**İki kulvarlı, sızıntısız protokol** (yol haritası §1.4):
+
+* **🎯 Kulvar 1 — Kalibresiz 242 Saf JSRT (`_v6_9r_cache`):** eğitim `fit` = **1.366 JSRT-dışı**
+  hasta (67.266 aday); füzyon z-referansı `rva` = **693 JSRT-dışı** val hastası (33.802 aday);
+  değerlendirme = **149 nodüllü + 93 sağlıklı = 242 Saf JSRT** (12.027 aday). **JSRT'den tek bir
+  görüntü ne eğitime ne kalibrasyona girer.**
+* **🛡️ Kulvar 2 — `NODE21 Val 734` (`_v6_9l_cache`):** eğitim `tr` = 1.580 hasta (74.950 aday);
+  z-ref ve değerlendirme = aynı 734 val hastası (33.910 aday, 231 lezyon) — `V6.9l` protokolüyle
+  birebir.
+* Füzyon ağırlığı **hiçbir yerde yeniden öğrenilmedi**: `w_s1 = 0,55 · w_tda = 0,45` kilitli.
+* **Mühür:** koşu öncesi/sonrası 8 salt-okunur dosyanın SHA-256 özetleri **değişmedi**
+  (`sha256_unchanged = true`); toplam süre **4.960 s** (~83 dk, özellik çıkarımı 30 dk + 2×9 kol).
+  Kilitli NODE21 testi **açılmadı** (test bütçesi **5/5**).
+
+**Kulvar 1 — Kalibresiz 242 Saf JSRT** *(TDA-tek = `w_tda = 1,0`; Füzyon = `w_tda = 0,45`)*
+
+| Kol | Boyut | Aday AUC | r(p_TDA, s1) | r(p_TDA, Pure1600) | TDA-tek AUC | S@0,125 | **S@0,25** | S@0,50 | rank | top1-hit | Füzyon AUC | S@0,125 | **S@0,25** | S@0,50 | **rank** | top1-hit |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Arm_0** Pure1600 (kontrol) | 1600 | 0,7515 | 0,2299 | 1,0000 | **0,9704** | 0,0067 | 0,0268 | 0,0604 | 0,7345 | 0,0671 | **0,9197** | 0,4362 | 0,5235 | 0,5839 | **0,8206** | 0,5436 |
+| Arm_1 Radyal (M1) | 424 | 0,7441 | 0,2152 | 0,7952 | 0,9312 | 0,0336 | 0,0537 | 0,0738 | 0,7118 | 0,1074 | 0,9116 | 0,4497 | 0,4966 | 0,5772 | 0,8078 | 0,5570 |
+| Arm_2 EDT (M2) | 560 | 0,7223 | 0,2106 | 0,5198 | 0,8048 | 0,0201 | 0,0537 | 0,0738 | 0,6170 | 0,0671 | 0,8655 | 0,4228 | 0,4765 | 0,5906 | 0,7683 | 0,5705 |
+| Arm_3 VR-Graf (M3) | 296 | 0,6314 | 0,1153 | 0,3155 | 0,6600 | 0,0000 | 0,0000 | 0,0336 | 0,4950 | 0,0671 | 0,8612 | 0,4430 | 0,4899 | 0,5705 | 0,7684 | 0,5369 |
+| Arm_4 M1+M2+M3 | 1280 | **0,7548** | 0,2406 | 0,7547 | 0,9288 | 0,0403 | **0,0671** | 0,1007 | 0,7134 | 0,1074 | 0,9073 | 0,4362 | 0,4966 | 0,5772 | 0,8046 | 0,5503 |
+| Arm_5 1600+M1 | 2024 | 0,7470 | 0,2269 | 0,8766 | 0,9342 | 0,0470 | 0,0671 | 0,0805 | 0,7174 | 0,0872 | 0,9164 | 0,4228 | 0,5235 | 0,5906 | 0,8182 | 0,5570 |
+| Arm_6 1600+M1+M2+M3 | 2880 | 0,7446 | **0,2563** | 0,8064 | 0,9331 | 0,0537 | 0,0671 | 0,1074 | 0,7166 | 0,1074 | 0,9170 | 0,4161 | 0,5034 | 0,5772 | 0,8136 | 0,5369 |
+| Arm_7 α=0,35 (çift HGB) | 1600+1280 | 0,7646 | 0,2287 | 0,9553 | 0,9663 | 0,0268 | 0,0671 | 0,1208 | 0,7415 | 0,0940 | 0,9076 | 0,4430 | 0,5101 | 0,5906 | 0,8082 | 0,5436 |
+| Arm_7 α=0,50 (çift HGB) | 1600+1280 | **0,7662** | 0,2310 | 0,9248 | 0,9570 | 0,0604 | 0,0738 | 0,1208 | 0,7362 | 0,1275 | 0,9075 | 0,4430 | 0,4966 | 0,5906 | 0,8048 | 0,5436 |
+
+**Kulvar 2 — NODE21 Val 734** *(231 lezyon)*
+
+| Kol | Boyut | Aday AUC | r(p_TDA, s1) | r(p_TDA, Pure1600) | TDA-tek AUC | S@0,125 | **S@0,25** | S@0,50 | rank | top1-hit | Füzyon AUC | S@0,125 | **S@0,25** | S@0,50 | **rank** | top1-hit |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Arm_0** Pure1600 (kontrol) | 1600 | 0,8434 | 0,2193 | 1,0000 | **0,9387** | 0,0606 | 0,1212 | 0,1775 | 0,7343 | 0,1744 | 0,9836 | 0,6883 | 0,7706 | 0,7965 | 0,9304 | 0,8023 |
+| Arm_1 Radyal (M1) | 424 | 0,8473 | 0,2124 | 0,7349 | 0,9386 | 0,0649 | 0,1082 | 0,1775 | 0,7310 | 0,1221 | 0,9840 | 0,6840 | 0,7532 | 0,8182 | 0,9263 | 0,7616 |
+| Arm_2 EDT (M2) | 560 | 0,8051 | 0,2184 | 0,4979 | 0,7389 | 0,0693 | 0,1039 | 0,1645 | 0,5801 | 0,1802 | 0,9682 | 0,6537 | 0,7229 | 0,7922 | 0,9069 | 0,7500 |
+| Arm_3 VR-Graf (M3) | 296 | 0,7026 | 0,1318 | 0,2633 | 0,7234 | 0,0433 | 0,0736 | 0,1169 | 0,5610 | 0,0988 | 0,9700 | 0,6623 | 0,7143 | 0,7965 | 0,9061 | 0,7442 |
+| Arm_4 M1+M2+M3 | 1280 | 0,8730 | 0,2699 | 0,6897 | 0,9262 | 0,1342 | **0,2035** | 0,3030 | 0,7455 | **0,2674** | 0,9827 | 0,6883 | 0,7446 | 0,8009 | 0,9232 | 0,7733 |
+| **Arm_5 1600+M1** | 2024 | 0,8542 | 0,2159 | 0,8405 | **0,9410** | 0,0779 | 0,1082 | 0,1732 | 0,7328 | 0,1163 | **0,9867** | 0,6883 | **0,7749** | 0,8052 | **0,9338** | 0,7965 |
+| Arm_6 1600+M1+M2+M3 | 2880 | **0,8756** | 0,2690 | 0,7663 | 0,9225 | **0,1645** | 0,2078 | **0,3030** | 0,7438 | 0,2326 | 0,9828 | 0,6710 | 0,7576 | 0,8052 | 0,9265 | 0,7791 |
+| Arm_7 α=0,35 (çift HGB) | 1600+1280 | 0,8730 | 0,2339 | 0,9541 | 0,9399 | 0,1212 | 0,1688 | 0,2597 | 0,7471 | 0,2267 | 0,9829 | 0,6926 | 0,7532 | 0,8095 | 0,9255 | 0,7791 |
+| Arm_7 α=0,50 (çift HGB) | 1600+1280 | **0,8788** | 0,2416 | 0,9124 | 0,9405 | 0,1255 | 0,2035 | 0,2987 | **0,7562** | 0,2616 | 0,9823 | 0,6883 | 0,7489 | 0,8095 | 0,9239 | 0,7733 |
+
+**Harness doğrulaması (yol haritası §5.6.3).** `Arm_0` iki kulvarda da yayımlanmış referansları
+**birebir** üretti — Kulvar 1: TDA-tek AUC `0,9704` · S@0.25 `0,0268` · füzyon AUC `0,9197` ·
+S@0.25 `0,5235` · rank `0,8206`; Kulvar 2: TDA-tek AUC `0,9387` · füzyon AUC `0,9836` ·
+S@0.25 `0,7706` · rank `0,9304` (9/9 hücre, sapma yok).
+
+### Karar: 🔴 KILL / NEUTRAL — ana mimari değişmiyor
+
+**Hiçbir kol iki kulvarda birlikte kazanç sağlamadı**, dolayısıyla §1.4 kuralı gereği **kilitli
+NODE21 testi açılmadı** (bütçe **5/5**'te kaldı) ve `stage2_foundation_tda_hgb_pure1600.joblib`
+**değiştirilmedi**.
+
+| Kol | JSRT Δrank | JSRT ΔS@0,25 | JSRT ΔAUC | VAL Δrank | VAL ΔS@0,25 | VAL ΔAUC | Hüküm |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
+| Arm_1 Radyal | −0,0128 | −0,0269 | −0,0081 | −0,0041 | −0,0174 | +0,0004 | ✗ |
+| Arm_2 EDT | −0,0523 | −0,0470 | −0,0542 | −0,0235 | −0,0477 | −0,0154 | ✗✗ |
+| Arm_3 VR-Graf | −0,0522 | −0,0336 | −0,0585 | −0,0243 | −0,0563 | −0,0136 | ✗✗ |
+| Arm_4 M1+M2+M3 | −0,0160 | −0,0269 | −0,0124 | −0,0072 | −0,0260 | −0,0009 | ✗ |
+| **Arm_5 1600+M1** | −0,0024 | **0,0000** | −0,0033 | **+0,0034** | **+0,0043** | **+0,0031** | **~ (iki kulvarda zıt)** |
+| Arm_6 1600+TümGeo | −0,0070 | −0,0201 | −0,0027 | −0,0039 | −0,0130 | −0,0008 | ✗ |
+| Arm_7 α=0,35 / 0,50 | −0,0124 / −0,0158 | −0,0134 / −0,0269 | −0,0121 / −0,0122 | −0,0049 / −0,0065 | −0,0174 / −0,0217 | −0,0007 / −0,0013 | ✗ |
+
+**Ama üç önemli kavramsal bulgu var (raporlanması gereken pozitifler):**
+
+1. 🎯 **Geometrik/radyal TDA tek başına kutu körlüğünü gerçekten kırıyor — ama yalnız tek başına.**
+   TDA-tek `S@0.25`: JSRT'de **0,0268 → 0,0671 (2,5×)**, VAL'de **0,1212 → 0,2035 (1,7×)**;
+   `top1_box_hit_rate`: JSRT **0,0671 → 0,1074**, VAL **0,1744 → 0,2674**. Yani "kutunun merkezine
+   yakın, kalın ve yuvarlak yapı" önsavı **doğru yönde** çalışıyor — §V6.9.17'deki `%2,7`'lik
+   körlüğün nedeni gerçekten **merkez + kalınlık bilgisizliğiymiş**.
+2. 📈 **Aday düzeyinde de gerçek sinyal taşıyor (kurum içinde):** aday AUC VAL'de
+   **0,8434 → 0,8756** (+0,032, Arm_6) ve **0,8730** (Arm_4). Bu, saf parlaklık TDA'sının
+   *aday düzeyinde* en zayıf halka olduğunu doğrular.
+3. ⚖️ **Füzyona taşınmamasının en olası açıklaması: korelasyon artışı.** `r(p_TDA, s1)` VAL'de
+   **0,2193 → 0,2690**, JSRT'de **0,2299 → 0,2563** (mutlak düzey hâlâ düşük, ≤0,27). Yani yeni
+   temsiller aday düzeyinde daha iyi ama **1. aşamanın zaten kodladığı bilgiye daha yakın**;
+   kilitli `w_tda = 0,45` füzyonunda bu yüzden tamamlayıcılık kazancı görülmüyor. ⚠️ Bu bir
+   **korelasyon gözlemidir, nedensellik ayrıca test edilmedi**. Buna karşılık en **bağımsız** kol
+   VR-graf (`r = 0,115 / 0,132`) aynı zamanda en **zayıf** kol (aday AUC 0,6314 / 0,7026) ⇒
+   *bağımsızlık var, sinyal yok*.
+4. 🔻 **EDT (M2) ve VR-graf (M3) tek başına başarısız:** füzyon AUC JSRT'de 0,8655 / 0,8612
+   (kontrol 0,9197), VAL'de 0,9682 / 0,9700 (kontrol 0,9836). Yoğunluk yüzdeliklerinden türetilen
+   ikili maskeler gürültüye duyarlı; VR-graf ise 40–48 düğümle temsil edilemeyecek kadar seyrek bilgi
+   taşıyor.
+5. 🧪 **Arm_7 (çift uzman olasılık harmanı) en iyi aday AUC'sini veriyor** (JSRT 0,7662 / VAL 0,8788 —
+   iki kulvarda da tabanın üstünde) ama hasta düzeyinde kaybediyor: harmanlanan iki olasılık da aynı
+   `s1` aday havuzu üzerinde sıralama yaptığı için füzyonda bilgi eklemiyor.
+
+* 🔒 **Sonuç:** 3 yeni kutu-içi TDA ailesi **kavramsal olarak doğrulandı** (kutu körlüğünün nedeni
+  merkez/kalınlık bilgisizliği), ancak **pratik olarak kazandırmadı** ⇒ ana mimari
+  **saf 1.600 parlaklık TDA'sında kalır**. Geometrik aile, ileride 1. aşama zayıflatıldığında
+  (ör. aday havuzu 5–10 kutuya indirildiğinde) veya TDA ağırlığı
+  veriyle yeniden öğrenildiğinde aday olabilir; kilitli ağırlıkla değil.
+* **Kod/kayıt:** [v6_9t_geometric_graph_tda.py](pipelines/v6_two_stage/v6_9t_geometric_graph_tda.py) ·
+  `artifacts/v6_two_stage/v6_9t_geometric_graph_tda.json` · özellik önbelleği
+  `_v6_9t_geo_cache.npz` (386 MB, gitignore'lu)

@@ -40,6 +40,7 @@ veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğre
 | **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
 | **Harici (JSRT, eğitimden izole)** | **242 saf JSRT (149 nodüllü + 93 sağlıklı, V6.9r):** Saf 1.600 ile **%86,6 Recall@10 · %95,3 Recall@50 · 0,9197 (top1) / 0,9652 (nOR) AUC · S@0.25 %52,4 · S@0.50 %58,4** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.8) · **saha kalibrasyonu (V6.9t, N=160 etiketli): 0,9662 (top1) / 0,9868 (nOR) AUC · S@0.25 %56,4 · S@0.50 %66,4** (§9.9) · *(149 JSRT + 250 val kontrol, V6.9k4: 0,9316 top1 / 0,9749 nOR)* |
 | **Gönderim modeli** | 4.882 hastanın tamamıyla eğitildi → **NODE21'de değerlendirilemez** |
+| **Negatif sonuç (V6.9u)** | Kutu-içi **radyal / EDT / Vietoris-Rips graf TDA** ailesi (9 kol × 2 kulvar): kutu körlüğünü **tek başına** kırıyor (TDA-tek S@0,25 Saf JSRT **%2,7 → %6,7**), ama 1. aşama ile korelasyon arttığı için **füzyonda kazanmıyor** (rank 0,8206 → en iyi 0,8182) ⇒ ana mimari değişmedi, kilitli test açılmadı ([ablation_matrix.md](ablation_matrix.md) §17.14) |
 | **Konteyner** | `submission_docker/` · çevrimdışı (`--network=none`) test edildi · non-root · CUDA 13,9 GB / CPU 3,51 GB · ⚠️ **stage-2 hâlâ 1.604** (tam-veri bundle'ı yenilenmedi; bkz. [roadmap.md](roadmap.md) TODO) |
 
 ---
