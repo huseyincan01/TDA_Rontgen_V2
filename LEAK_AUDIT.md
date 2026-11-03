@@ -576,6 +576,42 @@ VinDr'de aynı protokol **0,6376 → 0,7935** vermişti.
 
 ---
 
+### 9.10 Kilitli Testin Altıncı Kullanımı ve "Seçim Teste Sızmadı" Beyanı (V6.9v) 🟡
+
+§9.1'de ilan edilen **tek atımlık mühür** pratikte şu kullanımlarla harcandı: **V6.4 · V6.9 ·
+V6.9f · V6.9i · V6.9m** (5/5). `V6.9v` bu sayıyı **6'ya** çıkardı: `NODE21 Test (734)` üzerinde
+5 kol (Arm_0 + 4 radyal varyant) ölçüldü. Test artık **"dokunulmamış mühür"** olarak sunulamaz;
+doğru etiket **"yeniden kullanılan doğrulama kümesi"**dir ve makalede böyle yazılmalıdır.
+
+**Sızıntı riski ve nasıl sınırlandı:**
+
+1. **Seçim kuralı teste dokunmadı.** Model seçimi §1.4/§17.14'teki **"Val + JSRT'de birlikte net
+   kazanç"** kuralıyla yapıldı; hiçbir varyant bu kuralı geçmedi ⇒ **ana mimari değişmedi**
+   (`stage2_foundation_tda_hgb_pure1600.joblib`, SHA-256 değişmedi). Test sayıları **karar
+   gerekçesine sokulmadı**, yalnız NODE21-içi kazancın büyüklüğü belgelendi.
+2. **Tek yönlü bilgi akışı.** Test, *yeni hiçbir model/hiperparametre* seçmek için kullanılmadı;
+   `a60_fixed` satırı önceden (V6.9u'da) kararlaştırılmış konfigürasyonun aynısıdır ve
+   **bit-birebir** yeniden üretildi (`max|Δ| = 0`) ⇒ test yalnız **onay/raporlama** için açıldı.
+3. **Beyan edilen rezerv.** Eğer ileride `a40_cal` (Test `rank` **0,9047 → 0,9146**, 6/6 metrik)
+   dağıtıma alınırsa, bu seçim **Val + Test** ile yapılmış olur ⇒ o noktada "test üzerinde seçim
+   yapılmadı" cümlesi **geçersizleşir** ve `JSRT −0,0073` regresyonu ile birlikte yazılmalıdır.
+
+**Ölçülen sonuç (6. kullanım):** a40_cal (Pure1600 + kalibre radyal TDA) Test'te **6/6 metriği**
+iyileştirdi — AUC **0,9661 → 0,9750**, S@0,125 **%60,7 → %63,8**, S@0,25 **%72,1 → %73,4**,
+S@0,50 **%76,4 → %78,6**, `rank_metric` **0,9047 → 0,9146**, top1-hit **%69,2 → %70,9** — ama
+242 Saf JSRT'de `rank` **−0,0073**. Bu, kazancın **siteye özgü (kutu-merkezleme önsavı)** olduğunu
+gösterir: JSRT'de kutuların **%47**'si yamanın "göbeği" dışında (NODE21 Val'de %24).
+
+**Kural (güncel):** kilitli test sayıları **`in-fold` / yeniden kullanılmış** olarak etiketlenir;
+kaynak-dışı genelleme iddialarında **242 Saf JSRT (V6.9r)** ve **VinDr (V6.9j2)** kullanılmaya devam
+edilir; test sayıları **model seçimi gerekçesi olarak gösterilemez**.
+
+**Kayıt:** `artifacts/v6_two_stage/v6_9v_radial_focused.json` ·
+[`v6_9v_radial_focused.py`](pipelines/v6_two_stage/v6_9v_radial_focused.py) ·
+[`v6_9v_box_offset_audit.py`](pipelines/v6_two_stage/v6_9v_box_offset_audit.py)
+
+---
+
 ## 10. 🔒 KAPANIŞ — ön-eğitim örtüşmesi konusu mühürlendi
 
 **Soru:** Ön-eğitim korpusu NODE21'in kaynaklarıyla örtüştüğü için skorlarımız şişmiş olabilir mi?

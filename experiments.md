@@ -2544,7 +2544,7 @@ NODE21 testi açılmadı** (bütçe **5/5**'te kaldı) ve `stage2_foundation_tda
 2. 📈 **Aday düzeyinde de gerçek sinyal taşıyor (kurum içinde):** aday AUC VAL'de
    **0,8434 → 0,8756** (+0,032, Arm_6) ve **0,8730** (Arm_4). Bu, saf parlaklık TDA'sının
    *aday düzeyinde* en zayıf halka olduğunu doğrular.
-3. ⚖️ **Füzyona taşınmamasının en olası açıklaması: korelasyon artışı.** `r(p_TDA, s1)` VAL'de
+3. ⚖️ **[§V6.9.21'de düzeltildi — bu madde yalnız M2+M3 içeren kollar için geçerlidir; yalnız M1 eklenen Arm_5'te korelasyon *düşer*.]** **Füzyona taşınmamasının en olası açıklaması: korelasyon artışı.** `r(p_TDA, s1)` VAL'de
    **0,2193 → 0,2690**, JSRT'de **0,2299 → 0,2563** (mutlak düzey hâlâ düşük, ≤0,27). Yani yeni
    temsiller aday düzeyinde daha iyi ama **1. aşamanın zaten kodladığı bilgiye daha yakın**;
    kilitli `w_tda = 0,45` füzyonunda bu yüzden tamamlayıcılık kazancı görülmüyor. ⚠️ Bu bir
@@ -2567,3 +2567,146 @@ NODE21 testi açılmadı** (bütçe **5/5**'te kaldı) ve `stage2_foundation_tda
 * **Kod/kayıt:** [v6_9t_geometric_graph_tda.py](pipelines/v6_two_stage/v6_9t_geometric_graph_tda.py) ·
   `artifacts/v6_two_stage/v6_9t_geometric_graph_tda.json` · özellik önbelleği
   `_v6_9t_geo_cache.npz` (386 MB, gitignore'lu)
+### V6.9.21 Radyal Kübik TDA Odaklı Doğrulama — kalibre eksen aralıkları, yumuşak alpha ve kilitli test (V6.9v)
+
+**Neden.** §V6.9.20'de üç kutu-içi TDA ailesinden yalnız **M1 (kutu-merkezli radyal)** ayakta kaldı:
+M2 (EDT) ve M3 (VR-graf) çöktü. Ama M1 iki **elverişsiz koşulda** sınanmıştı:
+
+1. **Eksen aralığı çökmesi (grid collapse):** PI eksenleri Pure1600'de olduğu gibi eğitim
+   diyagramlarından **türetilmemiş**, sabit ve aşırı geniş `b_range = p_range = (0, 255)` alınmıştı.
+   Gerçek aralıklar ise çok daha dar (aşağıdaki tablo) ⇒ 10×10 ızgarada bin genişliği 25,5 birim
+   olduğu için **H1 ömürlerinin tamamı tek satıra**, H0 ömürleri ise yalnız iki satıra düşüyordu.
+   Yani 200 PI hücresinin **~30'u** anlamlıydı.
+2. **Tek ve sert alpha:** yalnız `alpha = 60,0` denendi. Oysa §V6.9.20'nin kutu-merkezleme ölçümü
+   (aşağıda) yabancı sitede kutuların çok daha fazla kaydığını gösteriyor ⇒ sert ceza orada
+   yapısal olarak zararlı olabilir.
+3. **Test ölçümü yoktu:** Arm_5 `NODE21 Test (734)` üzerinde hiç koşmamıştı.
+
+**Yöntem.** Dört varyant, aynı protokolle (her kol **kendi** HGB'sini sıfırdan eğitir: yeni
+`StandardScaler` + yeni HGB, `max_iter=200, lr=0,08, balanced, rs=42`; füzyon kilitli
+`w_s1 = 0,55 / w_tda = 0,45`, z-ref yalnız kalibrasyon kohortundan):
+
+| Varyant | alpha | PI eksen aralıkları |
+| :--- | ---: | :--- |
+| `a60_fixed` | 60 | sabit `0…255` = **V6.9u'nun Arm_5'i birebir** (harness kontrolü) |
+| `a60_cal` | 60 | eğitim diyagramlarından p1–p99 |
+| `a40_cal` | 40 | eğitim diyagramlarından p1–p99 |
+| `a25_cal` | 25 | eğitim diyagramlarından p1–p99 |
+
+Aralıklar **her kulvarın kendi eğitim kümesinden** türetildi (L2 = NODE21 train; L1 = JSRT-dışı
+fit) — Pure1600'ün `derive_ranges` mantığıyla aynı: doğum için p1'in tabanı, ömür için 0 ile p99'un
+tavanı, 32 ve 64 yamaları **birleşik havuzlanarak**:
+
+| alpha | H0 doğum | H0 ömür | H1 doğum | H1 ömür |
+| ---: | :--- | :--- | :--- | :--- |
+| **60** | 38–253 (L1: 37–253) | 0–41 (L1: 0–42) | 50–254 (L1: 51–254) | **0–24 (L1: 0–25)** |
+| **40** | 30–251 (L1: 30–251) | 0–43 (L1: 0–43) | 41–253 (L1: 43–253) | 0–26 (L1: 0–27) |
+| **25** | 22–249 (L1: 22–249) | 0–44 (L1: 0–44) | 33–253 (L1: 35–253) | 0–27 (L1: 0–28) |
+
+* 🔧 **Çökme aritmetiği:** sabit `p_range = 0…255`, `grid = 10` ⇒ bin genişliği **25,5**. H1 ömür
+  p99'u **24** olduğu için **tüm** H1 çubukları satır 0'a düşüyordu; H0 (p99 = 41) yalnız 2 satır
+  kullanıyordu. Kalibre aralıkla H1 ömür ekseni **1 satır → 10 satır** (bin 2,4 birim) oluyor.
+* 🧪 **Harness (5/5 birebir):** `a60_fixed`, §V6.9.20'nin M1 sütunlarıyla **bit-birebir** aynı
+  (`max|Δ| = 0,00e+00`, iki hastada sınandı); `Arm_0` Val/Test/JSRT sayıları ve `a60_fixed`'in
+  Val/JSRT sayıları yayımlanmış V6.9u/V6.9m değerlerini **tam** tutturdu (5/5 hücre).
+* 💾 10 model (5 kol × 2 kulvar) + 5.349 hastanın radyal özellikleri (3 alpha × 2 yama);
+  **11.129 s**, 8 salt-okunur artefaktın SHA-256'sı **değişmedi**.
+
+**Sonuç tablosu** *(füzyon `w = 0,45` · 56 px sabit kutu · resmî IoU > 0,2 eşleşmesi)*
+
+| Kol | AUC | S@0,125 | **S@0,25** | S@0,50 | **`rank`** | top1-hit | ΔAUC | ΔS@0,25 | **Δ`rank`** |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **NODE21 Val 734** *(seçim kohortu)* | | | | | | | | | |
+| Arm_0 Pure1600 | 0,9836 | 0,6883 | **0,7706** | 0,7965 | 0,9304 | **0,8023** | — | — | — |
+| a60_fixed | 0,9867 | 0,6883 | 0,7749 | 0,8052 | **0,9338** | 0,7965 | +0,0031 | +0,0043 | **+0,0034** |
+| a60_cal | 0,9867 | 0,6840 | 0,7749 | 0,8052 | **0,9338** | 0,7791 | +0,0031 | +0,0043 | **+0,0034** |
+| a40_cal | 0,9871 | **0,6926** | 0,7662 | 0,8139 | 0,9319 | 0,7907 | +0,0035 | −0,0044 | +0,0015 |
+| a25_cal | **0,9876** | 0,6883 | 0,7446 | **0,8225** | 0,9269 | 0,7733 | +0,0040 | −0,0260 | −0,0035 |
+| **NODE21 TEST 734** *(kilitli — 6. kullanım)* | | | | | | | | | |
+| Arm_0 Pure1600 | 0,9661 | 0,6070 | 0,7205 | 0,7642 | 0,9047 | 0,6919 | — | — | — |
+| a60_fixed | 0,9726 | 0,6201 | 0,7205 | 0,7860 | 0,9096 | 0,6919 | +0,0065 | 0,0000 | +0,0049 |
+| a60_cal | 0,9723 | 0,6157 | 0,7293 | 0,7948 | 0,9115 | **0,7151** | +0,0062 | +0,0088 | +0,0068 |
+| **a40_cal** | **0,9750** | **0,6376** | **0,7336** | 0,7860 | **0,9146** | 0,7093 | **+0,0089** | **+0,0131** | **+0,0099** |
+| a25_cal | 0,9741 | 0,6114 | 0,7249 | **0,8035** | 0,9118 | 0,7035 | +0,0080 | +0,0044 | +0,0071 |
+| **242 Saf JSRT** *(kalibresiz dış test)* | | | | | | | | | |
+| Arm_0 Pure1600 | **0,9197** | **0,4362** | 0,5235 | 0,5839 | 0,8206 | 0,5436 | — | — | — |
+| a60_fixed | 0,9164 | 0,4228 | 0,5235 | 0,5906 | 0,8182 | **0,5570** | −0,0033 | 0,0000 | −0,0024 |
+| a60_cal | 0,9189 | 0,4228 | 0,5034 | 0,5839 | 0,8150 | 0,5436 | −0,0008 | −0,0201 | −0,0056 |
+| a40_cal | 0,9143 | 0,4295 | 0,5101 | **0,6040** | 0,8133 | 0,5436 | −0,0054 | −0,0134 | −0,0073 |
+| a25_cal | 0,9190 | 0,4295 | **0,5302** | 0,5772 | **0,8218** | 0,5436 | −0,0007 | **+0,0067** | **+0,0012** |
+
+**Aday düzeyi ve TDA-tek** *(Val / TEST / JSRT)*
+
+| Kol | aday AUC | r(p_TDA, s1) | TDA-tek hasta AUC |
+| :--- | :--- | :--- | :--- |
+| Arm_0 Pure1600 | 0,8434 / 0,8394 / 0,7515 | 0,2193 / 0,2231 / 0,2299 | 0,9387 / 0,9420 / **0,9704** |
+| a60_fixed | 0,8542 / 0,8518 / 0,7470 | 0,2159 / 0,2197 / 0,2269 | **0,9410** / **0,9598** / 0,9342 |
+| a60_cal | 0,8586 / 0,8553 / 0,7495 | 0,2184 / 0,2226 / 0,2315 | 0,9378 / 0,9582 / 0,9474 |
+| a40_cal | **0,8623** / 0,8554 / 0,7531 | 0,2202 / 0,2218 / 0,2206 | 0,9313 / 0,9514 / 0,9252 |
+| a25_cal | **0,8623** / 0,8549 / **0,7534** | 0,2184 / 0,2178 / 0,2215 | 0,9375 / 0,9465 / 0,9461 |
+
+**Bulgu 1 — NODE21 Test'te altı ölçütün tamamı iyileşiyor (a40_cal).**
+AUC **0,9661 → 0,9750** (+0,0089), S@0,125 **%60,70 → %63,76** (+0,0306), S@0,25
+**%72,05 → %73,36** (+0,0131), S@0,50 **%76,42 → %78,60** (+0,0218), `rank_metric`
+**0,9047 → 0,9146** (+0,0099), top1-hit **%69,19 → %70,93** (+0,0174). NODE21'in **iki**
+kohortu birlikte alındığında (Val + Test ortalaması) `rank`: 0,9175 → **0,9232** (+0,0057) —
+aile içinde en iyi kol.
+
+**Bulgu 2 — Kalibre eksen aralıkları gerçek ama küçük katkı veriyor.** Aynı alpha'da
+`fixed → cal`: **Test** S@0,25 +0,0088, `rank` +0,0019, top1-hit +0,0232, AUC −0,0003;
+**Val**'de yalnız S@0,125 −0,0043 ve top1-hit −0,0174 (diğerleri aynı); **JSRT**'de `rank` −0,0032,
+S@0,25 −0,0201. Yani "H1 ızgara çökmesi" **doğru bir teşhisti**, fakat tek başına oyunu çevirmiyor.
+
+**Bulgu 3 — alpha, site-bağımlı bir düğme (ölçülmüş mekanizma).** Val'de S@0,25 *sert* alpha'yı
+seviyor (a60: 0,7749 → a25: 0,7446, **−2,6 puan**); JSRT'de sıra **ters** (a25: **+0,0067**,
+a40: −0,0134); Test'te en iyi S@0,25 a40'ta. Nedeni ölçüldü — **kutu-merkezleme farkı**
+([`v6_9v_box_offset_audit.py`](pipelines/v6_two_stage/v6_9v_box_offset_audit.py), yalnız önbellek
+okur, eğitim yok):
+
+| Kutu-merkezleme (1024 uzayı, `r_norm`; 1,0 = 32'lik yamanın yarıçapı) | **JSRT 242** (149 lezyon) | **NODE21 Val** (231 lezyon) |
+| :--- | ---: | ---: |
+| Havuzdaki **en iyi** kutunun ofseti — medyan | **0,47** | **0,31** |
+| P(ofset > 0,5 — "göbeğin" dışı) | **%47,0** | %24,2 |
+| P(ofset > 1,0 — yama yarıçapı dışı) | %16,1 | %7,8 |
+| **1. aşamanın kendi top-1 kutusunun** ofseti — medyan | **1,13** | **0,56** |
+| P(top-1 ofset > 1,0) | %51,0 | %42,0 |
+
+Yani yabancı sitede 1. aşama kutuyu **belirgin biçimde daha kötü ortalıyor** (median ofset ~1,5–2×);
+M1'in cezası `alpha·r_norm` ile doğrusal arttığı için aynı kutu için ceza orada daha büyük ⇒
+**radyal önsav siteye özgüdür**, evrensel bir iyileştirme değildir.
+
+**Bulgu 4 — Radyal özet dış kohorta taşınmıyor.** TDA-tek hasta AUC: **Test**'te 0,9420 → 0,9598
+(**+1,8 puan**), **JSRT**'de 0,9704 → 0,9474 (**−2,3 puan**) — aynı aile, zıt yön. Üç kohortun
+ortalaması alındığında tüm varyantlar tabana **+0,0014…+0,0020** ekliyor, yani dış kohort kazancı
+yiyor.
+
+> 📌 **§V6.9.20 için düzeltme (bu deneyin yan ürünü).** §V6.9.20'de "geometrik/graf TDA füzyona
+> girmiyor çünkü **1. aşama ile korelasyon artıyor** (0,219 → 0,269)" yazılmıştı. Bu, **M2+M3'ü de
+> içeren** Arm_4/Arm_6 için doğrudur; **yalnız M1 eklenen Arm_5 için yanlıştır**: orada
+> `r(p_TDA, s1)` **düşüyor** (Val 0,2193 → 0,2159; JSRT 0,2299 → 0,2269). V6.9v'de de dört varyantın
+> hiçbiri korelasyonu artırmıyor (**r ≈ 0,22**, taban 0,219–0,230). Yani **M1 bağımsız bilgi
+> ekliyor**; taşınmamasının nedeni korelasyon değil, **kutu-merkezleme önsavının siteye özgülüğü**dür
+> (Bulgu 3).
+
+**Karar: 🔒 ANA MİMARİ DEĞİŞMİYOR — `Pure1600` kalır (protokol saflığı).**
+§V6.9.20/§1.4'ün "iki kulvarda birlikte net kazanç" kuralı **yine sağlanmadı**:
+
+| Varyant | Val Δ`rank` | JSRT Δ`rank` | Kural |
+| :--- | ---: | ---: | :---: |
+| a60_fixed | +0,0034 | −0,0024 | ✗ |
+| a60_cal | +0,0034 | −0,0056 | ✗ |
+| a40_cal | +0,0015 | −0,0073 | ✗ |
+| a25_cal | −0,0035 | +0,0012 | ✗ |
+
+Seçim **Val + JSRT** üzerinden yapıldı ve hiçbir varyant geçemedi ⇒ dağıtılan model
+`stage2_foundation_tda_hgb_pure1600.joblib` **değişmedi**. a40_cal'in Test'teki 6/6 kazancı
+**belgelenir ama model seçiminde kullanılmaz**; böylece "test üzerinde seçim yapılmadı" beyanı
+korunur. Radyal özet, **NODE21-içi dağıtım** hedeflenirse hazır bir seçenek olarak duruyor
+(`a40_cal`, +0,0099 Test `rank`) — kullanılırsa "seçim Val+Test ile yapıldı, JSRT −0,0073" beyanı
+zorunludur.
+
+* ⚠️ **Test bütçesi:** bu koşuyla `NODE21 Test` **6. kez** kullanıldı (5/5 → 6). Test artık
+  "dokunulmamış mühür" değil, **"yeniden kullanılan doğrulama kümesi"** olarak etiketlenmelidir.
+* **Kod/kayıt:** [v6_9v_radial_focused.py](pipelines/v6_two_stage/v6_9v_radial_focused.py) ·
+  [v6_9v_box_offset_audit.py](pipelines/v6_two_stage/v6_9v_box_offset_audit.py) ·
+  `artifacts/v6_two_stage/v6_9v_radial_focused.json`
