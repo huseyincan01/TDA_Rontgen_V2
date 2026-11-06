@@ -110,8 +110,8 @@ python pipelines/v6_two_stage/v6_6_train_foundation.py
 doğrulama kümesinde dondurulan z-referansı):
 
 ```powershell
-python pipelines/v6_two_stage/v6_9l_spatial_ablation.py   # adaylar + 1.600 PI önbelleği
-python pipelines/v6_two_stage/v6_9m_pure1600_seal.py      # HGB paketi + z-ref dondurma
+python pipelines/v6_two_stage/v6_9l_spatial_ablation.py   # adaylar + PI önbelleği (1.604 sütun)
+python pipelines/v6_two_stage/v6_9m_pure1600_seal.py      # ilk 1.600 sütun → HGB paketi + z-ref
 # → artifacts/v6_two_stage/checkpoints/stage2_foundation_tda_hgb_pure1600.joblib
 ```
 
