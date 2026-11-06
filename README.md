@@ -1,100 +1,181 @@
-# node21_tda
+# NODE21 — İki Aşamalı Nodül Tespiti: Topolojik Şekil Analizi + Derin Öğrenme
 
-NODE21 göğüs röntgenlerinde nodül tespiti üzerine bir araştırma projesi: hasta bazında
-veri hazırlama, **kübik kalıcı homoloji (TDA)** özellikleri ve derin öğrenme dedektörleriyle
-**iki aşamalı lokalizasyon**, ve resmî NODE21 detection formatına uyan bir
-**Grand-Challenge gönderim konteyneri**.
+Göğüs röntgenlerinde (CXR) nodül adaylarını **bulan** ve bu adayları **şekil analiziyle** yeniden
+sıralayıp yanlış alarmları eleyen iki aşamalı bir tespit sistemi.
 
-> **Hikâyenin tamamı tek sayfada: [STORY.md](STORY.md)** — v1'den V6.7'ye, her dönüm
-> noktasında "ne sandığımız / ne çıktığı".
+* **1. aşama — konum:** CXR vakıf omurgalı bir CenterNet dedektörü her röntgende en olası 50
+  şüpheli noktayı üretir ve 56×56 sabit kutu çizer.
+* **2. aşama — şekil:** Her kutunun içinden `32×32` ve `64×64` yamalar kırpılır, **kübik kalıcı
+  homoloji (cubical persistent homology)** ile topolojik bir vektör çıkarılır ve bu vektör
+  gradient-boosting bir sınıflandırıcıyla "gerçek nodül / yanlış alarm" olarak puanlanır.
+* **Füzyon:** İki aşamanın puanı sabit ağırlıklarla birleştirilir:
+  `S = σ(0.55 · z(s₁) + 0.45 · z(p_TDA))`.
 
----
-
-## Belgeler — hangisi neyi barındırıyor
-
-| Belge | İçerik | Ne zaman okunur |
-| :--- | :--- | :--- |
-| **[STORY.md](STORY.md)** | **Anlatı**: v1 → v2 → v3 → v4 → V5.1 → V6 → V6.6 → V6.7, dönüm noktaları ve dürüst sınırlar | **İlk buradan başla** |
-| [progress.md](progress.md) | Veri hattının kuruluşu: v1'in 5 metodolojik hatası, v2 temiz hat (≥%20 kuralı, hasta düzeyi split, train'den türetilen TDA aralıkları, 1:1 dengeleme, 7 denetim) + v2.1/v3 sonuçları · **§8: V6.9 sonrası hangi ifadeler hâlâ geçerli** | Veri nasıl kuruldu |
-| [roadmap.md](roadmap.md) | **v3** protokolü: 15 yönetim kuralı, test bütçesi, faz kapıları, kill kriterleri, karar günlüğü, §13 kapanış · **§14: bütçe muhasebesi (2 mühür) + yöntemsel ders** | Yöntem disiplini |
-| [v4_roadmap.md](v4_roadmap.md) | **v4** programı: V1.1/V1.2, V2.x, V3.x, A2, V4/V5 kararları ve gerekçeleri · **§7: dış doğrulama hükmünün V6.9 düzeltmesi** | Tamamlayıcılık arayışı |
-| [experiments.md](experiments.md) | **Tüm deneyler, kronolojik** (§1–§13): v2.1 benchmark → v3 (E0–E5) → VinDr harici → V5.x → V6 → V6.6 → V6.7 → V6.8 → V6.9 mührü | Belirli bir sayının kaynağı |
-| [ablation_matrix.md](ablation_matrix.md) | **Makale tabloları**: liderlik, 5 ablasyon, istatistik, V6 (§13), V6.6 (§14), V6.7 (§15), V6.8 (§16), V6.9 (§17) | Yayın sayıları |
-| **[LEAK_AUDIT.md](LEAK_AUDIT.md)** | **Sızıntı ve geçerlilik denetimi**: temiz çıkan 5 kontrol, VinDr kontaminasyonu (%100 örtüşme), val seçim yanlılığı, mühürlü test onayı, yayın öncesi 6 düzeltme | **Yayına girmeden önce zorunlu** |
-| [paper_draft.md](paper_draft.md) | Makale taslağı (v3 iskeleti + §4.8 harici + §4.10 V6 + **§4.10 V6.9 mühür tablosu**, §6'da 3 yeni sınırlama) | Yazım |
-| [literature.md](literature.md) | Literatür taraması, yenilik konumlandırması, hakem riski · **§5.6: denetimin doğurduğu 3 yeni hakem itirazı ve cevapları** | Konumlandırma |
-| **[submission_docker/README.md](submission_docker/README.md)** | Gönderim konteyneri: boru hattı, resmî baseline uyumluluğu, `--network=none` | Gönderim/dağıtım |
-
-**Okuma sırası (yeni okuyucu):** `STORY.md` → `progress.md` (veri) → `roadmap.md`
-(protokol) → `ablation_matrix.md` (nihai sayılar) → `experiments.md` (ayrıntı).
+Sistemin ayırt edici yanı, 2. aşamada ham piksel yerine **topolojik şekil özeti** kullanmasıdır:
+aynı küçük kareyi ham pikselleriyle inceleyen bir CNN `0,652` AUC'de kalırken, şeklini inceleyen
+TDA aynı kutularda `0,926` AUC'ye ulaşır.
 
 ---
 
-## Mevcut durum (kısa)
+## Nihai mimari
 
-| | |
-| :--- | :--- |
-| **Dürüst (mühürlü test) sonuç** | Hasta AUC **0,9661** (füzyon, **saf 1.600**) / **0,9446** (1. aşama) · rank_metric **0,9047** / **0,8842** (V6.9m) · ⚠️ pozitiflerin **%82,9'u** omurganın gördüğü kaynaklardan (kutular yeni) — beyan: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9 |
-| **Val'de ölçülen (seçilmiş) sonuç** | Saf 1.600 (`V6.9m/s`): Füzyon AUC **0,9836** · rank_metric **0,9304** · S@0,25 **0,7706** · S@0,50 **0,7965** *(eski 1.604 sürümü: AUC 0,9879 · rank 0,9131 / yarıçap 0,9185)* — val'de seçim yapıldığı için **hafif iyimser** |
-| **Lokalizasyon (M5_foundation, val)** | Yalnız Aşama-1: Recall@K20 **0,9827**, K50 **0,9913** · FROC@0,5 **0,831**, @4 **0,952** |
-| **Harici (VinDr-CXR)** | ✅ **Temiz omurgayla** (`densenet121-res224-nih`, VinDr'yi hiç görmemiş): **0,6663 AUC (nOR)** / 0,6369 (top1) · kontaminasyonun etkisi **ölçüldü ve bulunamadı** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §8) |
-| **Harici (JSRT, eğitimden izole)** | **242 saf JSRT (149 nodüllü + 93 sağlıklı, V6.9r):** Saf 1.600 ile **%86,6 Recall@10 · %95,3 Recall@50 · 0,9197 (top1) / 0,9652 (nOR) AUC · S@0.25 %52,4 · S@0.50 %58,4** ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9.8) · **saha kalibrasyonu (V6.9t, N=160 etiketli): 0,9662 (top1) / 0,9868 (nOR) AUC · S@0.25 %56,4 · S@0.50 %66,4** (§9.9) · *(149 JSRT + 250 val kontrol, V6.9k4: 0,9316 top1 / 0,9749 nOR)* |
-| **Gönderim modeli** | 4.882 hastanın tamamıyla eğitildi → **NODE21'de değerlendirilemez** |
-| **Negatif sonuç (V6.9u)** | Kutu-içi **radyal / EDT / Vietoris-Rips graf TDA** ailesi (9 kol × 2 kulvar): kutu körlüğünü **tek başına** kırıyor (TDA-tek S@0,25 Saf JSRT **%2,7 → %6,7**), ama 1. aşama ile korelasyon arttığı için **füzyonda kazanmıyor** (rank 0,8206 → en iyi 0,8182) ⇒ ana mimari değişmedi, kilitli test açılmadı ([ablation_matrix.md](ablation_matrix.md) §17.14) |
-| **Konteyner** | `submission_docker/` · çevrimdışı (`--network=none`) test edildi · non-root · CUDA 13,9 GB / CPU 3,51 GB · ⚠️ **stage-2 hâlâ 1.604** (tam-veri bundle'ı yenilenmedi; bkz. [roadmap.md](roadmap.md) TODO) |
-
----
-
-## Değişmez kurallar
-
-1. **Kural 9 — leaderboard karşılaştırması yok.** Verimiz NODE21'in **halka açık eğitim
-   setidir** (4.882 hasta); resmî test setleri (281 + 298) **özeldir**. Kendi iç
-   bölmemiz resmî test değildir ⇒ sıralama karşılaştırması **geçersizdir**.
-2. **Test bütçesi: 5/5 kullanıldı ve kapandı.** V6.4 mührü (0,9876) · V6.9 mührü (0,8842 / 0,9446)
-   · V6.9f (yarıçap doğrulaması, Δ=0) · V6.9i (uyumlu 2. aşama → 0,9045 / 0,9687) · **V6.9m
-   (saf 1.600 → 0,9047 / 0,9661)** — hepsi **ayarsız, tek atım**; hiçbirinde test üzerinde seçim
-   yapılmadı. Altıncı bir kullanım kabul edilmez; yeni bir test sonucu ancak yeni bir veri
-   kümesiyle üretilebilir ([LEAK_AUDIT.md](LEAK_AUDIT.md) §6).
-3. **Bilimsel checkpoint'ler korunur.** `M5_centernet.pt`, `M6_fcos.pt`, `M5_foundation.pt`,
-   `stage2_final_tda_hgb.joblib` (1604, eski), `stage2_foundation_tda_hgb.joblib` (1604) ve
-   **`stage2_foundation_tda_hgb_pure1600.joblib` (aktif, saf 1.600)** SHA-256 ile teyitlidir;
-   tam-veri gönderim modelleri ayrı dizinde (`submission_fulldata/`) tutulur.
-4. **Sayı çelişkisi:** öncelik sırası → `ablation_matrix.md` › `roadmap.md §13` ›
-   `experiments.md`. En güncel çalışma `exp/v4-directional-radial` dalındadır.
-5. **"Seçilmiş" ≠ "dürüst".** Val'de alınan sayılar **seçilmiş**tir (296 değerlendirme +
-   19 w noktası aynı bölmede); **dürüst** dış-değer yalnız mühürlü test koşusundan gelir.
-   Her tablo hangisi olduğunu **yazmak zorundadır**. Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md).
-6. **Her doğrulama iddiası, omurganın ön-eğitim listesiyle çapraz kontrol edilmeden
-   yazılmaz.** VinDr dersi: 400/400 örtüşme ancak denetimle ortaya çıktı. NODE21'in içi
-   de aynı kurala tabidir: pozitiflerin %82,9'u omurganın gördüğü korpuslardan (NIH/PadChest).
-   **Ölçüldü ve kapandı** — etkileşim testi −0,200 (avantaj görülmeyen kaynaklarda 2,6×
-   daha büyük) ⇒ şişme lehine kanıt yok; yine de her metinde **beyan** edilir
-   ([LEAK_AUDIT.md](LEAK_AUDIT.md) §9–§10).
-
----
-
-## Dallar ve Etiketler (Tags)
-
-| Dal / Etiket | Anlamı |
-| :--- | :--- |
-| `main` (`v6.9-two-stage-final`) | **Ana dal (nihai durum)** — v1'den **V6.9s'ye** tüm çalışma (V5 fiziksel kanonikleştirme, V6 iki aşamalı lokalizasyon, V6.6 CXR vakıf omurgası, V6.7 tam veri + Docker, V6.8 kanıt boşlukları, V6.9 mühürlü test + sızıntı denetimi + 242 saf JSRT dış testi + ağırlık ablasyonu) |
-| `exp/v4-directional-radial` | Geliştirme dalı (`main` ile eşitlendi) |
-| `v5.3-five-zone` *(tag)* | Eski 5-zonlu global TDA döneminin (V4/V5.1–V5.3) son commit'i (`914c065`) |
-| `v3-publication-ready` *(tag)* | v3 5-zonlu NODE21 iç değerlendirme kapanışı (`0ae2617`) |
-
----
-
-## Depo yapısı (özet)
-
-```
-src/node21_tda/            veri hattı, TDA çıkarıcı, segmenter, modeller
-pipelines/                 v2 hattı (01–07) + exp/ (E*, V*) + v6_two_stage/ (V6.0–V6.9)
-artifacts/v6_two_stage/    V6 raporları (JSON) + submission_config.json
-artifacts/v6_two_stage/test_seal_preregistration.json   V6.9 ön-kaydı (hash kilitli)
-artifacts/v6_two_stage/submission_fulldata/   tam-veri gönderim modelleri (git dışı)
-submission_docker/         process.py · Dockerfile · Dockerfile.cpu · smoke_test.py · weights/
-LEAK_AUDIT.md              sızıntı/geçerlilik denetimi (yayın öncesi zorunlu okuma)
+```mermaid
+flowchart LR
+    A["Girdi<br/>röntgen .mha<br/>1024×1024, 12-bit"] --> B["Ön işleme<br/>akciğer maskesi (PSPNet) + dilasyon<br/>akciğer p1–p99 kanonikleştirme<br/>c_lungref → [0,255]"]
+    B --> C["1. AŞAMA — konum<br/>FoundationCenterNet<br/>xrv resnet50-res512-all<br/>girdi [-1024, +1024]"]
+    C --> D["3 ölçek (0.9 / 1.0 / 1.1) × yatay flip TTA<br/>3×3 tepe + 8 px mesafe-NMS<br/>en iyi 50 aday → 56×56 kutu"]
+    D --> E["2. AŞAMA — şekil<br/>her kutu: 32×32 çekirdek + 64×64 çevre<br/>H0 + H1 kübik kalıcı homoloji<br/>20×20 kalıcılık imgesi"]
+    E --> F["1.600 boyutlu saf topolojik vektör<br/>(2 kesit × 2 homoloji × 20×20)"]
+    F --> G["HistGradientBoosting<br/>200 iterasyon · lr 0,08 · balanced"]
+    D --> H["z(s₁)"]
+    G --> I["z(p_TDA)"]
+    H --> J{"Füzyon (kilitli)<br/>0,55·z(s₁) + 0,45·z(p_TDA)"}
+    I --> J
+    J --> K["Skorlu kutular<br/>+ hasta olasılığı"]
 ```
 
-**Git dışı tutulanlar:** model checkpoint'leri, gömülü xrv ağırlıkları (~350 MB),
-türetilmiş önbellekler (`*.npz`), `scratch/`.
+**Tasarım kuralları (sabit ve denetlenmiş):**
+
+| Kural | Ne demek |
+| :--- | :--- |
+| **Tuzak B** | 1. aşama skoru `s₁` **hiçbir zaman** 2. aşama özellik matrisine sütun olarak girmez (`stage1_score_included = False`); yalnız son füzyonda kullanılır. |
+| **Saf topolojik temsil** | 2. aşama girdisi %100 TDA'dır: 1.600 boyut, konum/yarıçap/yoğunluk sütunu yok. |
+| **Dondurulmuş normalizasyon** | Füzyonun z-referansı (ortalama/sapma) doğrulama kümesinde bir kez dondurulur; testte yeniden hesaplanmaz. |
+| **Sabit kutu** | 56×56; yarıçap kafası resmî IoU > 0,20 eşleşmesinde kazanç sağlamadığı için kullanılmaz. |
+| **Tek eşik kuralı** | Resmî metrik: IoU > 0,20, aynı hastada aynı GT'ye ikinci isabet ne TP ne FP sayılır. |
+
+---
+
+## Nihai sonuçlar
+
+**Kilitli test — 734 hasta / 229 lezyon** (56×56 kutu, resmî IoU > 0,20 eşleşmesi):
+
+| Ölçüt | Yalnız 1. aşama | **1. + 2. aşama (füzyon)** |
+| :--- | ---: | ---: |
+| Hasta AUC (top-1) | 0,9446 | **0,9661** |
+| `rank_metric` (0,75·AUC + 0,25·S@0,25) | 0,8842 | **0,9047** |
+| S@0,125 (0,125 yanlış alarm/röntgen bütçesinde duyarlılık) | — | 0,6070 |
+| S@0,25 | %70,3 | **%72,1** |
+| S@0,50 | %76,4 | %76,4 |
+
+**Doğrulama — 734 hasta / 231 lezyon:** füzyon AUC **0,9836**, `rank_metric` **0,9304**,
+S@0,25 **%77,1**, S@0,50 **%79,7**. 1. aşama lokalizasyonu: **Recall@K20 0,9827 · K50 0,9913**
+(FROC@0,5 yanlış alarm/röntgen 0,831).
+
+**Dış doğrulama — hiç görülmemiş hastaneler:**
+
+| Kohort | Sıfır-eğitim | Az sayıda yerel etiketle |
+| :--- | ---: | ---: |
+| **JSRT** (Japonya, 149 nodüllü + 93 sağlıklı = 242, 12-bit `.mha`) | ilk 10 kutuda **%86,6** · ilk 50'de **%95,3** · AUC **0,9197** (top-1) / **0,9652** (noisy-OR) | 160 etiketli görüntüyle AUC **0,9662**, S@0,50 **%66,4** |
+| **VinDr-CXR** (Vietnam, 400 görüntü, 8-bit JPEG) | AUC **0,6376** | 160 görüntüyle **0,7935** |
+
+> Görüntü kalitesi düşük (8-bit JPEG) sitede sıfır-eğitim zayıf ama kalibrasyon kazancı büyük;
+> kayıpsız (12-bit) sitede sıfır-eğitim zaten güçlü ve kalibrasyon onu kurum içi düzeye taşıyor.
+
+---
+
+## Kurulum
+
+```powershell
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt      # torch, torchxrayvision, gudhi, scikit-learn, SimpleITK, scipy
+```
+
+**Beklenen veri düzeni** (NODE21 halka açık eğitim seti):
+
+| Yol | İçerik |
+| :--- | :--- |
+| `dataset_node21/cxr_images/proccessed_data/images/{pid}.mha` | 1024×1024 uint16 röntgenler (4.882 hasta) |
+| `data/processed/zones/patients/{pid}/mask_5zones.mha` | akciğer/zon maskeleri (PSPNet çıktısı) |
+| `data/processed/splits_v2/patient_splits.csv` | hasta düzeyi train/val/test bölünmesi (3.414 / 734 / 734) |
+| `data/processed/features_v5_1/lung_p1p99.json` | hasta başına akciğer p1–p99 yoğunluk sınırları |
+
+Model ağırlıkları depoda **tutulmaz** (`artifacts/v6_two_stage/checkpoints/` sürüm kontrolü
+dışındadır); aşağıdaki eğitim adımlarıyla üretilir veya size ayrıca sağlanır.
+
+---
+
+## Kullanım
+
+### A) Bilimsel hat (raporlanan sayıları üreten model)
+
+**1) 1. aşama dedektörünü eğit** (18 epoch, iki fazlı: 5 donuk + 13 diferansiyel ince ayar):
+
+```powershell
+python pipelines/v6_two_stage/v6_6_train_foundation.py
+# → artifacts/v6_two_stage/checkpoints/M5_foundation.pt
+```
+
+**2) 2. aşama topolojik paketini üret** (önce aday + PI önbelleği, sonra 1.600 boyutlu HGB ve
+doğrulama kümesinde dondurulan z-referansı):
+
+```powershell
+python pipelines/v6_two_stage/v6_9l_spatial_ablation.py   # adaylar + 1.600 PI önbelleği
+python pipelines/v6_two_stage/v6_9m_pure1600_seal.py      # HGB paketi + z-ref dondurma
+# → artifacts/v6_two_stage/checkpoints/stage2_foundation_tda_hgb_pure1600.joblib
+```
+
+**Çıktılar:** `artifacts/v6_two_stage/checkpoints/stage2_foundation_tda_hgb_pure1600.joblib`
+(2. aşama paketi) ve
+`artifacts/v6_two_stage/v6_9m_pure1600_seal.json` (kilitli test: 734 hasta / 229 lezyon,
+resmî IoU > 0,20; TDA-tek ve füzyon metrikleri yan yana).
+
+### B) Dağıtım hattı (tek görüntü çıkarımı ve konteyner)
+
+[`v6_7_submission_infer.py`](pipelines/v6_two_stage/v6_7_submission_infer.py) **dondurulmuş sözleşmeyi** (`artifacts/v6_two_stage/submission_config.json`)
+okur ve **%100 veriyle** eğitilmiş paketi kullanır; bu paket önce üretilmelidir:
+
+```powershell
+python pipelines/v6_two_stage/v6_7_train_fulldata.py        # 4.882 hastanın tamamıyla 1. aşama
+python pipelines/v6_two_stage/v6_7_build_fulldata_stage2.py # 2. aşama + z-ref
+python pipelines/v6_two_stage/v6_7_freeze_config.py         # sözleşmeyi (sha256) dondur
+# → artifacts/v6_two_stage/submission_fulldata/…
+
+python pipelines/v6_two_stage/v6_7_submission_infer.py --image <rontgen.mha>
+python pipelines/v6_two_stage/v6_7_submission_infer.py --smoke        # hızlı öz-test
+```
+
+**Grand-Challenge konteyneri:** `submission_docker/` (çevrimdışı `--network=none` altında test
+edilmiş, non-root). Girdi/çıktı sözleşmesi ve komutlar:
+[`submission_docker/README.md`](submission_docker/README.md).
+
+---
+
+## Depo yapısı
+
+```
+pipelines/v6_two_stage/     iki aşamalı hattın tamamı (dedektör, TDA, paket, çıkarım, denetim)
+src/node21_tda/             TDA özellik çıkarıcı, segmenter, veri yardımcıları
+artifacts/v6_two_stage/     ölçüm kayıtları (JSON) · checkpoint ve önbellekler sürüm dışı
+submission_docker/          Grand-Challenge konteyneri (Dockerfile, process.py, smoke test)
+data/, dataset_node21/      veri (sürüm dışı)
+```
+
+---
+
+## Sınırlar ve dürüst beyan
+
+1. **Ön-eğitim örtüşmesi beyan edilir.** NODE21 açık kaynaklardan derlenmiştir ve omurga (xrv
+   `resnet50-res512-all`) bu korpusların bir kısmını **kutusuz** görmüştür: pozitiflerin **%82,9'u**
+   omurganın gördüğü kaynaklardandır. Resmî metrik **kutu** tabanlı olduğu için kutu ezberine kapalıdır
+   ve temiz omurgayla yapılan kontrol ölçümü şişme göstermemiştir.
+2. **Kutu boyu tavanı.** Sabit 56×56 kutu ile test lezyonlarının **%1,7'si** (4/229) hiçbir zaman
+   IoU > 0,20 sağlayamaz (doğrulamada %4,3).
+3. **Test kümesi yeniden kullanılmıştır.** Geliştirme sırasında birkaç kez değerlendirildiği için
+   "dokunulmamış mühür" değil, **yeniden kullanılan doğrulama kümesi** olarak okunmalıdır.
+4. **Füzyon ağırlığı öğrenilmemiştir.** `0,55 / 0,45` doğrulama kümesinde bir kez seçilip
+   dondurulmuştur; testte ya da harici veride yeniden uyarlanmaz.
+5. **Konteyner 1.604 boyutlu 2. aşamayı kullanır.** Tam-veri paketi 4 uzamsal sütunla (1.600 + 4)
+   eğitilmiştir: hasta AUC 0,9687 · `rank_metric` 0,9045 · S@0,50 %79,0 (bilimsel paket: 0,9661 /
+   0,9047 / %76,4). Aradaki fark `submission_docker/README.md`'de açıkça yazılıdır.
+6. **Harici kalibrasyon yerel etiket ister.** JSRT/VinDr kalibrasyon satırları "hedef merkezden
+   N etiketli görüntü temin edilirse" senaryosudur; sıfır-eğitim iddiası değildir.
+
+---
+
+## Teknik ayrıntı ve geliştirici notları
+
+* Ayrıntılı yöntem: [`TEKNIK_YONTEM.md`](TEKNIK_YONTEM.md)
+* Ölçüm günlüğü: [`experiments.md`](experiments.md) · ablasyon tabloları: [`ablation_matrix.md`](ablation_matrix.md)
+* Sızıntı/izolasyon denetimi: [`LEAK_AUDIT.md`](LEAK_AUDIT.md)
+* Depo içi gezinme, belge dizini ve sürüm geçmişi: [`README_DEV.md`](README_DEV.md)

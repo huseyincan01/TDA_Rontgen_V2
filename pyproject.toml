@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "node21-tda"
 version = "3.0.0"
-description = "NODE21 CXR: 5 anatomik zon + Kübik Kalıcı Homoloji (TDA) ile nodül risk triyajı"
+description = "NODE21 CXR: iki asamali nodul tespiti - CXR vakif omurgali CenterNet + kutu-ici kubik kalici homoloji (TDA) ile yeniden siralama"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
