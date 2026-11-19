@@ -111,3 +111,13 @@ scratch/
 
 # xrv agirlik onbellegi (workspace ici; ~150 MB)
 artifacts/xrv_weights/
+
+# Yerel calisma notlari, deney gunlukleri ve makale taslagi (yalniz README.md ve TEKNIK_YONTEM.md git'te)
+/experiments.md
+/ablation_matrix.md
+/LEAK_AUDIT.md
+/paper_draft.md
+/literature.md
+/roadmap.md
+/progress.md
+/README_DEV.md
