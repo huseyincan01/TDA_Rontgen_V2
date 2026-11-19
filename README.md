@@ -1,3 +1,162 @@
+[English](#node21--two-stage-pulmonary-nodule-detection-deep-learning--topological-data-analysis) | [Türkçe](#node21--i̇ki-aşamalı-akciğer-nodülü-tespiti-derin-öğrenme--topolojik-veri-analizi)
+
+---
+
+# NODE21 — Two-Stage Pulmonary Nodule Detection (Deep Learning + Topological Data Analysis)
+
+A two-stage detection system that **locates** pulmonary nodule candidates in chest radiographs (CXR) and **re-ranks** them via **topological shape analysis** to suppress false positives.
+
+* **Stage 1 (Localization):** A CenterNet detector built on a CXR foundation backbone (`torchxrayvision` `resnet50-res512-all`) identifies the top 50 suspicious locations per radiograph and produces fixed `56×56` candidate boxes.
+* **Stage 2 (Shape):** Around each candidate, `32×32` (core) and `64×64` (context) patches are cropped; a 1,600-dimensional pure topological representation is extracted via **cubical persistent homology** and scored by a gradient-boosted classifier (`HistGradientBoostingClassifier`).
+* **Late Fusion:** Standardized scores from both stages are combined with fixed weights:
+  `S = σ(0.55 · z(s₁) + 0.45 · z(p_TDA))`.
+
+---
+
+## Architecture and Design Rationale
+
+```mermaid
+flowchart LR
+    A["Input Radiograph (.mha)<br/>1024×1024, 12-bit"] --> B["Preprocessing<br/>PSPNet lung mask + dilation<br/>Lung p1–p99 canonicalization<br/>c_lungref → [0, 255]"]
+    B --> C["Stage 1 — Localization<br/>FoundationCenterNet<br/>(xrv resnet50-res512-all)"]
+    C --> D["3 scales (0.9 / 1.0 / 1.1) × flip TTA<br/>3×3 peak + 8 px distance-NMS<br/>Top-50 candidates (cx, cy, s₁)"]
+    D -- "coordinates only (cx, cy)" --> E["Stage 2 — Shape<br/>32×32 core + 64×64 context<br/>H0 + H1 cubical persistent homology<br/>20×20 Persistence Image"]
+    E --> F["1,600-D pure TDA vector<br/>(2 patches × 2 homologies × 20×20)"]
+    F --> G["HistGradientBoosting<br/>(NO s₁ input)"]
+    D -- "s₁ score" --> H["z(s₁)"]
+    G -- "p_TDA score" --> I["z(p_TDA)"]
+    H --> J{"Late Fusion<br/>0.55·z(s₁) + 0.45·z(p_TDA)"}
+    I --> J
+    J --> K["Scored boxes (56×56)<br/>+ patient probability"]
+```
+
+Key architectural decisions and their rationale:
+
+1. **Division of labor between stages (localization vs. shape):**
+   The Stage-1 detector locates lesions with high recall (`Recall@K50 = 99.1%` on validation, `95.3%` on external JSRT), but remains vulnerable to false positives at tight false-positive budgets and across unseen hospitals. Conversely, cubical TDA in Stage 2 does not directly encode pixel coordinates and therefore cannot localize boxes on its own (e.g., on external JSRT it reaches `0.970` patient-level AUC alone, yet only `2.7%` `S@0.25`), while strongly distinguishing whether the intensity topology inside a candidate patch belongs to a true nodule. Thus, the two stages solve "where is it?" and "is its shape consistent with a nodule?" separately.
+2. **Withholding the Stage-1 score from Stage 2 (bias isolation):**
+   Stage 1 passes only candidate coordinates `(cx, cy)` to Stage 2; the Stage-1 confidence/heatmap score `s₁` is **never** included as an input feature to the Stage-2 classifier (`stage1_score_included = False`). Because the two stages operate on fundamentally different feature spaces (Stage 1: CNN texture/context, Stage 2: topological persistence), feeding `s₁` into Stage 2 causes the tree ensemble to inherit and amplify Stage 1's false-positive bias. Computing both scores independently and merging them only at the final z-score fusion keeps inter-branch correlation low (`r(p_TDA, s₁) ≈ 0.22`) and preserves fusion gain.
+3. **Whole-lung canonicalization instead of local patch min–max (`c_lungref`):**
+   Stretching each `32×32` or `64×64` patch independently to `[0, 255]` artificially inflates minor background noise in healthy parenchyma to nodule-like contrast. Instead, intensity normalization is performed once across the patient's entire lung mask using `p1–p99` percentiles. This step also eliminates quantization collapse where 12-bit radiographs divided by a 16-bit ceiling (`65535`) were effectively compressed to ~4 bits.
+4. **Dual scale (`32×32` + `64×64`) and pure topological representation (1,600-D):**
+   The `32×32` patch captures the core topology of the candidate, while the `64×64` patch captures its contrast against surrounding parenchyma and vessels. While a small CNN operating on raw pixels of the exact same patches stays at `0.652` AUC, `H0/H1` Persistence Images achieve `0.926` AUC on the same candidates. Four auxiliary spatial-position columns were dropped after showing no measurable patient-level gain in-domain; patch-level radial, Euclidean distance transform (EDT), and Vietoris-Rips graph filtrations (`V6.9u`–`V6.9v`) were also evaluated, but proved sensitive to box-centering shifts on external sites, so the main architecture remains on the simplest and best-generalizing **pure 1,600-D** representation.
+5. **Fixed box size and frozen fusion parameters:**
+   Fusion z-score reference statistics (`mean/std`) and weights (`0.55 / 0.45`) are frozen once on the validation split and never re-tuned on test or external data. Box size is kept fixed at `56×56 px` (a learned dynamic radius head did not improve the official `IoU > 0.20` metric).
+
+---
+
+## Results
+
+### In-Domain (NODE21 — `56×56` boxes, official `IoU > 0.20` matching)
+
+**Test split — 734 patients / 229 lesions:**
+
+| Metric | Stage 1 Only | **Stage 1 + Stage 2 (Fusion)** |
+| :--- | ---: | ---: |
+| Patient AUC (top-1) | 0.9446 | **0.9661** |
+| `rank_metric` (`0.75·AUC + 0.25·S@0.25`) | 0.8842 | **0.9047** |
+| S@0.125 (sensitivity at 0.125 FP/image) | — | 0.6070 |
+| S@0.25 | 70.3% | **72.1%** |
+| S@0.50 | 76.4% | 76.4% |
+
+**Validation split — 734 patients / 231 lesions:** Fusion Patient AUC **0.9836**, `rank_metric` **0.9304**, S@0.25 **77.1%**, S@0.50 **79.7%**. Stage-1 candidate recall: **Recall@K20 `0.9827` · Recall@K50 `0.9913`**.
+
+### External Validation (Unseen Hospitals)
+
+| Cohort | Zero-Shot | Site Calibration (`N=160` local labels) |
+| :--- | :--- | :--- |
+| **Pure JSRT** *(Japan, 149 nodule + 93 control = 242, 12-bit `.mha`)* | Recall@K10 **86.6%** · K50 **95.3%** · AUC **0.9197** (top-1) / **0.9652** (noisy-OR) · S@0.25 **52.4%** · `rank_metric` **0.8206** | AUC **0.9662** · S@0.25 **56.4%** · S@0.50 **66.4%** · `rank_metric` **0.8656** |
+| **VinDr-CXR** *(Vietnam, 400 images, 8-bit JPEG)* | AUC **0.6376** | AUC **0.7935** |
+
+> On the lossless 12-bit external site (JSRT), zero-shot performance starts strong and reaches in-domain test levels with a small number of local labels. On the lower-quality 8-bit JPEG site (VinDr), zero-shot starts lower, while the relative gain from site calibration is larger.
+
+---
+
+## Setup and Expected Data Layout
+
+```powershell
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt
+```
+
+Core dependencies: `torch`, `torchxrayvision`, `gudhi`, `scikit-learn`, `SimpleITK`, `scipy`.
+
+Expected data paths (NODE21 public training set — not included in the repository):
+
+| Path | Contents |
+| :--- | :--- |
+| `dataset_node21/cxr_images/proccessed_data/images/{pid}.mha` | `1024×1024` uint16 radiographs (4,882 patients) |
+| `data/processed/zones/patients/{pid}/mask_5zones.mha` | Lung masks (PSPNet output) |
+| `data/processed/splits_v2/patient_splits.csv` | Patient-level train / val / test split (`3,414 / 734 / 734`) |
+| `data/processed/features_v5_1/lung_p1p99.json` | Per-patient lung `p1–p99` intensity bounds |
+
+Model checkpoints and large caches (`artifacts/v6_two_stage/checkpoints/`) are excluded from version control and are reproduced via the commands below.
+
+---
+
+## Usage
+
+### 1) Scientific Pipeline (Reproducing Reported Results)
+
+```powershell
+# Stage-1 detector training (18 epochs: 5 frozen + 13 differential fine-tuning)
+python pipelines/v6_two_stage/v6_6_train_foundation.py
+# -> artifacts/v6_two_stage/checkpoints/M5_foundation.pt
+
+# Stage-2 candidate + PI cache and pure 1,600-D HGB bundle
+python pipelines/v6_two_stage/v6_9l_spatial_ablation.py
+python pipelines/v6_two_stage/v6_9m_pure1600_seal.py
+# -> artifacts/v6_two_stage/checkpoints/stage2_foundation_tda_hgb_pure1600.joblib
+# -> artifacts/v6_two_stage/v6_9m_pure1600_seal.json
+```
+
+### 2) Single-Image Inference and Docker Container
+
+```powershell
+# Build full-data deployment bundle and freeze contract
+python pipelines/v6_two_stage/v6_7_train_fulldata.py
+python pipelines/v6_two_stage/v6_7_build_fulldata_stage2.py
+python pipelines/v6_two_stage/v6_7_freeze_config.py
+
+# Single-image inference / quick smoke test
+python pipelines/v6_two_stage/v6_7_submission_infer.py --image <radiograph.mha>
+python pipelines/v6_two_stage/v6_7_submission_infer.py --smoke
+```
+
+For the offline (`--network=none`) Grand-Challenge container setup and I/O contract, see [`submission_docker/README.md`](submission_docker/README.md).
+
+---
+
+## Repository Structure
+
+```text
+pipelines/v6_two_stage/     Training, inference, and ablation scripts for the two-stage pipeline
+src/node21_tda/             TDA feature extractor, lung segmentation, and data utilities
+artifacts/v6_two_stage/     JSON evaluation logs (checkpoints and caches are gitignored)
+submission_docker/          Grand-Challenge Docker container (Dockerfile, process.py)
+data/, dataset_node21/      Data directories (excluded from version control)
+```
+
+---
+
+## Limitations and Known Constraints
+
+1. **Pretraining source overlap:** NODE21 is compiled from public CXR corpora, and the foundation backbone (`xrv resnet50-res512-all`) saw part of those corpora (82.9% of positives) during box-free classification pretraining. The official evaluation metric is bounding-box based; additional controls were run with a non-overlapping backbone and on the fully isolated JSRT cohort (242 patients).
+2. **Fixed box geometry:** With a fixed `56×56` box, a small fraction of very large/small lesions (`1.7%` in test, `4.3%` in validation) cannot geometrically satisfy `IoU > 0.20`.
+3. **Internal test split reuse:** The NODE21 internal test split was evaluated multiple times across development iterations and should be interpreted as a reused internal evaluation split rather than a single-use untouched test set.
+4. **Deployment container difference:** While the scientific pipeline uses the pure 1,600-D TDA vector, the full-data container (`submission_fulldata`) packages the 1,604-D Stage-2 bundle containing 4 spatial columns (test AUC `0.9687` vs. `0.9661`, `rank_metric` `0.9045` vs. `0.9047`).
+5. **External calibration requirement:** The site-calibration column in the external validation table reflects a deployment scenario where labeled examples from the target hospital are available, and should be interpreted separately from zero-shot results.
+
+---
+
+## Related Documents
+
+* Technical methodology and mathematical details: [`TECHNICAL_METHOD.md`](TECHNICAL_METHOD.md)
+* Grand-Challenge container guide: [`submission_docker/README.md`](submission_docker/README.md)
+
+---
+---
+
 # NODE21 — İki Aşamalı Akciğer Nodülü Tespiti (Derin Öğrenme + Topolojik Veri Analizi)
 
 Göğüs röntgenlerinde (CXR) akciğer nodülü adaylarını **tespit eden** ve bu adayları **topolojik şekil analiziyle** yeniden sıralayıp yanlış alarmları eleyen iki aşamalı bir tespit sistemi.
@@ -147,5 +306,5 @@ data/, dataset_node21/      Veri dizinleri (sürüm kontrolü dışı)
 
 ## İlgili Belgeler
 
-* Yöntem ve matematiksel ayrıntılar: [`TEKNIK_YONTEM.md`](TEKNIK_YONTEM.md)
+* Yöntem ve matematiksel ayrıntılar: [`TECHNICAL_METHOD.md`](TECHNICAL_METHOD.md)
 * Grand-Challenge konteyner kılavuzu: [`submission_docker/README.md`](submission_docker/README.md)
