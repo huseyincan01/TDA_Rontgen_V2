@@ -1,7 +1,8 @@
-[English](#technical-method--node21-nodule-detection-two-stage-detector--local-tda) | [Türkçe](#teknik-yöntem--node21-nodül-tespiti-i̇ki-aşamalı-dedektör--lokal-tda)
+[English](#en) | [Türkçe](#tr)
 
 ---
 
+<a id="en"></a>
 # Technical Method — NODE21 Nodule Detection (Two-Stage: Detector + Local TDA)
 
 > This document describes step by step **how the system is built**: data preparation, Stage-1
@@ -330,6 +331,7 @@ are reported ([`v6_9r_true_jsrt_external.py`](pipelines/v6_two_stage/v6_9r_true_
 ---
 ---
 
+<a id="tr"></a>
 # Teknik Yöntem — NODE21 Nodül Tespiti (İki Aşamalı: Dedektör + Lokal TDA)
 
 > Bu belge, sistemin **nasıl inşa edildiğini** adım adım anlatır: veri hazırlığı, 1. aşama
@@ -462,7 +464,7 @@ akciğer alanı merkezine uzaklık = "hilus vekili", akciğer maskesi sınırın
 "plevra vekili") ⇒ 1.604. **V6.9l ablasyonu** bu 4 sütunun hasta düzeyinde katkı
 sağlamadığını (±0,001 AUC; işaretler ters) ve aday düzeyinde **zarar verdiğini**
 (TDA-tek AUC 0,9387 → 0,9242) gösterdi ⇒ Occam'ın usturası gereği **çıkarıldı** (V6.9m).
-Ayrıntı ve kilitli test sonucu: [experiments.md](experiments.md) §V6.9.13–14.
+Ayrıntı ve kilitli test sonucu: `experiments.md` §V6.9.13–14.
 
 > 🧪 **Alternatif kutu-içi filtrasyonlar denendi ve elendi (V6.9u).** Ham parlaklık filtrasyonunun
 > (`255 − I`) iki körlüğü — kutunun **merkezini** ve yapının **kalınlığını** görmemesi — üç yeni
@@ -477,8 +479,8 @@ Ayrıntı ve kilitli test sonucu: [experiments.md](experiments.md) §V6.9.13–1
 > nedeni gerçekten **merkez + kalınlık bilgisizliğiymiş**. Füzyona taşınmamasının **en olası
 > açıklaması** ölçüldü: yeni temsillerin **1. aşama ile korelasyonu artıyor** (`r(p_TDA, s1)`:
 > 0,219 → 0,269 Val; 0,230 → 0,256 JSRT; mutlak düzey ≤0,27) ⇒ 1. aşamanın kodladığı bilgiye
-> yaklaşıyorlar. (Korelasyon gözlemi; nedensellik test edilmedi.) Ayrıntı: [experiments.md](experiments.md) §V6.9.20 ·
-> [ablation_matrix.md](ablation_matrix.md) §17.14.
+> yaklaşıyorlar. (Korelasyon gözlemi; nedensellik test edilmedi.) Ayrıntı: `experiments.md` §V6.9.20 ·
+> `ablation_matrix.md` §17.14.
 
 > ⚠️ **TARİHSEL KAYIT — çıkarılan 4 uzamsal vekil (v6.1–v6.9l sürümleri).** Aşağıdaki tanımlar
 > artık **kullanılmamaktadır**; V6.9l'de ölçülüp V6.9m'de kaldırılmıştır. Kayıt olarak duruyor,
@@ -506,7 +508,7 @@ Ayrıntı ve kilitli test sonucu: [experiments.md](experiments.md) §V6.9.13–1
 > füzyon AUC farkı **±0,001**, rank_metric farkı **±0,0025** ve işaretler **ters yönlü**.
 > Aday düzeyinde ise konum sütunları **zarar veriyordu** (TDA-tek AUC 0,9387 → 0,9242). Gerçek
 > medial/lateral kenarları kullanan anatomik kodlama da vekili geçmedi (−0,0008).
-> [experiments.md](experiments.md) §V6.9.13 · kilitli test doğrulaması §V6.9.14.
+> `experiments.md` §V6.9.13 · kilitli test doğrulaması §V6.9.14.
 
 > ⚠️ Kesitler **yeniden boyutlandırılmaz** ve sabit 32/64 px'tir. Sebep ölçülmüştür: interpolasyon
 > (bilinear resize) H1 döngülerini siler — V5.1'de ölçek normalizasyonu TDA'yı 0,9211 → 0,8539'a
@@ -560,7 +562,7 @@ alınmaz (transductive sızıntı yok).
 
 > 📌 **Neden sabit ağırlık?** Öğrenilen bir LR/LR-benzeri füzyon, az sayıda hastada kolayca
 > aşırı uyum sağlar. Sabit, önceden doğrulanmış ağırlık; hem sızıntısız hem tekrarlanabilirdir.
-> Ayrıntı: [LEAK_AUDIT.md](LEAK_AUDIT.md) §4 ve Tuzak B notu.
+> Ayrıntı: `LEAK_AUDIT.md` §4 ve Tuzak B notu.
 
 > ⚖️ **Ağırlık duyarlılığı (V6.9s):** `w_tda` ∈ [0,40 … 0,70] taramasında hasta AUC `w_tda` ile artar (Test 0,966 → 0,978), ama kutu ölçütleri `w_tda` ≈ 0,45–0,50'de tepe yapıp ≥ 0,60'ta düşer (Test S@0.25 %72,1 → %61,6): TDA kutu koordinatını değiştirmez, sabit aday havuzunu yeniden sıralar ve ağırlık büyüdükçe 1. aşamada alt sırada kalan sahte adaylar 1. sıraya çıkar. Kilitli `w = 0,55 / 0,45` değişmedi. Ayrıntı: `experiments.md` V6.9.18, `ablation_matrix.md` §17.12.
 
@@ -582,8 +584,8 @@ flowchart TD
 **Kilitli test sonucu (sızıntısız, ayarsız):** yalnız 1. aşama rank_metric **0,8842** /
 AUC **0,9446** → iki aşamalı füzyon rank_metric **0,9045** / AUC **0,9687** (1.604 sürümü) ·
 **0,9047** / 0,9661 ve S@0,5 0,7642 (**saf 1.600, V6.9m — dağıtılan sürüm)**.
-Ayrıntı: [experiments.md](experiments.md) · [ablation_matrix.md](ablation_matrix.md) ·
-[LEAK_AUDIT.md](LEAK_AUDIT.md).
+Ayrıntı: `experiments.md` · `ablation_matrix.md` ·
+`LEAK_AUDIT.md`.
 
 ---
 
@@ -635,7 +637,7 @@ sağlıklı)** dış kohortundaki sıfır-eğitim performansı: **Recall@K10 0,8
 
 **Kullanım kuralı.** Kilitli test sayıları **`in-fold`** olarak etiketlenir (veri seti içinde
 geçerli). *Kaynak-dışı genelleme* iddiasında **242 Saf JSRT (`V6.9r`)** ve **VinDr (`V6.9j2`)**
-sayıları kullanılır. Ayrıntı ve izolasyon denetimi: [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.7–§9.9 ·
+sayıları kullanılır. Ayrıntı ve izolasyon denetimi: `LEAK_AUDIT.md` §9.7–§9.9 ·
 [`v6_9r_true_jsrt_external.py`](pipelines/v6_two_stage/v6_9r_true_jsrt_external.py).
 
 > 🎯 **Saha kalibrasyonu simetrisi (`V6.9t`).** Sıfır-eğitim satırlarının yanına, hedef hastaneden
@@ -644,4 +646,4 @@ sayıları kullanılır. Ayrıntı ve izolasyon denetimi: [LEAK_AUDIT.md](LEAK_A
 > **0,9006 → 0,9662** (+6,6 puan; yayımlanmış 3-TTA tabanına göre +4,7). Kazanç neredeyse tamamen
 > 1. aşamadan gelir (S@0.25: 0,4899 → 0,5772) ve **10 etiket kazanımın %55'ini, 40 etiket %76'sını**
 > getirir. Bu satırlar **yerel etiket gerektirir**; sıfır-eğitim iddialarında kullanılmaz
-> ([experiments.md](experiments.md) §V6.9.19, [LEAK_AUDIT.md](LEAK_AUDIT.md) §9.9).
+> (`experiments.md` §V6.9.19, `LEAK_AUDIT.md` §9.9).

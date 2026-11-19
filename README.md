@@ -1,7 +1,8 @@
-[English](#node21--two-stage-pulmonary-nodule-detection-deep-learning--topological-data-analysis) | [Türkçe](#node21--i̇ki-aşamalı-akciğer-nodülü-tespiti-derin-öğrenme--topolojik-veri-analizi)
+[English](#en) | [Türkçe](#tr)
 
 ---
 
+<a id="en"></a>
 # NODE21 — Two-Stage Pulmonary Nodule Detection (Deep Learning + Topological Data Analysis)
 
 A two-stage detection system that **locates** pulmonary nodule candidates in chest radiographs (CXR) and **re-ranks** them via **topological shape analysis** to suppress false positives.
@@ -39,7 +40,7 @@ Key architectural decisions and their rationale:
 3. **Whole-lung canonicalization instead of local patch min–max (`c_lungref`):**
    Stretching each `32×32` or `64×64` patch independently to `[0, 255]` artificially inflates minor background noise in healthy parenchyma to nodule-like contrast. Instead, intensity normalization is performed once across the patient's entire lung mask using `p1–p99` percentiles. This step also eliminates quantization collapse where 12-bit radiographs divided by a 16-bit ceiling (`65535`) were effectively compressed to ~4 bits.
 4. **Dual scale (`32×32` + `64×64`) and pure topological representation (1,600-D):**
-   The `32×32` patch captures the core topology of the candidate, while the `64×64` patch captures its contrast against surrounding parenchyma and vessels. While a small CNN operating on raw pixels of the exact same patches stays at `0.652` AUC, `H0/H1` Persistence Images achieve `0.926` AUC on the same candidates. Four auxiliary spatial-position columns were dropped after showing no measurable patient-level gain in-domain; patch-level radial, Euclidean distance transform (EDT), and Vietoris-Rips graph filtrations (`V6.9u`–`V6.9v`) were also evaluated, but proved sensitive to box-centering shifts on external sites, so the main architecture remains on the simplest and best-generalizing **pure 1,600-D** representation.
+   The `32×32` patch captures the core topology of the candidate, while the `64×64` patch captures its contrast against surrounding parenchyma and vessels. While a small CNN operating on raw pixels of the exact same patches stays at `0.652` AUC, `H0/H1` Persistence Images achieve `0.926` AUC on the same candidates. Four auxiliary spatial-position columns were dropped after showing no measurable patient-level gain in-domain; patch-level radial, Euclidean distance transform (EDT), and Vietoris-Rips graph filtrations were also evaluated, but proved sensitive to box-centering shifts on external sites, so the main architecture remains on the simplest and best-generalizing **pure 1,600-D** representation.
 5. **Fixed box size and frozen fusion parameters:**
    Fusion z-score reference statistics (`mean/std`) and weights (`0.55 / 0.45`) are frozen once on the validation split and never re-tuned on test or external data. Box size is kept fixed at `56×56 px` (a learned dynamic radius head did not improve the official `IoU > 0.20` metric).
 
@@ -55,7 +56,7 @@ Key architectural decisions and their rationale:
 | :--- | ---: | ---: |
 | Patient AUC (top-1) | 0.9446 | **0.9661** |
 | `rank_metric` (`0.75·AUC + 0.25·S@0.25`) | 0.8842 | **0.9047** |
-| S@0.125 (sensitivity at 0.125 FP/image) | — | 0.6070 |
+| S@0.125 (sensitivity at 0.125 FP/image) | — | 60.7% |
 | S@0.25 | 70.3% | **72.1%** |
 | S@0.50 | 76.4% | 76.4% |
 
@@ -157,6 +158,7 @@ data/, dataset_node21/      Data directories (excluded from version control)
 ---
 ---
 
+<a id="tr"></a>
 # NODE21 — İki Aşamalı Akciğer Nodülü Tespiti (Derin Öğrenme + Topolojik Veri Analizi)
 
 Göğüs röntgenlerinde (CXR) akciğer nodülü adaylarını **tespit eden** ve bu adayları **topolojik şekil analiziyle** yeniden sıralayıp yanlış alarmları eleyen iki aşamalı bir tespit sistemi.
@@ -194,7 +196,7 @@ Mimariyi şekillendiren temel tasarım kararları ve gerekçeleri:
 3. **Yerel yama yerine akciğer-geneli kanonikleştirme (`c_lungref`):**
    Her `32×32` veya `64×64` yamayı kendi min–max değerine göre `[0, 255]` aralığına germek, homojen sağlıklı dokudaki küçük gürültüleri bile yapay olarak nodül kontrastına çıkarır. Bunun yerine normalizasyon hastanın tüm akciğer maskesi içindeki `p1–p99` yüzdelikleriyle tek seferde yapılır. Bu adım aynı zamanda 12-bit röntgenlerin 16-bit (`65535`) tavanına bölünerek ~4-bit'e sıkışması sorununu da giderir.
 4. **Çift ölçek (`32×32` + `64×64`) ve saf topolojik temsil (1.600 boyut):**
-   `32×32` yama adayın çekirdek yapısını, `64×64` yama ise çevre parankim ve damar bağlamıyla kontrastını taşır. Aynı yamaları ham piksel olarak inceleyen küçük bir CNN `0,652` AUC'de kalırken, `H0/H1` Kalıcılık İmgeleri (Persistence Image) aynı adaylarda `0,926` AUC üretir. Ek uzamsal konum sütunları (4 özellik) kurum içinde ek kazanç getirmediği için çıkarılmış; kutu-içi radyal, uzaklık dönüşümü (EDT) ve Vietoris-Rips graf filtrasyonları da (`V6.9u`–`V6.9v`) sınanmış, ancak dış hastanede kutu-merkezleme farkına duyarlı oldukları görüldüğünden ana mimari en sade ve genellenebilir olan **saf 1.600** temsilde bırakılmıştır.
+   `32×32` yama adayın çekirdek yapısını, `64×64` yama ise çevre parankim ve damar bağlamıyla kontrastını taşır. Aynı yamaları ham piksel olarak inceleyen küçük bir CNN `0,652` AUC'de kalırken, `H0/H1` Kalıcılık İmgeleri (Persistence Image) aynı adaylarda `0,926` AUC üretir. Ek uzamsal konum sütunları (4 özellik) kurum içinde ek kazanç getirmediği için çıkarılmış; kutu-içi radyal, uzaklık dönüşümü (EDT) ve Vietoris-Rips graf filtrasyonları da sınanmış, ancak dış hastanede kutu-merkezleme farkına duyarlı oldukları görüldüğünden ana mimari en sade ve genellenebilir olan **saf 1.600** temsilde bırakılmıştır.
 5. **Sabit kutu ve dondurulmuş füzyon parametreleri:**
    Füzyon z-referansı (`mean/std`) ve ağırlıklar (`0,55 / 0,45`) doğrulama kümesinde bir kez sabitlenir; testte veya harici veride yeniden ayarlanmaz. Kutu boyutu sabit `56×56 px` olarak kullanılır (öğrenilmiş dinamik yarıçap kafası resmî `IoU > 0,20` metriğinde ek artış sağlamamıştır).
 
@@ -210,7 +212,7 @@ Mimariyi şekillendiren temel tasarım kararları ve gerekçeleri:
 | :--- | ---: | ---: |
 | Hasta AUC (top-1) | 0,9446 | **0,9661** |
 | `rank_metric` (`0,75·AUC + 0,25·S@0,25`) | 0,8842 | **0,9047** |
-| S@0,125 (0,125 yanlış alarm/röntgen) | — | 0,6070 |
+| S@0,125 (0,125 yanlış alarm/röntgen) | — | %60,7 |
 | S@0,25 | %70,3 | **%72,1** |
 | S@0,50 | %76,4 | %76,4 |
 
