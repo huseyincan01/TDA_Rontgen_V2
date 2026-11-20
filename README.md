@@ -32,7 +32,7 @@ flowchart LR
 ```
 
 ![Two-Stage Detection and Topological Signature Overview](artifacts/figures/pipeline_overview.png)
-*End-to-end visual example on a locked NODE21 test radiograph (`n1066`): Stage-1 `56×56` localization with `32×32` / `64×64` crop (left), real `20×20` `H₀/H₁` Persistence Images (middle), and Stage-1, Stage-2 TDA, and Late Fusion scores comparing the true nodule against the top hard-negative false positive (right).*
+*Real Stage-2 TDA rescue example on a locked NODE21 test radiograph (`n1058`, `IoU = 0.66`): Stage-1 ranked a false positive first (`z(s₁): +9.02 vs. +8.13`), Stage-2 TDA strongly separated the true nodule's `20×20` `H₀/H₁` topological signature (`z(p_TDA): +2.08 vs. +0.17`), and Late Fusion promoted the true nodule to rank 1 (`+5.41 vs. +5.04`).*
 
 Key architectural decisions and their rationale:
 
@@ -191,7 +191,7 @@ flowchart LR
 ```
 
 ![İki Aşamalı Tespit ve Topolojik İmza Özeti](artifacts/figures/pipeline_overview.png)
-*Kilitli NODE21 test kümesinden gerçek bir örnek (`n1066`): 1. aşama `56×56` kutu tespiti ve `32×32` / `64×64` yama kırpıntısı (sol), gerçek `20×20` `H₀/H₁` Kalıcılık İmgeleri (orta) ve gerçek nodül ile en güçlü zor-negatif yanlış alarmın 1. aşama, 2. aşama TDA ve geç füzyon puanları (sağ).*
+*Kilitli NODE21 test kümesinden gerçek bir 2. aşama TDA kurtarma örneği (`n1058`, `IoU = 0,66`): 1. aşama bir yanlış alarmı 1. sıraya koymuşken (`z(s₁): +9,02 vs +8,13`), 2. aşama TDA gerçek nodülün `20×20` `H₀/H₁` topolojik imzasını belirgin biçimde ayırıp (`z(p_TDA): +2,08 vs +0,17`) geç füzyonla doğru nodülü 1. sıraya taşımaktadır (`+5,41 vs +5,04`).*
 
 Mimariyi şekillendiren temel tasarım kararları ve gerekçeleri:
 
