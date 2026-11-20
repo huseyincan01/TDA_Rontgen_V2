@@ -31,6 +31,9 @@ flowchart LR
     J --> K["Scored boxes (56×56)<br/>+ patient probability"]
 ```
 
+![Two-Stage Detection and Topological Signature Overview](artifacts/figures/pipeline_overview.png)
+*End-to-end visual example on a locked NODE21 test radiograph (`n1066`): Stage-1 `56×56` localization with `32×32` / `64×64` crop (left), real `20×20` `H₀/H₁` Persistence Images (middle), and Stage-1, Stage-2 TDA, and Late Fusion scores comparing the true nodule against the top hard-negative false positive (right).*
+
 Key architectural decisions and their rationale:
 
 1. **Division of labor between stages (localization vs. shape):**
@@ -186,6 +189,9 @@ flowchart LR
     I --> J
     J --> K["Skorlu kutular (56×56)<br/>+ hasta olasılığı"]
 ```
+
+![İki Aşamalı Tespit ve Topolojik İmza Özeti](artifacts/figures/pipeline_overview.png)
+*Kilitli NODE21 test kümesinden gerçek bir örnek (`n1066`): 1. aşama `56×56` kutu tespiti ve `32×32` / `64×64` yama kırpıntısı (sol), gerçek `20×20` `H₀/H₁` Kalıcılık İmgeleri (orta) ve gerçek nodül ile en güçlü zor-negatif yanlış alarmın 1. aşama, 2. aşama TDA ve geç füzyon puanları (sağ).*
 
 Mimariyi şekillendiren temel tasarım kararları ve gerekçeleri:
 
